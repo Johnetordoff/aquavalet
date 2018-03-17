@@ -3,11 +3,12 @@ import logging.config
 PROJECT_NAME = 'aqua valet'
 
 DEFAULT_FORMATTER = {
-        '()': 'waterbutler.core.logging.MaskFormatter',
-        'format': '[%(asctime)s][%(levelname)s][%(name)s]: %(message)s',
-        'pattern': '(?<=cookie=)(.*?)(?=&|$)',
-        'mask': '***'
+    '()': 'waterbutler.core.logging.MaskFormatter',
+    'format': '[%(asctime)s][%(levelname)s][%(name)s]: %(message)s',
+    'pattern': '(?<=cookie=)(.*?)(?=&|$)',
+    'mask': '***'
 }
+
 DEFAULT_LOGGING_CONFIG = {
     'version': 1,
     'disable_existing_loggers': False,

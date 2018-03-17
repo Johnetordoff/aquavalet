@@ -7,7 +7,6 @@ from http import HTTPStatus
 import tornado.gen
 
 from waterbutler.core import utils
-from waterbutler.server import settings
 from waterbutler.server.api.v1 import core
 from waterbutler.core import remote_logging
 from waterbutler.server.auth import AuthHandler

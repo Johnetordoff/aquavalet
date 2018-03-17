@@ -12,10 +12,10 @@ DEBUG = True
 SSL_CERT_FILE = None
 SSL_KEY_FILE = None
 
-XHEADERS =  False
+XHEADERS = False
 CORS_ALLOW_ORIGIN = '*'
 
-CHUNK_SIZE =  65536 # 64KB
+CHUNK_SIZE = 65536  # 64KB
 MAX_BODY_SIZE = 4.9 * (1024 ** 3)  # 4.9 GB
 
 HMAC_ALGORITHM = getattr(hashlib, 'sha256')

@@ -4,7 +4,6 @@ from http import HTTPStatus
 from waterbutler import tasks
 from waterbutler.sizes import MBs
 from waterbutler.core import exceptions
-from waterbutler.server import settings
 from waterbutler.core.auth import AuthType
 from waterbutler.core import remote_logging
 from waterbutler.server.auth import AuthHandler
