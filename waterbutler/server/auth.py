@@ -6,24 +6,10 @@ from waterbutler.core.auth import AuthType
 class AuthHandler:
 
     def __init__(self, names):
-        self.manager = driver.NamedExtensionManager(
-            namespace='waterbutler.auth',
-            names=names,
-            invoke_on_load=True,
-            invoke_args=(),
-            name_order=True,
-        )
+        pass
 
     async def fetch(self, request, bundle):
-        for extension in self.manager.extensions:
-            credential = await extension.obj.fetch(request, bundle)
-            if credential:
-                return credential
-        raise AuthHandler('no valid credential found')
+        return {'auth' : 'fake_auth', 'credentials': 'fake_creds', 'settings' : {'folder': 'platter/'}}
 
     async def get(self, resource, provider, request, action=None, auth_type=AuthType.SOURCE):
-        for extension in self.manager.extensions:
-            credential = await extension.obj.get(resource, provider, request, action=action, auth_type=auth_type)
-            if credential:
-                return credential
-        raise AuthHandler('no valid credential found')
+        return {'auth' : 'fake_auth', 'credentials': 'fake_creds', 'settings' : {'folder': 'platter/'}}

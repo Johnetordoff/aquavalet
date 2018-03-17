@@ -1,0 +1,92 @@
+          ok  Starting native_osx for sync wb-sync
+          ok  wb-sync container still running, restarting unison in container
+containerd: container not found
+/Library/Ruby/Gems/2.0.0/gems/docker-sync-0.5.4/lib/docker-sync/sync_strategy/native_osx.rb:107:in `start_container': Start failed (RuntimeError)
+	from /Library/Ruby/Gems/2.0.0/gems/docker-sync-0.5.4/lib/docker-sync/sync_strategy/native_osx.rb:114:in `run'
+	from /Library/Ruby/Gems/2.0.0/gems/docker-sync-0.5.4/lib/docker-sync/sync_process.rb:85:in `run'
+	from /Library/Ruby/Gems/2.0.0/gems/docker-sync-0.5.4/lib/docker-sync/sync_manager.rb:107:in `block in run'
+	from /Library/Ruby/Gems/2.0.0/gems/docker-sync-0.5.4/lib/docker-sync/sync_manager.rb:106:in `each'
+	from /Library/Ruby/Gems/2.0.0/gems/docker-sync-0.5.4/lib/docker-sync/sync_manager.rb:106:in `run'
+	from /Library/Ruby/Gems/2.0.0/gems/docker-sync-0.5.4/tasks/sync/sync.thor:51:in `block in start'
+	from /Library/Ruby/Gems/2.0.0/gems/docker-sync-0.5.4/tasks/sync/sync.thor:50:in `chdir'
+	from /Library/Ruby/Gems/2.0.0/gems/docker-sync-0.5.4/tasks/sync/sync.thor:50:in `start'
+	from /Library/Ruby/Gems/2.0.0/gems/thor-0.19.4/lib/thor/command.rb:27:in `run'
+	from /Library/Ruby/Gems/2.0.0/gems/thor-0.19.4/lib/thor/invocation.rb:126:in `invoke_command'
+	from /Library/Ruby/Gems/2.0.0/gems/thor-0.19.4/lib/thor.rb:369:in `dispatch'
+	from /Library/Ruby/Gems/2.0.0/gems/thor-0.19.4/lib/thor/base.rb:444:in `start'
+	from /Library/Ruby/Gems/2.0.0/gems/docker-sync-0.5.4/bin/docker-sync:14:in `<top (required)>'
+	from /usr/local/bin/docker-sync:23:in `load'
+	from /usr/local/bin/docker-sync:23:in `<main>'
+          ok  Starting native_osx for sync wb-sync
+          ok  wb-sync container still running, restarting unison in container
+unison: stopped
+unison: started
+     success  Sync container started
+     success  Showing unison logs from your sync container: wb-sync
+[2018-03-16 22:41:41 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 22:41:40.97 on 16 Mar 2018
+[2018-03-16 22:41:41 -0400] Sync Log:  [BGN] Updating file .docker-sync/daemon.log from /host_sync to /app_sync
+[2018-03-16 22:41:41 -0400] Sync Log:  [END] Updating file .docker-sync/daemon.log
+[2018-03-16 22:41:41 -0400] Sync Log:  [BGN] Copying .docker-sync/daemon.pid from /host_sync to /app_sync
+[2018-03-16 22:41:41 -0400] Sync Log:  [END] Copying .docker-sync/daemon.pid
+[2018-03-16 22:41:41 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 22:41:40.98 on 16 Mar 2018
+[2018-03-16 22:41:41 -0400] Sync Log:  Synchronization complete at 22:41:40  (2 items transferred, 0 skipped, 0 failed)
+[2018-03-16 22:47:27 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 22:47:27.57 on 16 Mar 2018
+[2018-03-16 22:47:27 -0400] Sync Log:  [BGN] Copying waterbutler.egg-info from /app_sync to /host_sync
+[2018-03-16 22:47:27 -0400] Sync Log:  [END] Copying waterbutler.egg-info
+[2018-03-16 22:47:27 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 22:47:27.62 on 16 Mar 2018
+[2018-03-16 22:47:27 -0400] Sync Log:  Synchronization complete at 22:47:27  (1 item transferred, 0 skipped, 0 failed)
+[2018-03-16 22:49:41 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 22:49:41.57 on 16 Mar 2018
+[2018-03-16 22:49:41 -0400] Sync Log:  [BGN] Updating file waterbutler/providers/filesystem/settings.py from /host_sync to /app_sync
+[2018-03-16 22:49:41 -0400] Sync Log:  [END] Updating file waterbutler/providers/filesystem/settings.py
+[2018-03-16 22:49:41 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 22:49:41.58 on 16 Mar 2018
+[2018-03-16 22:49:41 -0400] Sync Log:  Synchronization complete at 22:49:41  (1 item transferred, 0 skipped, 0 failed)
+[2018-03-16 22:50:16 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 22:50:15.06 on 16 Mar 2018
+[2018-03-16 22:50:16 -0400] Sync Log:  [BGN] Copying platter from /host_sync to /app_sync
+[2018-03-16 22:50:16 -0400] Sync Log:  [END] Copying platter
+[2018-03-16 22:50:16 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 22:50:15.06 on 16 Mar 2018
+[2018-03-16 22:50:16 -0400] Sync Log:  Synchronization complete at 22:50:15  (1 item transferred, 0 skipped, 0 failed)
+[2018-03-16 22:51:15 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 22:51:14.68 on 16 Mar 2018
+[2018-03-16 22:51:15 -0400] Sync Log:  [BGN] Updating file waterbutler/server/auth.py from /host_sync to /app_sync
+[2018-03-16 22:51:15 -0400] Sync Log:  [END] Updating file waterbutler/server/auth.py
+[2018-03-16 22:51:15 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 22:51:14.69 on 16 Mar 2018
+[2018-03-16 22:51:15 -0400] Sync Log:  Synchronization complete at 22:51:14  (1 item transferred, 0 skipped, 0 failed)
+[2018-03-16 22:51:26 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 22:51:25.69 on 16 Mar 2018
+[2018-03-16 22:51:26 -0400] Sync Log:  [BGN] Updating file waterbutler/server/auth.py from /host_sync to /app_sync
+[2018-03-16 22:51:26 -0400] Sync Log:  [END] Updating file waterbutler/server/auth.py
+[2018-03-16 22:51:26 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 22:51:25.70 on 16 Mar 2018
+[2018-03-16 22:51:26 -0400] Sync Log:  Synchronization complete at 22:51:25  (1 item transferred, 0 skipped, 0 failed)
+[2018-03-16 22:51:51 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 22:51:50.58 on 16 Mar 2018
+[2018-03-16 22:51:51 -0400] Sync Log:  [BGN] Copying platter/.coverage from /host_sync to /app_sync
+[2018-03-16 22:51:51 -0400] Sync Log:  [END] Copying platter/.coverage
+[2018-03-16 22:51:51 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 22:51:50.59 on 16 Mar 2018
+[2018-03-16 22:51:51 -0400] Sync Log:  Synchronization complete at 22:51:50  (1 item transferred, 0 skipped, 0 failed)
+[2018-03-16 22:52:29 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 22:52:29.36 on 16 Mar 2018
+[2018-03-16 22:52:29 -0400] Sync Log:  [BGN] Updating file waterbutler/server/auth.py from /host_sync to /app_sync
+[2018-03-16 22:52:29 -0400] Sync Log:  [END] Updating file waterbutler/server/auth.py
+[2018-03-16 22:52:29 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 22:52:29.36 on 16 Mar 2018
+[2018-03-16 22:52:29 -0400] Sync Log:  Synchronization complete at 22:52:29  (1 item transferred, 0 skipped, 0 failed)
+[2018-03-16 22:53:55 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 22:53:54.80 on 16 Mar 2018
+[2018-03-16 22:53:55 -0400] Sync Log:  [BGN] Copying platter/bk.jpg from /host_sync to /app_sync
+[2018-03-16 22:53:55 -0400] Sync Log:  [END] Copying platter/bk.jpg
+[2018-03-16 22:53:55 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 22:53:54.83 on 16 Mar 2018
+[2018-03-16 22:53:55 -0400] Sync Log:  Synchronization complete at 22:53:54  (1 item transferred, 0 skipped, 0 failed)
+[2018-03-16 22:54:01 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 22:54:01.15 on 16 Mar 2018
+[2018-03-16 22:54:01 -0400] Sync Log:  [BGN] Updating file waterbutler/server/auth.py from /host_sync to /app_sync
+[2018-03-16 22:54:01 -0400] Sync Log:  [END] Updating file waterbutler/server/auth.py
+[2018-03-16 22:54:01 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 22:54:01.15 on 16 Mar 2018
+[2018-03-16 22:54:01 -0400] Sync Log:  Synchronization complete at 22:54:01  (1 item transferred, 0 skipped, 0 failed)
+[2018-03-16 22:54:14 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 22:54:14.56 on 16 Mar 2018
+[2018-03-16 22:54:14 -0400] Sync Log:  [BGN] Updating file waterbutler/server/auth.py from /host_sync to /app_sync
+[2018-03-16 22:54:14 -0400] Sync Log:  [END] Updating file waterbutler/server/auth.py
+[2018-03-16 22:54:14 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 22:54:14.57 on 16 Mar 2018
+[2018-03-16 22:54:14 -0400] Sync Log:  Synchronization complete at 22:54:14  (1 item transferred, 0 skipped, 0 failed)
+[2018-03-16 22:54:37 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 22:54:37.68 on 16 Mar 2018
+[2018-03-16 22:54:37 -0400] Sync Log:  [BGN] Updating file waterbutler/server/auth.py from /host_sync to /app_sync
+[2018-03-16 22:54:38 -0400] Sync Log:  [END] Updating file waterbutler/server/auth.py
+[2018-03-16 22:54:38 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 22:54:37.73 on 16 Mar 2018
+[2018-03-16 22:54:38 -0400] Sync Log:  Synchronization complete at 22:54:37  (1 item transferred, 0 skipped, 0 failed)
+[2018-03-16 22:55:18 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 22:55:18.56 on 16 Mar 2018
+[2018-03-16 22:55:18 -0400] Sync Log:  [BGN] Updating file waterbutler/server/auth.py from /host_sync to /app_sync
+[2018-03-16 22:55:18 -0400] Sync Log:  [END] Updating file waterbutler/server/auth.py
+[2018-03-16 22:55:18 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 22:55:18.57 on 16 Mar 2018
+[2018-03-16 22:55:18 -0400] Sync Log:  Synchronization complete at 22:55:18  (1 item transferred, 0 skipped, 0 failed)

@@ -11,7 +11,7 @@ from waterbutler.server.auth import AuthHandler
 from waterbutler.core.utils import make_provider
 from waterbutler.constants import DEFAULT_CONFLICT
 
-auth_handler = AuthHandler(settings.AUTH_HANDLERS)
+auth_handler = AuthHandler(None)
 
 
 class MoveCopyMixin:

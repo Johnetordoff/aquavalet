@@ -3,30 +3,24 @@ import hashlib
 from waterbutler import settings
 
 
-config = settings.child('SERVER_CONFIG')
+ADDRESS = '0.0.0.0'
+PORT = 7777
+DOMAIN = "http://localhost:7777"
 
-ADDRESS = config.get('ADDRESS', 'localhost')
-PORT = config.get('PORT', 7777)
-DOMAIN = config.get('DOMAIN', "http://localhost:7777")
+DEBUG = True
 
-DEBUG = config.get_bool('DEBUG', True)
+SSL_CERT_FILE = None
+SSL_KEY_FILE = None
 
-SSL_CERT_FILE = config.get_nullable('SSL_CERT_FILE', None)
-SSL_KEY_FILE = config.get_nullable('SSL_KEY_FILE', None)
+XHEADERS =  False
+CORS_ALLOW_ORIGIN = '*'
 
-XHEADERS = config.get_bool('XHEADERS', False)
-CORS_ALLOW_ORIGIN = config.get('CORS_ALLOW_ORIGIN', '*')
+CHUNK_SIZE =  65536 # 64KB
+MAX_BODY_SIZE = 4.9 * (1024 ** 3)  # 4.9 GB
 
-CHUNK_SIZE = int(config.get('CHUNK_SIZE', 65536))  # 64KB
-MAX_BODY_SIZE = int(config.get('MAX_BODY_SIZE', int(4.9 * (1024 ** 3))))  # 4.9 GB
+HMAC_ALGORITHM = getattr(hashlib, 'sha256')
 
-AUTH_HANDLERS = config.get('AUTH_HANDLERS', [
-    'osf',
-])
-
-HMAC_ALGORITHM = getattr(hashlib, config.get('HMAC_ALGORITHM', 'sha256'))
-
-HMAC_SECRET = config.get('HMAC_SECRET')
+HMAC_SECRET = 'HMAC_SECRET'
 if not settings.DEBUG:
     assert HMAC_SECRET, 'HMAC_SECRET must be specified when not in debug mode'
 HMAC_SECRET = (HMAC_SECRET or 'changeme').encode('utf-8')

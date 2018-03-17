@@ -1,0 +1,21 @@
+version: "3"
+
+services:
+
+  wb:
+    volumes:
+      - wb-sync:/code:nocopy
+
+  wb_worker:
+    volumes:
+      - wb-sync:/code:nocopy
+
+  wb_requirements:
+    volumes:
+      - wb-sync:/code:nocopy
+
+volumes:
+
+   wb-sync:
+     external: true
+

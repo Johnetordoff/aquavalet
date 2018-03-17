@@ -1,0 +1,64 @@
+# Reference README-docker-compose.md for instructions.
+
+version: '3'
+
+volumes:
+  rabbitmq_vol:
+    external: false
+  wb_requirements_vol:
+    external: false
+
+services:
+
+  ###################
+  # Shared Services #
+  ###################
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - 5672:5672
+      - 15672:15672
+    volumes:
+      - rabbitmq_vol:/var/lib/rabbitmq
+    stdin_open: true
+
+  wb_requirements:
+    image: av:latest
+    command: |-
+      /bin/bash -c "
+        invoke install --develop &&
+        (python -m compileall /usr/local/lib/python3.6 || true) &&
+        rm -Rf /python3.6/* &&
+        cp -Rf -p /usr/local/lib/python3.6 /
+      "
+    restart: 'no'
+    volumes:
+      - wb_requirements_vol:/python3.6
+
+  wb:
+    image: av:latest
+    command: invoke server
+    restart: unless-stopped
+    ports:
+      - 7777:7777
+    env_file:
+      - .docker-compose.wb.env
+    volumes:
+      - wb_requirements_vol:/usr/local/lib/python3.6
+    stdin_open: true
+
+  wb_worker:
+    image: av:latest
+    command: invoke celery
+    restart: unless-stopped
+    depends_on:
+      - wb
+      - rabbitmq
+    environment:
+      C_FORCE_ROOT: 1
+    env_file:
+      - .docker-compose.wb.env
+    volumes:
+      - wb_requirements_vol:/usr/local/lib/python3.6
+    stdin_open: true

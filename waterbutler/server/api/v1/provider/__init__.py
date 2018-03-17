@@ -18,7 +18,7 @@ from waterbutler.server.api.v1.provider.metadata import MetadataMixin
 from waterbutler.server.api.v1.provider.movecopy import MoveCopyMixin
 
 logger = logging.getLogger(__name__)
-auth_handler = AuthHandler(settings.AUTH_HANDLERS)
+auth_handler = AuthHandler(None)
 
 
 def list_or_value(value):
