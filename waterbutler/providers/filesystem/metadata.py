@@ -1,41 +1,28 @@
 import os
-
 from waterbutler.core import metadata
 
 
 class BaseFileSystemMetadata(metadata.BaseMetadata):
 
-    def __init__(self, raw, folder):
+    def __init__(self, raw, folder, path):
         super().__init__(raw)
         self._folder = folder
+        self.path_obj = path
 
     @property
     def provider(self):
         return 'filesystem'
 
     def build_path(self, path):
-        # TODO write a test for this
         if path.lower().startswith(self._folder.lower()):
             path = path[len(self._folder):]
         return super().build_path(path)
 
-
-class FileSystemFolderMetadata(BaseFileSystemMetadata, metadata.BaseFolderMetadata):
-
-    @property
-    def name(self):
-        return os.path.split(self.raw['path'].rstrip('/'))[1]
-
-    @property
-    def path(self):
-        return self.build_path(self.raw['path'])
-
-
-class FileSystemFileMetadata(BaseFileSystemMetadata, metadata.BaseFileMetadata):
+class FileSystemItemMetadata(BaseFileSystemMetadata, metadata.BaseMetadata):
 
     @property
     def name(self):
-        return os.path.split(self.raw['path'])[1]
+        return self.raw.get('name') or os.path.split(self.raw['path'])[1]
 
     @property
     def path(self):
@@ -50,10 +37,6 @@ class FileSystemFileMetadata(BaseFileSystemMetadata, metadata.BaseFileMetadata):
         return self.raw['modified']
 
     @property
-    def modified_utc(self):
-        return self.raw['modified_utc']
-
-    @property
     def created_utc(self):
         return None
 
@@ -63,4 +46,8 @@ class FileSystemFileMetadata(BaseFileSystemMetadata, metadata.BaseFileMetadata):
 
     @property
     def etag(self):
-        return '{}::{}'.format(self.raw['modified'], self.raw['path'])
+        return '{}::{}'.format(self.raw.get('modified'), self.raw['path'])
+
+    @property
+    def kind(self):
+        return self.raw['kind']

@@ -11,8 +11,7 @@ from waterbutler.core import exceptions
 from waterbutler.core.path import WaterButlerPath
 
 from waterbutler.providers.filesystem import settings
-from waterbutler.providers.filesystem.metadata import FileSystemFileMetadata
-from waterbutler.providers.filesystem.metadata import FileSystemFolderMetadata
+from waterbutler.providers.filesystem.metadata import FileSystemItemMetadata
 
 logger = logging.getLogger(__name__)
 
@@ -29,17 +28,6 @@ class FileSystemProvider(provider.BaseProvider):
         super().__init__(auth, credentials, settings)
         self.folder = self.settings['folder']
         os.makedirs(self.folder, exist_ok=True)
-
-    async def validate_v1_path(self, path, **kwargs):
-        if not os.path.exists(self.folder + path):
-            raise exceptions.NotFoundError(str(path))
-
-        implicit_folder = path.endswith('/')
-        explicit_folder = os.path.isdir(self.folder + path)
-        if implicit_folder != explicit_folder:
-            raise exceptions.NotFoundError(str(path))
-
-        return WaterButlerPath(path, prepend=self.folder)
 
     async def validate_path(self, path, **kwargs):
         return WaterButlerPath(path, prepend=self.folder)
@@ -71,8 +59,8 @@ class FileSystemProvider(provider.BaseProvider):
 
         return streams.FileStreamReader(file_pointer)
 
-    async def upload(self, stream, path, **kwargs):
-        created = not (await self.exists(path))
+    async def upload(self, stream, path):
+        created = not os.path.exists(path.full_path)
 
         os.makedirs(os.path.split(path.full_path)[0], exist_ok=True)
 
@@ -91,50 +79,31 @@ class FileSystemProvider(provider.BaseProvider):
         else:
             shutil.rmtree(path.full_path)
             if path.is_root:
-                os.makedirs(self.folder, exist_ok=True)
+                raise Exception('That\'s the root!')
+                #os.makedirs(self.folder, exist_ok=True)
 
-    async def metadata(self, path, **kwargs):
-        if path.is_dir:
-            if not os.path.exists(path.full_path) or not os.path.isdir(path.full_path):
-                raise exceptions.MetadataError(
-                    'Could not retrieve folder \'{0}\''.format(path),
-                    code=404,
-                )
+    async def metadata(self, path, version=None):
+        return self._format_metadata(path)
 
-            ret = []
-            for item in os.listdir(path.full_path):
-                if os.path.isdir(os.path.join(path.full_path, item)):
-                    metadata = self._metadata_folder(path, item)
-                    ret.append(FileSystemFolderMetadata(metadata, self.folder))
-                else:
-                    metadata = self._metadata_file(path, item)
-                    ret.append(FileSystemFileMetadata(metadata, self.folder))
-            return ret
-        else:
-            if not os.path.exists(path.full_path) or os.path.isdir(path.full_path):
-                raise exceptions.MetadataError(
-                    'Could not retrieve file \'{0}\''.format(path),
-                    code=404,
-                )
+    async def children(self, path):
+        relative_path = path.full_path.replace(self.folder, '')
 
-            metadata = self._metadata_file(path)
-            return FileSystemFileMetadata(metadata, self.folder)
+        paths = [WaterButlerPath(os.path.join('/', relative_path, child), prepend=self.folder) for child in os.listdir(path.full_path)]
+        return [self._format_metadata(path) for path in paths]
 
-    def _metadata_file(self, path, file_name=''):
-        full_path = path.full_path if file_name == '' else os.path.join(path.full_path, file_name)
-        modified = datetime.datetime.utcfromtimestamp(os.path.getmtime(full_path)).replace(tzinfo=datetime.timezone.utc)
-        return {
-            'path': full_path,
-            'size': os.path.getsize(full_path),
-            'modified': modified.strftime('%a, %d %b %Y %H:%M:%S %z'),
-            'modified_utc': modified.isoformat(),
-            'mime_type': mimetypes.guess_type(full_path)[0],
+    async def create_folder(self, path):
+        return os.makedirs(path.full_path, exist_ok=True)
+
+    def _format_metadata(self, path):
+        modified = datetime.datetime.utcfromtimestamp(os.path.getmtime(path.full_path)).replace(tzinfo=datetime.timezone.utc)
+        metadata = {
+            'path': path.full_path,
+            'size': os.path.getsize(path.full_path),
+            'modified': modified.isoformat(),
+            'mime_type': mimetypes.guess_type(path.full_path)[0],
+            'kind':  'folder' if os.path.isdir(path.full_path) else 'file'
         }
-
-    def _metadata_folder(self, path, folder_name):
-        return {
-            'path': os.path.join(path.path, folder_name),
-        }
+        return FileSystemItemMetadata(metadata, self.folder, path)
 
     def can_intra_copy(self, dest_provider, path=None):
         return type(self) == type(dest_provider)

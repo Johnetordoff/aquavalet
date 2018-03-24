@@ -5,7 +5,6 @@ from waterbutler.core import utils
 from waterbutler.tasks import core
 from waterbutler.core import remote_logging
 from waterbutler.core.path import WaterButlerPath
-from waterbutler.core.log_payload import LogPayload
 
 
 logger = logging.getLogger(__name__)

@@ -153,7 +153,7 @@ class ResponseStreamReader(BaseStream):
 
     @property
     def content_range(self):
-        return self.response.headers['Content-Range']
+        return self.response.headers.get('Content-Range')
 
     @property
     def name(self):

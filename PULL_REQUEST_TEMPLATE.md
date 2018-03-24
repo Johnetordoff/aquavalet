@@ -15,10 +15,6 @@
 
 <!-- For security related tickets, talk with the team lead before submit your PR -->
 
-## Ticket
-
-<!-- Link to JIRA ticket, if applicable e.g. https://openscience.atlassian.net/browse/SVCS-1234 -->
-
 ## Purpose
 
 <!-- Describe the purpose of your changes -->

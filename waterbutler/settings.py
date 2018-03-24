@@ -3,7 +3,6 @@ import logging.config
 PROJECT_NAME = 'aqua valet'
 
 DEFAULT_FORMATTER = {
-    '()': 'waterbutler.core.logging.MaskFormatter',
     'format': '[%(asctime)s][%(levelname)s][%(name)s]: %(message)s',
     'pattern': '(?<=cookie=)(.*?)(?=&|$)',
     'mask': '***'
@@ -42,7 +41,8 @@ DEFAULT_LOGGING_CONFIG = {
 DEBUG = True
 OP_CONCURRENCY = 5
 
-logging_config = DEFAULT_LOGGING_CONFIG
-logging.config.dictConfig(logging_config)
+DEFAULT_CONFLICT = 'warn'
+
+logging.config.dictConfig(DEFAULT_LOGGING_CONFIG)
 
 SENTRY_DSN = None

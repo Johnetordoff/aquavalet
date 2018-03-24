@@ -1,14 +1,13 @@
 import tornado.web
 import tornado.gen
 import tornado.iostream
-from raven.contrib.tornado import SentryMixin
 
 from waterbutler import tasks
 from waterbutler.server import utils
 from waterbutler.core import exceptions
 
 
-class BaseHandler(utils.CORsMixin, utils.UtilMixin, tornado.web.RequestHandler, SentryMixin):
+class BaseHandler(utils.CORsMixin, utils.UtilMixin, tornado.web.RequestHandler):
 
     @classmethod
     def as_entry(cls):
@@ -28,7 +27,6 @@ class BaseHandler(utils.CORsMixin, utils.UtilMixin, tornado.web.RequestHandler, 
         else:
             finish_args = [{'code': status_code, 'message': self._reason}]
 
-        self.captureException(exc_info, **exception_kwargs)
         self.finish(*finish_args)
 
     # avoid dumping duplicate information to application log

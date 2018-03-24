@@ -369,7 +369,7 @@ class S3Provider(provider.BaseProvider):
             if item['Key'] == path.path
         ]
 
-    async def metadata(self, path, revision=None, **kwargs):
+    async def metadata(self, path, version=None, **kwargs):
         """Get Metadata about the requested file or folder
 
         :param WaterButlerPath path: The path to a key or folder

@@ -6,12 +6,9 @@ from functools import partial
 
 import tornado.web
 import tornado.platform.asyncio
-from raven.contrib.tornado import AsyncSentryClient
 
-from waterbutler import settings
 from waterbutler.server.api import v1
 from waterbutler.server import handlers
-from waterbutler.version import __version__
 from waterbutler.server import settings as server_settings
 
 logger = logging.getLogger(__name__)
@@ -42,7 +39,6 @@ def make_app(debug):
         [(r'/status', handlers.StatusHandler)],
         debug=debug,
     )
-    app.sentry_client = AsyncSentryClient(settings.SENTRY_DSN, release=__version__)
     return app
 
 

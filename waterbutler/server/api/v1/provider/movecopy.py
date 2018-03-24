@@ -2,13 +2,11 @@ import json
 from http import HTTPStatus
 
 from waterbutler import tasks
-from waterbutler.sizes import MBs
 from waterbutler.core import exceptions
 from waterbutler.core.auth import AuthType
-from waterbutler.core import remote_logging
 from waterbutler.server.auth import AuthHandler
 from waterbutler.core.utils import make_provider
-from waterbutler.constants import DEFAULT_CONFLICT
+from waterbutler.settings import DEFAULT_CONFLICT
 
 auth_handler = AuthHandler(None)
 
@@ -24,20 +22,6 @@ class MoveCopyMixin:
             except ValueError:
                 raise exceptions.InvalidParameters('Invalid json body')
         return self._json
-
-    def prevalidate_post(self):
-        """Validate body and query parameters before spending API calls on validating path.  We
-        don't trust path yet, so I don't wanna see it being used here.  Current validations:
-
-        1. Max body size is 1Mb.
-        2. Content-Length header must be provided.
-        """
-        try:
-            if int(self.request.headers['Content-Length']) > 1 * MBs:
-                # There should be no JSON body > 1 megs
-                raise exceptions.InvalidParameters('Request body must be under 1Mb', code=413)
-        except (KeyError, ValueError):
-            raise exceptions.InvalidParameters('Content-Length is required', code=411)
 
     def build_args(self):
         return ({
@@ -94,7 +78,7 @@ class MoveCopyMixin:
             self.auth['credentials'],
             self.auth['settings']
         )
-        self.path = await self.provider.validate_v1_path(self.path, **self.arguments)
+        self.path = await self.provider.validate_path(self.path, **self.arguments)
 
         if auth_action == 'rename':  # 'rename' implies the file/folder does not change location
             self.dest_auth = self.auth
@@ -139,7 +123,7 @@ class MoveCopyMixin:
             result = await getattr(tasks, provider_action).adelay(
                 rename=self.json.get('rename'),
                 conflict=conflict,
-                request=remote_logging._serialize_request(self.request),
+                request=None,
                 *self.build_args()
             )
             metadata, created = await tasks.wait_on_celery(result)

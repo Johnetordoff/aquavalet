@@ -53,7 +53,7 @@ class OSFStorageProvider(provider.BaseProvider):
         self.archive_settings = settings.get('archive')
         self.archive_credentials = credentials.get('archive')
 
-    async def validate_v1_path(self, path, **kwargs):
+    async def validate_path(self, path, **kwargs):
         if path == '/':
             return WaterButlerPath('/', _ids=[self.root_id], folder=True)
 
@@ -74,52 +74,6 @@ class OSFStorageProvider(provider.BaseProvider):
         names, ids = zip(*[(x['name'], x['id']) for x in reversed(data['data'])])
 
         return WaterButlerPath('/'.join(names), _ids=ids, folder=explicit_folder)
-
-    async def validate_path(self, path, **kwargs):
-        if path == '/':
-            return WaterButlerPath('/', _ids=[self.root_id], folder=True)
-
-        ends_with_slash = path.endswith('/')
-
-        try:
-            path, name = path.strip('/').split('/')
-        except ValueError:
-            path, name = path, None
-
-        async with self.signed_request(
-            'GET',
-            self.build_url(path, 'lineage'),
-            expects=(200, 404)
-        ) as resp:
-
-            if resp.status == 404:
-                return WaterButlerPath(path, _ids=(self.root_id, None), folder=path.endswith('/'))
-
-            data = await resp.json()
-
-        is_folder = data['data'][0]['kind'] == 'folder'
-        names, ids = zip(*[(x['name'], x['id']) for x in reversed(data['data'])])
-        if name is not None:
-            ids += (None, )
-            names += (name, )
-            is_folder = ends_with_slash
-
-        return WaterButlerPath('/'.join(names), _ids=ids, folder=is_folder)
-
-    async def revalidate_path(self, base, path, folder=False):
-        assert base.is_dir
-
-        try:
-            data = next(
-                x for x in
-                await self.metadata(base)
-                if x.name == path and
-                x.kind == ('folder' if folder else 'file')
-            )
-
-            return base.child(data.name, _id=data.path.strip('/'), folder=folder)
-        except StopIteration:
-            return base.child(path, folder=folder)
 
     def make_provider(self, settings):
         """Requests on different files may need to use different providers,

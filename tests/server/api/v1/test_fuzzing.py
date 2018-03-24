@@ -15,40 +15,6 @@ from tests.server.api.v1.utils import ServerTestCase
 class TestServerFuzzing(ServerTestCase):
 
     @testing.gen_test
-    def test_head_no_auth_server(self):
-        with mock.patch('waterbutler.auth.osf.handler.aiohttp.request') as mock_auth:
-            mock_auth.side_effect = aiohttp.errors.ClientError
-
-            with pytest.raises(httpclient.HTTPError) as exc:
-                yield self.http_client.fetch(
-                    self.get_url('/resources//providers//'),
-                    method='HEAD'
-                )
-            assert exc.value.code == client.NOT_FOUND
-
-            with pytest.raises(httpclient.HTTPError) as exc:
-                yield self.http_client.fetch(
-                    self.get_url('/resources/jaaaaaaank/providers//'),
-                    method='HEAD'
-                )
-            assert exc.value.code == client.NOT_FOUND
-
-            with pytest.raises(httpclient.HTTPError) as exc:
-                yield self.http_client.fetch(
-                    self.get_url('/resources//providers/jaaaaank/'),
-                    method='HEAD'
-                )
-            assert exc.value.code == client.NOT_FOUND
-
-            with pytest.raises(httpclient.HTTPError) as exc:
-                yield self.http_client.fetch(
-                    self.get_url('/resources/jernk/providers/jaaaaank/'),
-                    method='HEAD'
-                )
-
-            assert exc.value.code == client.SERVICE_UNAVAILABLE
-
-    @testing.gen_test
     def test_movecopy_requires_contentlength(self):
         with pytest.raises(httpclient.HTTPError) as exc:
             yield self.http_client.fetch(

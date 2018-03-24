@@ -25,7 +25,7 @@ HTTP_REASONS = {
 
 
 def make_disposition(filename):
-    return 'attachment;filename="{}"'.format(filename.replace('"', '\\"'))
+    return
 
 
 def parse_request_range(range_header):
@@ -118,8 +118,6 @@ class CORsMixin:
 
 class UtilMixin:
 
-    bytes_downloaded = 0
-    bytes_uploaded = 0
 
     def set_status(self, code, reason=None):
         return super().set_status(code, reason or HTTP_REASONS.get(code))
@@ -130,7 +128,6 @@ class UtilMixin:
                 chunk = await stream.read(settings.CHUNK_SIZE)
                 if not chunk:
                     break
-                # Temp fix, write does not accept bytearrays currently
                 if isinstance(chunk, bytearray):
                     chunk = bytes(chunk)
                 self.write(chunk)

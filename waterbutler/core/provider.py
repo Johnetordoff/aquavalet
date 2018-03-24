@@ -15,7 +15,6 @@ from waterbutler.core import streams
 from waterbutler.core import exceptions
 from waterbutler.core import path as wb_path
 from waterbutler import settings as wb_settings
-from waterbutler.core.metrics import MetricsRecord
 from waterbutler.core import metadata as wb_metadata
 from waterbutler.core.utils import ZipStreamGenerator
 from waterbutler.core.utils import RequestHandlerContext
@@ -100,10 +99,6 @@ class BaseProvider(metaclass=abc.ABCMeta):
         self.credentials = credentials
         self.settings = settings
 
-        self.provider_metrics = MetricsRecord('provider')
-        self.provider_metrics.add('auth', auth)
-        self.metrics = self.provider_metrics.new_subrecord(self.NAME)
-
     @property
     @abc.abstractmethod
     def NAME(self) -> str:
@@ -179,15 +174,11 @@ class BaseProvider(metaclass=abc.ABCMeta):
             url = url()
         while retry >= 0:
             try:
-                self.provider_metrics.incr('requests.count')
-                self.provider_metrics.append('requests.urls', url)
                 response = await aiohttp.request(method, url, *args, **kwargs)
-                self.provider_metrics.append('requests.verbose', ['OK', response.status, url])
                 if expects and response.status not in expects:
                     raise (await exceptions.exception_from_response(response, error=throws, **kwargs))
                 return response
             except throws as e:
-                self.provider_metrics.append('requests.verbose', ['NO', e.code, url])
                 if retry <= 0 or e.code not in self._retry_on:
                     raise
                 await asyncio.sleep((1 + _retry - retry) * 2)
@@ -217,12 +208,6 @@ class BaseProvider(metaclass=abc.ABCMeta):
         args = (dest_provider, src_path, dest_path)
         kwargs = {'rename': rename, 'conflict': conflict}
 
-        self.provider_metrics.add('move', {
-            'got_handle_naming': handle_naming,
-            'conflict': conflict,
-            'got_rename': rename is not None,
-        })
-
         if handle_naming:
             dest_path = await dest_provider.handle_naming(
                 src_path,
@@ -240,9 +225,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
         ):
             raise exceptions.OverwriteSelfError(src_path)
 
-        self.provider_metrics.add('move.can_intra_move', False)
         if self.can_intra_move(dest_provider, src_path):
-            self.provider_metrics.add('move.can_intra_move', True)
             return await self.intra_move(*args)
 
         if src_path.is_dir:
@@ -264,11 +247,6 @@ class BaseProvider(metaclass=abc.ABCMeta):
         args = (dest_provider, src_path, dest_path)
         kwargs = {'rename': rename, 'conflict': conflict, 'handle_naming': handle_naming}
 
-        self.provider_metrics.add('copy', {
-            'got_handle_naming': handle_naming,
-            'conflict': conflict,
-            'got_rename': rename is not None,
-        })
         if handle_naming:
             dest_path = await dest_provider.handle_naming(
                 src_path,
@@ -286,9 +264,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
         ):
             raise exceptions.OverwriteSelfError(src_path)
 
-        self.provider_metrics.add('copy.can_intra_copy', False)
         if self.can_intra_copy(dest_provider, src_path):
-            self.provider_metrics.add('copy.can_intra_copy', True)
             return await self.intra_copy(*args)
 
         if src_path.is_dir:
@@ -339,8 +315,6 @@ class BaseProvider(metaclass=abc.ABCMeta):
         folder.children = []
         items = await self.metadata(src_path)  # type: ignore
 
-        # Metadata returns a union, which confuses mypy
-        self.provider_metrics.append('_folder_file_ops.item_counts', len(items))  # type: ignore
 
         for i in range(0, len(items), wb_settings.OP_CONCURRENCY):  # type: ignore
             futures = []
@@ -441,7 +415,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
     async def intra_copy(self,
                          dest_provider: 'BaseProvider',
                          source_path: wb_path.WaterButlerPath,
-                         dest_path: wb_path.WaterButlerPath) -> typing.Tuple[wb_metadata.BaseFileMetadata, bool]:
+                         dest_path: wb_path.WaterButlerPath) -> typing.Tuple[wb_metadata.BaseMetadata, bool]:
         """If the provider supports copying files and/or folders within itself by some means other
         than download/upload, then ``can_intra_copy`` should return ``True``.  This method will
         implement the copy.  It accepts the destination provider, a source path, and the
@@ -459,7 +433,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
     async def intra_move(self,
                          dest_provider: 'BaseProvider',
                          src_path: wb_path.WaterButlerPath,
-                         dest_path: wb_path.WaterButlerPath) -> typing.Tuple[wb_metadata.BaseFileMetadata, bool]:
+                         dest_path: wb_path.WaterButlerPath) -> typing.Tuple[wb_metadata.BaseMetadata, bool]:
         """If the provider supports moving files and/or folders within itself by some means other
         than download/upload/delete, then ``can_intra_move`` should return ``True``.  This method
         will implement the move.  It accepts the destination provider, a source path, and the
@@ -586,7 +560,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     async def upload(self, stream: streams.BaseStream, path: wb_path.WaterButlerPath, *args, **kwargs) \
-            -> typing.Tuple[wb_metadata.BaseFileMetadata, bool]:
+            -> typing.Tuple[wb_metadata.BaseMetadata, bool]:
         """Uploads the given stream to the provider.  Returns the metadata for the newly created
         file and a boolean indicating whether the file is completely new (``True``) or overwrote
         a previously-existing file (``False``)
@@ -625,27 +599,6 @@ class BaseProvider(metaclass=abc.ABCMeta):
         :rtype: :class:`.BaseMetadata`
         :rtype: :class:`list` of :class:`.BaseMetadata`
         :raises: :class:`.MetadataError`
-        """
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    async def validate_v1_path(self, path: str, **kwargs) -> wb_path.WaterButlerPath:
-        """API v1 requires that requests against folder endpoints always end with a slash, and
-        requests against files never end with a slash.  This method checks the provider's metadata
-        for the given id and throws a 404 Not Found if the implicit and explicit types don't
-        match.  This method duplicates the logic in the provider's validate_path method, but
-        validate_path must currently accomodate v0 AND v1 semantics.  After v0's retirement, this
-        method can replace validate_path.
-
-        ``path`` is the string in the url after the provider name and refers to the entity to be
-        acted on. For v1, this must *always exist*.  If it does not, ``validate_v1_path`` should
-        return a 404.  Creating a new file in v1 is done by making a PUT request against the parent
-        folder and specifying the file name as a query parameter.  If a user attempts to create a
-        file by PUTting to its inferred path, validate_v1_path should reject this request with a 404.
-
-        :param path: ( :class:`str` ) user-supplied path to validate
-        :rtype: :class:`.WaterButlerPath`
-        :raises: :class:`.NotFoundError`
         """
         raise NotImplementedError
 

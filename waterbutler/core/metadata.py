@@ -49,54 +49,47 @@ class BaseMetadata(metaclass=abc.ABCMeta):
             'etag': hashlib.sha256('{}::{}'.format(self.provider, self.etag).encode('utf-8')).hexdigest(),
         }
 
-    def json_api_serialized(self, resource: str) -> dict:
-        """Returns a dict of primitives suitable for serializing into a JSON-API -compliant
-        response.  Sets the `id` and `type` attributes required by JSON-API, and stores the
-        metadata under the `attributes` key.  A `links` object provides a dict of actions and the
-        urls where those actions can be performed.
-
-        .. note::
-
-            This method determines the output of API v1.
-
-        :rtype: dict
-        """
+    def json_api_serialized(self) -> dict:
         json_api = {
             'id': self.provider + self.path,
             'type': 'files',
             'attributes': self.serialized(),
-            'links': self._json_api_links(resource),
+            'links': self._json_api_links(),
         }
-        # Typing: skip "unsupported target for indexed assignment" errors for nested dict from method
-        json_api['attributes']['resource'] = resource  # type: ignore
         return json_api
 
-    def _json_api_links(self, resource: str) -> dict:
+    def _entity_url(self) -> str:
+        """ Utility method for constructing the base url for actions. """
+        url = furl.furl(settings.DOMAIN)
+        segments = ['v1', 'providers', self.provider]
+        url.path.segments.extend(segments)
+
+        return url
+
+    def _json_api_links(self) -> dict:
         """ Returns a dict of action names and the endpoints where those actions are performed.
 
         :rtype: dict
         """
-        entity_url = self._entity_url(resource)
-        actions = {
-            'move': entity_url,
-            'upload': entity_url + '?kind=file',
-            'delete': entity_url,
-        }
+        url = self._entity_url()
+        path_segments = self.path.split('/')[1:]
+        url.path.segments.extend(path_segments)
+
+        actions = {}
+        if len(path_segments) > 0:
+            url = self._entity_url()
+            if self.is_file:
+                path_parent = self.path.split('/')[1:-1]
+                url.path.segments.extend(path_parent)
+
+            if self.is_folder:
+                path_parent = self.path.split('/')[1:-3]
+                url.path.segments.extend(path_parent)
+
+            actions['parent'] = url.url + '/'
 
         return actions
 
-    def _entity_url(self, resource: str) -> str:
-        """ Utility method for constructing the base url for actions. """
-        url = furl.furl(settings.DOMAIN)
-        segments = ['v1', 'resources', resource, 'providers', self.provider]
-        # If self is a folder, path ends with a slash which must be preserved. However, furl
-        # percent-encodes the trailing slash. Instead, turn folders into a list of (path_id, ''),
-        # and let furl add the slash for us.  The [1:] is because path always begins with a slash,
-        # meaning the first entry is always ''.
-        segments += self.path.split('/')[1:]
-        url.path.segments.extend(segments)
-
-        return url.url
 
     def build_path(self, path) -> str:
         if not path.startswith('/'):
@@ -220,13 +213,13 @@ class BaseFileMetadata(BaseMetadata):
             'size': self.size,
         })
 
-    def _json_api_links(self, resource: str) -> dict:
+    def _json_api_links(self) -> dict:
         """ Adds the `download` link to the JSON-API repsonse `links` field.
 
         :rtype: dict
         """
-        ret = super()._json_api_links(resource)
-        ret['download'] = self._entity_url(resource)
+        ret = super()._json_api_links()
+        ret['download'] = self._entity_url()
         return ret
 
     @property
@@ -346,23 +339,23 @@ class BaseFolderMetadata(BaseMetadata):
             ret['children'] = [c.serialized() for c in self.children]
         return ret
 
-    def json_api_serialized(self, resource: str) -> dict:
+    def json_api_serialized(self) -> dict:
         """ Return a JSON-API compliant serializable dict, suitable for the WB v1 API.  Sets the
         `size` attribute to `None`, as folders do no have a size.
 
         :rtype: dict
         """
-        ret = super().json_api_serialized(resource)
+        ret = super().json_api_serialized()
         ret['attributes']['size'] = None
         return ret
 
-    def _json_api_links(self, resource: str) -> dict:
+    def _json_api_links(self) -> dict:
         """ Adds the `new_folder` link to the JSON-API repsonse `links` field.
 
         :rtype: dict
         """
-        ret = super()._json_api_links(resource)
-        ret['new_folder'] = self._entity_url(resource) + '?kind=folder'
+        ret = super()._json_api_links()
+        ret['new_folder'] = self._entity_url() + '?kind=folder'
         return ret
 
     @property

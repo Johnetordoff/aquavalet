@@ -7,7 +7,6 @@ import dateutil.parser
 # from concurrent.futures import ProcessPoolExecutor  TODO Get this working
 
 import aiohttp
-from raven import Client
 from stevedore import driver
 
 from waterbutler.core import exceptions
@@ -35,6 +34,7 @@ def make_provider(name: str, auth: dict, credentials: dict, settings: dict, **kw
 
     :rtype: :class:`waterbutler.core.provider.BaseProvider`
     """
+    print(auth, credentials, settings)
     try:
         manager = driver.DriverManager(
             namespace='waterbutler.providers',
@@ -59,7 +59,7 @@ def as_task(func):
     return wrapped
 
 
-def async_retry(retries=5, backoff=1, exceptions=(Exception, ), raven=client):
+def async_retry(retries=5, backoff=1, exceptions=(Exception, )):
 
     def _async_retry(func):
 
@@ -77,10 +77,6 @@ def async_retry(retries=5, backoff=1, exceptions=(Exception, ), raven=client):
                 else:
                     # Logs before all things
                     logger.error('Task {0} failed with exception {1}'.format(func, e))
-
-                    if raven:
-                        # Only log if a raven client exists
-                        client.captureException()
 
                     # If anything happens to be listening
                     raise e
