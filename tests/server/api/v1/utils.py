@@ -4,7 +4,7 @@ import os
 from tornado import testing
 from tornado.platform.asyncio import AsyncIOMainLoop
 
-from waterbutler.server.app import make_app
+from aquavalet.server.app import make_app
 
 
 class ServerTestCase(testing.AsyncHTTPTestCase):

@@ -1,4 +1,4 @@
-from waterbutler import settings
+from aquavalet import settings
 # Clear all celery settings
 TASKS_CONFIG = {
     'WAIT_TIME_OUT': 30,

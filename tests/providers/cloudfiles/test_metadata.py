@@ -1,10 +1,10 @@
 import pytest
 import aiohttp
 
-from waterbutler.core.path import WaterButlerPath
-from waterbutler.providers.cloudfiles.metadata import (CloudFilesFileMetadata,
-                                                       CloudFilesHeaderMetadata,
-                                                       CloudFilesFolderMetadata)
+from aquavalet.core.path import WaterButlerPath
+from aquavalet.providers.cloudfiles.metadata import (CloudFilesFileMetadata,
+                                                     CloudFilesHeaderMetadata,
+                                                     CloudFilesFolderMetadata)
 
 
 @pytest.fixture

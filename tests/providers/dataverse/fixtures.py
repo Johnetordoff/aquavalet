@@ -2,7 +2,7 @@ import pytest
 import os
 import json
 
-from waterbutler.providers.dataverse.metadata import (
+from aquavalet.providers.dataverse.metadata import (
     DataverseDatasetMetadata,
     DataverseRevision,
     DataverseFileMetadata

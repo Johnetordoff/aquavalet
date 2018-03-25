@@ -1,9 +1,9 @@
 import pytest
 
-from waterbutler.providers.bitbucket.path import BitbucketPath
-from waterbutler.providers.bitbucket.metadata import BitbucketFileMetadata
-from waterbutler.providers.bitbucket.metadata import BitbucketFolderMetadata
-from waterbutler.providers.bitbucket.metadata import BitbucketRevisionMetadata
+from aquavalet.providers.bitbucket.path import BitbucketPath
+from aquavalet.providers.bitbucket.metadata import BitbucketFileMetadata
+from aquavalet.providers.bitbucket.metadata import BitbucketFolderMetadata
+from aquavalet.providers.bitbucket.metadata import BitbucketRevisionMetadata
 
 from .fixtures import owner, repo, file_metadata, folder_metadata, revision_metadata
 

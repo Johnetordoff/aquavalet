@@ -36,7 +36,7 @@ def mypy(ctx):
     """
     Check python types using mypy (additional level of linting). Follows options defined in setup.cfg
     """
-    ctx.run('mypy waterbutler/', pty=True)
+    ctx.run('mypy aquavalet/', pty=True)
 
 
 @task
@@ -45,7 +45,7 @@ def test(ctx, verbose=False, types=False):
     if types:
         mypy(ctx)
 
-    cmd = 'py.test --cov-report term-missing --cov waterbutler tests'
+    cmd = 'py.test --cov-report term-missing --cov aquavalet tests'
     if verbose:
         cmd += ' -v'
     ctx.run(cmd, pty=True)
@@ -54,7 +54,7 @@ def test(ctx, verbose=False, types=False):
 @task
 def celery(ctx, loglevel='INFO', hostname='%h'):
 
-    from waterbutler.tasks.app import app
+    from aquavalet.tasks.app import app
     command = ['worker']
     if loglevel:
         command.extend(['--loglevel', loglevel])
@@ -77,7 +77,7 @@ def server(ctx):
         remote_parts = os.environ.get('REMOTE_DEBUG').split(':')
         pydevd.settrace(remote_parts[0], port=int(remote_parts[1]), suspend=False, stdoutToServer=True, stderrToServer=True)
 
-    from waterbutler.server.app import serve
+    from aquavalet.server.app import serve
     serve()
 
 

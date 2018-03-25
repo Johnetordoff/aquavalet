@@ -4,12 +4,12 @@ from http import client
 import pytest
 import aiohttpretty
 
-from waterbutler.core import streams
-from waterbutler.core import exceptions
-from waterbutler.core.path import WaterButlerPath
-from waterbutler.providers.owncloud import OwnCloudProvider
-from waterbutler.providers.owncloud.metadata import (OwnCloudFileMetadata,
-                                                     OwnCloudFileRevisionMetadata)
+from aquavalet.core import streams
+from aquavalet.core import exceptions
+from aquavalet.core.path import WaterButlerPath
+from aquavalet.providers.owncloud import OwnCloudProvider
+from aquavalet.providers.owncloud.metadata import (OwnCloudFileMetadata,
+                                                   OwnCloudFileRevisionMetadata)
 
 from tests import utils
 from tests.providers.owncloud.fixtures import (

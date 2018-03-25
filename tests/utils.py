@@ -10,10 +10,10 @@ import pytest
 from tornado import testing
 from tornado.platform.asyncio import AsyncIOMainLoop
 
-from waterbutler.core import metadata
-from waterbutler.core import provider
-from waterbutler.server.app import make_app
-from waterbutler.core.path import WaterButlerPath
+from aquavalet.core import metadata
+from aquavalet.core import provider
+from aquavalet.server.app import make_app
+from aquavalet.core.path import WaterButlerPath
 
 
 class MockCoroutine(mock.Mock):
@@ -149,11 +149,11 @@ class HandlerTestCase(testing.AsyncHTTPTestCase):
         self.mock_identity = MockCoroutine(side_effect=get_identity)
 
         # self.mock_identity.return_value = identity_future
-        self.identity_patcher = mock.patch('waterbutler.server.api.v0.core.auth_handler.fetch', self.mock_identity)
+        self.identity_patcher = mock.patch('aquavalet.server.api.v0.core.auth_handler.fetch', self.mock_identity)
 
         self.mock_provider = MockProvider1({}, {}, {})
         self.mock_make_provider = mock.Mock(return_value=self.mock_provider)
-        self.make_provider_patcher = mock.patch('waterbutler.core.utils.make_provider', self.mock_make_provider)
+        self.make_provider_patcher = mock.patch('aquavalet.core.utils.make_provider', self.mock_make_provider)
 
         if hasattr(self, 'HOOK_PATH'):
             self.mock_send_hook = mock.Mock()

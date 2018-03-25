@@ -1,7 +1,7 @@
 import pytest
 from unittest import mock
 
-from waterbutler.server.api.v1.provider.metadata import MetadataMixin
+from aquavalet.server.api.v1.provider.metadata import MetadataMixin
 
 
 class BaseMetadataMixinTest:

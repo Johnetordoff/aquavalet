@@ -3,9 +3,9 @@ import asyncio
 from http import client
 from unittest import mock
 
-from waterbutler.core import exceptions
-from waterbutler.core.path import WaterButlerPath
-from waterbutler.server.api.v1.provider.create import CreateMixin
+from aquavalet.core import exceptions
+from aquavalet.core.path import WaterButlerPath
+from aquavalet.server.api.v1.provider.create import CreateMixin
 
 from tests.utils import MockCoroutine
 

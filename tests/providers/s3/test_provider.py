@@ -10,11 +10,11 @@ from unittest import mock
 
 import pytest
 
-from waterbutler.core import (streams,
-                              metadata,
-                              exceptions)
-from waterbutler.providers.s3 import S3Provider
-from waterbutler.core.path import WaterButlerPath
+from aquavalet.core import (streams,
+                            metadata,
+                            exceptions)
+from aquavalet.providers.s3 import S3Provider
+from aquavalet.core.path import WaterButlerPath
 
 from tests.utils import MockCoroutine
 from tests.providers.s3.fixtures import (

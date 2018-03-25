@@ -4,12 +4,12 @@ import json
 import pytest
 import aiohttpretty
 
-from waterbutler.core import streams
-from waterbutler.core import exceptions
-from waterbutler.providers.figshare import metadata
-from waterbutler.providers.figshare import provider
-from waterbutler.providers.figshare.path import FigsharePath
-from waterbutler.providers.figshare.settings import PRIVATE_IDENTIFIER, MAX_PAGE_SIZE
+from aquavalet.core import streams
+from aquavalet.core import exceptions
+from aquavalet.providers.figshare import metadata
+from aquavalet.providers.figshare import provider
+from aquavalet.providers.figshare.path import FigsharePath
+from aquavalet.providers.figshare.settings import PRIVATE_IDENTIFIER, MAX_PAGE_SIZE
 
 from tests.providers.figshare.fixtures import (crud_fixtures,
                                                error_fixtures,
@@ -21,7 +21,7 @@ def auth():
     return {
         'name': 'cat',
         'email': 'cat@cat.com',
-        'callback_url': 'http://sup.com/api/v1/project/v8s9q/waterbutler/logs/',
+        'callback_url': 'http://sup.com/api/v1/project/v8s9q/aquavalet/logs/',
         'id': 'fakey',
     }
 

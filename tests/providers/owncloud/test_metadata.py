@@ -1,6 +1,6 @@
 import pytest
 
-from waterbutler.providers.owncloud.metadata import OwnCloudFileRevisionMetadata
+from aquavalet.providers.owncloud.metadata import OwnCloudFileRevisionMetadata
 
 from tests.providers.owncloud.fixtures import (
     file_metadata_object,

@@ -12,11 +12,11 @@ import aiohttp
 import aiohttpretty
 import aiohttp.multidict
 
-from waterbutler.core import streams
-from waterbutler.core import exceptions
-from waterbutler.core.path import WaterButlerPath
-from waterbutler.providers.cloudfiles import CloudFilesProvider
-from waterbutler.providers.cloudfiles import settings as cloud_settings
+from aquavalet.core import streams
+from aquavalet.core import exceptions
+from aquavalet.core.path import WaterButlerPath
+from aquavalet.providers.cloudfiles import CloudFilesProvider
+from aquavalet.providers.cloudfiles import settings as cloud_settings
 
 
 @pytest.fixture

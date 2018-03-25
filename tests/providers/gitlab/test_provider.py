@@ -3,14 +3,14 @@ import hashlib
 import pytest
 import aiohttpretty
 
-from waterbutler.core import streams
-from waterbutler.core import exceptions
+from aquavalet.core import streams
+from aquavalet.core import exceptions
 
-from waterbutler.providers.gitlab import GitLabProvider
-from waterbutler.providers.gitlab.path import GitLabPath
-from waterbutler.providers.gitlab import settings as gitlab_settings
-from waterbutler.providers.gitlab.metadata import GitLabFileMetadata
-from waterbutler.providers.gitlab.metadata import GitLabFolderMetadata
+from aquavalet.providers.gitlab import GitLabProvider
+from aquavalet.providers.gitlab.path import GitLabPath
+from aquavalet.providers.gitlab import settings as gitlab_settings
+from aquavalet.providers.gitlab.metadata import GitLabFileMetadata
+from aquavalet.providers.gitlab.metadata import GitLabFolderMetadata
 
 from tests.providers.gitlab import fixtures
 

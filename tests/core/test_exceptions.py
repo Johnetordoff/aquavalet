@@ -1,6 +1,6 @@
 import pytest
 
-from waterbutler.core import exceptions
+from aquavalet.core import exceptions
 
 
 class TestExceptionSerialization:
@@ -41,7 +41,7 @@ class TestExceptionSerialization:
         """In order for WaterButlerError-inheriting exception classes to survive
         pickling/unpickling, it is necessary for them to be able to be instatiated with
          a single integer arg.  The reasons for this are described in the docstring for
-        `waterbutler.core.exceptions.WaterButlerError`.
+        `aquavalet.core.exceptions.WaterButlerError`.
         """
         try:
             i_live_but_why = exception_class(616)

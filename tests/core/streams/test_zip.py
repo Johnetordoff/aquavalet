@@ -4,8 +4,8 @@ import zipfile
 
 import pytest
 
-from waterbutler.core import streams
-from waterbutler.core.utils import AsyncIterator
+from aquavalet.core import streams
+from aquavalet.core.utils import AsyncIterator
 
 from tests.utils import temp_files
 

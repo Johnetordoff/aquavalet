@@ -1,6 +1,6 @@
 import pytest
 
-from waterbutler.providers.figshare.path import FigsharePath
+from aquavalet.providers.figshare.path import FigsharePath
 
 
 class TestFigsharePath:

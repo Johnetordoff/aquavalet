@@ -6,12 +6,12 @@ from http import client
 
 import aiohttpretty
 
-from waterbutler.core import streams
-from waterbutler.core import exceptions
-from waterbutler.core.path import WaterButlerPath
-from waterbutler.providers.dataverse import settings as dvs
-from waterbutler.providers.dataverse import DataverseProvider
-from waterbutler.providers.dataverse.metadata import DataverseFileMetadata, DataverseRevision
+from aquavalet.core import streams
+from aquavalet.core import exceptions
+from aquavalet.core.path import WaterButlerPath
+from aquavalet.providers.dataverse import settings as dvs
+from aquavalet.providers.dataverse import DataverseProvider
+from aquavalet.providers.dataverse.metadata import DataverseFileMetadata, DataverseRevision
 
 from tests.providers.dataverse.fixtures import (
     native_file_metadata,

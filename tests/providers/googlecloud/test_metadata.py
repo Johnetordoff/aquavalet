@@ -23,12 +23,12 @@ from tests.providers.googlecloud.fixtures.folders import (folder_name,
                                                           meta_folder_resp_headers_raw,
                                                           )
 
-from waterbutler.providers.googlecloud import utils
-from waterbutler.providers.googlecloud import (GoogleCloudProvider,
-                                               BaseGoogleCloudMetadata,
-                                               GoogleCloudFileMetadata,
-                                               GoogleCloudFolderMetadata,
-                                               )
+from aquavalet.providers.googlecloud import utils
+from aquavalet.providers.googlecloud import (GoogleCloudProvider,
+                                             BaseGoogleCloudMetadata,
+                                             GoogleCloudFileMetadata,
+                                             GoogleCloudFolderMetadata,
+                                             )
 
 
 @pytest.fixture()

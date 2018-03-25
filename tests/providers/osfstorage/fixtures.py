@@ -6,12 +6,12 @@ from unittest import mock
 
 import pytest
 
-from waterbutler.core import streams
-from waterbutler.core.path import WaterButlerPath
-from waterbutler.providers.osfstorage.provider import OSFStorageProvider
-from waterbutler.providers.osfstorage.metadata import (OsfStorageFileMetadata,
-                                                       OsfStorageFolderMetadata,
-                                                       OsfStorageRevisionMetadata)
+from aquavalet.core import streams
+from aquavalet.core.path import WaterButlerPath
+from aquavalet.providers.osfstorage.provider import OSFStorageProvider
+from aquavalet.providers.osfstorage.metadata import (OsfStorageFileMetadata,
+                                                     OsfStorageFolderMetadata,
+                                                     OsfStorageRevisionMetadata)
 
 from tests import utils
 
@@ -43,7 +43,7 @@ def settings():
         'justa': 'setting',
         'nid': 'foo',
         'rootId': 'rootId',
-        'baseUrl': 'https://waterbutler.io',
+        'baseUrl': 'https://aquavalet.io',
         'storage': {
             'provider': 'mock',
         },

@@ -3,14 +3,14 @@ import pytest
 
 import aiohttpretty
 
-from waterbutler.core import streams
-from waterbutler.core import exceptions
+from aquavalet.core import streams
+from aquavalet.core import exceptions
 
-from waterbutler.providers.onedrive import OneDriveProvider
-from waterbutler.providers.onedrive.provider import OneDrivePath
-from waterbutler.providers.onedrive.metadata import OneDriveFileMetadata
-from waterbutler.providers.onedrive.metadata import OneDriveFolderMetadata
-from waterbutler.providers.onedrive.metadata import OneDriveRevisionMetadata
+from aquavalet.providers.onedrive import OneDriveProvider
+from aquavalet.providers.onedrive.provider import OneDrivePath
+from aquavalet.providers.onedrive.metadata import OneDriveFileMetadata
+from aquavalet.providers.onedrive.metadata import OneDriveFolderMetadata
+from aquavalet.providers.onedrive.metadata import OneDriveRevisionMetadata
 
 from tests.providers.onedrive.fixtures import (download_fixtures,
                                                revision_fixtures,

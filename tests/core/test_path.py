@@ -2,9 +2,9 @@ import pytest
 import functools
 from urllib import parse
 
-from waterbutler.core import exceptions
-from waterbutler.core.path import WaterButlerPath
-from waterbutler.core.path import WaterButlerPathPart
+from aquavalet.core import exceptions
+from aquavalet.core.path import WaterButlerPath
+from aquavalet.core.path import WaterButlerPathPart
 
 
 class EncodedPathPart:

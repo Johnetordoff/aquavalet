@@ -2,7 +2,7 @@ import re
 
 import pytest
 
-from waterbutler.providers.github.path import GitHubPath
+from aquavalet.providers.github.path import GitHubPath
 
 
 class TestGitHubPath:

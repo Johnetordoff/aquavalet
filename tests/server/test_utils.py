@@ -5,7 +5,7 @@ from tornado import testing
 
 from tests.server.api.v1.utils import ServerTestCase
 
-from waterbutler.server.utils import CORsMixin, parse_request_range
+from aquavalet.server.utils import CORsMixin, parse_request_range
 
 
 class MockHandler(CORsMixin):
@@ -29,7 +29,7 @@ class MockRequest(object):
         self.headers = headers
 
 
-@mock.patch('waterbutler.server.settings.CORS_ALLOW_ORIGIN', '')
+@mock.patch('aquavalet.server.settings.CORS_ALLOW_ORIGIN', '')
 class TestCORsMixin(ServerTestCase):
 
     def setUp(self, *args, **kwargs):

@@ -2,11 +2,11 @@ import pytest
 
 import os
 
-from waterbutler.providers.googledrive.provider import GoogleDrivePath
-from waterbutler.providers.googledrive.provider import GoogleDrivePathPart
-from waterbutler.providers.googledrive.metadata import GoogleDriveRevision
-from waterbutler.providers.googledrive.metadata import GoogleDriveFileMetadata
-from waterbutler.providers.googledrive.metadata import GoogleDriveFolderMetadata
+from aquavalet.providers.googledrive.provider import GoogleDrivePath
+from aquavalet.providers.googledrive.provider import GoogleDrivePathPart
+from aquavalet.providers.googledrive.metadata import GoogleDriveRevision
+from aquavalet.providers.googledrive.metadata import GoogleDriveFileMetadata
+from aquavalet.providers.googledrive.metadata import GoogleDriveFolderMetadata
 
 from tests.providers.googledrive.fixtures import(
     error_fixtures,

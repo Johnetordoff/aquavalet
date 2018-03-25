@@ -8,18 +8,18 @@ from urllib import parse
 import pytest
 import aiohttpretty
 
-from waterbutler.core import streams
-from waterbutler.core import exceptions
-from waterbutler.core.path import WaterButlerPath
+from aquavalet.core import streams
+from aquavalet.core import exceptions
+from aquavalet.core.path import WaterButlerPath
 
-from waterbutler.providers.googledrive import settings as ds
-from waterbutler.providers.googledrive import GoogleDriveProvider
-from waterbutler.providers.googledrive import utils as drive_utils
-from waterbutler.providers.googledrive.provider import GoogleDrivePath
-from waterbutler.providers.googledrive.metadata import (GoogleDriveRevision,
-                                                        GoogleDriveFileMetadata,
-                                                        GoogleDriveFolderMetadata,
-                                                        GoogleDriveFileRevisionMetadata)
+from aquavalet.providers.googledrive import settings as ds
+from aquavalet.providers.googledrive import GoogleDriveProvider
+from aquavalet.providers.googledrive import utils as drive_utils
+from aquavalet.providers.googledrive.provider import GoogleDrivePath
+from aquavalet.providers.googledrive.metadata import (GoogleDriveRevision,
+                                                      GoogleDriveFileMetadata,
+                                                      GoogleDriveFolderMetadata,
+                                                      GoogleDriveFileRevisionMetadata)
 
 from tests.providers.googledrive.fixtures import(error_fixtures,
                                                  sharing_fixtures,
@@ -384,7 +384,7 @@ class TestUpload:
 
         aiohttpretty.register_json_uri('PUT', finish_upload_url, body=item)
         aiohttpretty.register_uri('POST', start_upload_url,
-                                  headers={'LOCATION': 'http://waterbutler.io?upload_id={}'.format(upload_id)})
+                                  headers={'LOCATION': 'http://aquavalet.io?upload_id={}'.format(upload_id)})
 
         result, created = await provider.upload(file_stream, path)
 
@@ -408,7 +408,7 @@ class TestUpload:
 
         aiohttpretty.register_json_uri('PUT', finish_upload_url, body=item)
         aiohttpretty.register_uri('POST', start_upload_url,
-                                  headers={'LOCATION': 'http://waterbutler.io?upload_id={}'.format(upload_id)})
+                                  headers={'LOCATION': 'http://aquavalet.io?upload_id={}'.format(upload_id)})
 
         result, created = await provider.upload(file_stream, path)
 
@@ -433,7 +433,7 @@ class TestUpload:
 
         aiohttpretty.register_json_uri('PUT', finish_upload_url, body=item)
         aiohttpretty.register_uri('PUT', start_upload_url,
-                                  headers={'LOCATION': 'http://waterbutler.io?upload_id={}'.format(upload_id)})
+                                  headers={'LOCATION': 'http://aquavalet.io?upload_id={}'.format(upload_id)})
         result, created = await provider.upload(file_stream, path)
 
         assert aiohttpretty.has_call(method='PUT', uri=start_upload_url)
@@ -456,7 +456,7 @@ class TestUpload:
         finish_upload_url = provider._build_upload_url('files', uploadType='resumable',
                                                        upload_id=upload_id)
         aiohttpretty.register_uri('POST', start_upload_url,
-                                  headers={'LOCATION': 'http://waterbutler.io?upload_id={}'.format(upload_id)})
+                                  headers={'LOCATION': 'http://aquavalet.io?upload_id={}'.format(upload_id)})
         aiohttpretty.register_json_uri('PUT', finish_upload_url, body=item)
         result, created = await provider.upload(file_stream, path)
 
@@ -479,7 +479,7 @@ class TestUpload:
         aiohttpretty.register_json_uri('PUT', finish_upload_url,
                                        body=root_provider_fixtures['checksum_mismatch_metadata'])
         aiohttpretty.register_uri('POST', start_upload_url,
-                                  headers={'LOCATION': 'http://waterbutler.io?upload_id={}'.format(upload_id)})
+                                  headers={'LOCATION': 'http://aquavalet.io?upload_id={}'.format(upload_id)})
 
         with pytest.raises(exceptions.UploadChecksumMismatchError) as exc:
             await provider.upload(file_stream, path)

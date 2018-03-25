@@ -22,8 +22,8 @@ from tests.providers.googlecloud.fixtures.files import (file_wb_path,
                                                         file_2_copy_obj_name,
                                                         )
 
-from waterbutler.providers.googlecloud import utils
-from waterbutler.providers.googlecloud import GoogleCloudProvider
+from aquavalet.providers.googlecloud import utils
+from aquavalet.providers.googlecloud import GoogleCloudProvider
 
 
 @pytest.fixture()

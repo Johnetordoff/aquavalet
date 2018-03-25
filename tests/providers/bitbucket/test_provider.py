@@ -2,14 +2,14 @@ import pytest
 
 import aiohttpretty
 
-from waterbutler.core import exceptions
+from aquavalet.core import exceptions
 
-from waterbutler.providers.bitbucket import BitbucketProvider
-from waterbutler.providers.bitbucket.provider import BitbucketPath
-from waterbutler.providers.bitbucket import settings as bitbucket_settings
-from waterbutler.providers.bitbucket.metadata import BitbucketFileMetadata
-from waterbutler.providers.bitbucket.metadata import BitbucketFolderMetadata
-from waterbutler.providers.bitbucket.metadata import BitbucketRevisionMetadata
+from aquavalet.providers.bitbucket import BitbucketProvider
+from aquavalet.providers.bitbucket.provider import BitbucketPath
+from aquavalet.providers.bitbucket import settings as bitbucket_settings
+from aquavalet.providers.bitbucket.metadata import BitbucketFileMetadata
+from aquavalet.providers.bitbucket.metadata import BitbucketFolderMetadata
+from aquavalet.providers.bitbucket.metadata import BitbucketRevisionMetadata
 
 from tests.providers.bitbucket import fixtures
 

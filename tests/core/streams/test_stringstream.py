@@ -1,6 +1,6 @@
 import pytest
 
-from waterbutler.core import streams
+from aquavalet.core import streams
 
 
 class TestStringStream:

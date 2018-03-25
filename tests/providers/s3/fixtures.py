@@ -3,7 +3,7 @@ from collections import OrderedDict
 
 import pytest
 
-from waterbutler.providers.s3.metadata import (
+from aquavalet.providers.s3.metadata import (
     S3FileMetadataHeaders,
     S3FileMetadata,
     S3FolderMetadata,

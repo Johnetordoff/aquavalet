@@ -5,13 +5,13 @@ import os
 import shutil
 from http import client
 
-from waterbutler.core import streams
-from waterbutler.core import metadata
-from waterbutler.core import exceptions
-from waterbutler.core.path import WaterButlerPath
+from aquavalet.core import streams
+from aquavalet.core import metadata
+from aquavalet.core import exceptions
+from aquavalet.core.path import WaterButlerPath
 
-from waterbutler.providers.filesystem import FileSystemProvider
-from waterbutler.providers.filesystem.metadata import FileSystemFileMetadata
+from aquavalet.providers.filesystem import FileSystemProvider
+from aquavalet.providers.filesystem.metadata import FileSystemFileMetadata
 
 
 @pytest.fixture

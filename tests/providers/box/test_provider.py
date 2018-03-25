@@ -5,14 +5,14 @@ from http import client
 
 import aiohttpretty
 
-from waterbutler.core import streams
-from waterbutler.core import exceptions
-from waterbutler.core.path import WaterButlerPath
+from aquavalet.core import streams
+from aquavalet.core import exceptions
+from aquavalet.core.path import WaterButlerPath
 
-from waterbutler.providers.box import BoxProvider
-from waterbutler.providers.box.metadata import (BoxRevision,
-                                                BoxFileMetadata,
-                                                BoxFolderMetadata)
+from aquavalet.providers.box import BoxProvider
+from aquavalet.providers.box.metadata import (BoxRevision,
+                                              BoxFileMetadata,
+                                              BoxFolderMetadata)
 
 from tests.providers.box.fixtures import(intra_fixtures,
                                          revision_fixtures,

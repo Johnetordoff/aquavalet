@@ -6,13 +6,13 @@ from unittest import mock
 import pytest
 import aiohttpretty
 
-from waterbutler.core import metadata
-from waterbutler.core import exceptions
-from waterbutler.core.path import WaterButlerPath
-from waterbutler.providers.osfstorage.settings import FILE_PATH_COMPLETE, FILE_PATH_PENDING
-from waterbutler.providers.osfstorage.metadata import (OsfStorageFileMetadata,
-                                                       OsfStorageFolderMetadata,
-                                                       OsfStorageRevisionMetadata)
+from aquavalet.core import metadata
+from aquavalet.core import exceptions
+from aquavalet.core.path import WaterButlerPath
+from aquavalet.providers.osfstorage.settings import FILE_PATH_COMPLETE, FILE_PATH_PENDING
+from aquavalet.providers.osfstorage.metadata import (OsfStorageFileMetadata,
+                                                     OsfStorageFolderMetadata,
+                                                     OsfStorageRevisionMetadata)
 
 from tests import utils
 from tests.providers.osfstorage.fixtures import (auth, credentials, settings, provider,
@@ -311,7 +311,7 @@ class TestIntraCopy:
             }
         })
         url, _, params = src_provider.build_signed_url('POST',
-                                                       'https://waterbutler.io/hooks/copy/',
+                                                       'https://aquavalet.io/hooks/copy/',
                                                        data=data)
 
         body = {'path': '/folder1/', 'id': 'folder1', 'kind': 'folder', 'name': 'folder1'}
@@ -385,7 +385,7 @@ class TestIntraCopy:
             }
         })
         url, _, params = src_provider.build_signed_url('POST',
-                                                       'https://waterbutler.io/hooks/copy/',
+                                                       'https://aquavalet.io/hooks/copy/',
                                                        data=data)
 
         body = {'path': '/file', 'id': 'fileId', 'kind': 'file', 'name': 'file'}
@@ -427,7 +427,7 @@ class TestIntraMove:
                 'parent': dest_path.parent.identifier
             }
         })
-        url, _, params = src_provider.build_signed_url('POST', 'https://waterbutler.io/hooks/move/',
+        url, _, params = src_provider.build_signed_url('POST', 'https://aquavalet.io/hooks/move/',
                                                        data=data)
 
         body = {'path': '/folder1/', 'id': 'folder1', 'kind': 'folder', 'name': 'folder1'}
@@ -466,7 +466,7 @@ class TestIntraMove:
         })
         url, _, params = src_provider.build_signed_url(
             'POST',
-            'https://waterbutler.io/hooks/move/',
+            'https://aquavalet.io/hooks/move/',
             data=data
         )
 
@@ -602,7 +602,7 @@ class TestValidatePath:
 class TestUploads:
 
     def patch_tasks(self, monkeypatch):
-        basepath = 'waterbutler.providers.osfstorage.provider.{}'
+        basepath = 'aquavalet.providers.osfstorage.provider.{}'
         monkeypatch.setattr(basepath.format('os.rename'), lambda *_: None)
         monkeypatch.setattr(basepath.format('settings.RUN_TASKS'), False)
         monkeypatch.setattr(basepath.format('uuid.uuid4'), lambda: 'patched_path')
@@ -613,7 +613,7 @@ class TestUploads:
                               upload_response, upload_path, mock_time):
         self.patch_tasks(monkeypatch)
 
-        url = 'https://waterbutler.io/{}/children/'.format(upload_path.parent.identifier)
+        url = 'https://aquavalet.io/{}/children/'.format(upload_path.parent.identifier)
         aiohttpretty.register_json_uri('POST', url, status=201, body=upload_response)
 
         provider, inner_provider = provider_and_mock
@@ -642,7 +642,7 @@ class TestUploads:
         self.patch_tasks(monkeypatch)
         provider, inner_provider = provider_and_mock
 
-        url = 'https://waterbutler.io/{}/children/'.format(upload_path.parent.identifier)
+        url = 'https://aquavalet.io/{}/children/'.format(upload_path.parent.identifier)
 
         inner_provider.move.return_value = (utils.MockFileMetadata(), True)
         inner_provider.metadata.side_effect = exceptions.MetadataError('Boom!', code=404)
@@ -676,7 +676,7 @@ class TestUploads:
         self.patch_tasks(monkeypatch)
         provider, inner_provider = provider_and_mock
 
-        url = 'https://waterbutler.io/{}/children/'.format(upload_path.parent.identifier)
+        url = 'https://aquavalet.io/{}/children/'.format(upload_path.parent.identifier)
 
         inner_provider.metadata.side_effect = exceptions.MetadataError('Boom!', code=500)
         aiohttpretty.register_json_uri('POST', url, status=500)
@@ -689,10 +689,10 @@ class TestUploads:
     async def test_upload_and_tasks(self, monkeypatch, provider_and_mock, file_stream,
                                     upload_response, credentials, settings, mock_time):
         provider, inner_provider = provider_and_mock
-        basepath = 'waterbutler.providers.osfstorage.provider.{}'
+        basepath = 'aquavalet.providers.osfstorage.provider.{}'
         path = WaterButlerPath('/' + upload_response['data']['name'],
                                _ids=('Test', upload_response['data']['id']))
-        url = 'https://waterbutler.io/{}/children/'.format(path.parent.identifier)
+        url = 'https://aquavalet.io/{}/children/'.format(path.parent.identifier)
 
         mock_parity = mock.Mock()
         mock_backup = mock.Mock()
@@ -719,10 +719,10 @@ class TestUploads:
                                                       check_created=False, fetch_metadata=False)
         complete_path = os.path.join(FILE_PATH_COMPLETE, file_stream.writers['sha256'].hexdigest)
         mock_parity.assert_called_once_with(complete_path, upload_response['version'],
-                                            'https://waterbutler.io/hooks/metadata/',
+                                            'https://aquavalet.io/hooks/metadata/',
                                             credentials['parity'], settings['parity'])
         mock_backup.assert_called_once_with(complete_path, upload_response['version'],
-                                            'https://waterbutler.io/hooks/metadata/',
+                                            'https://aquavalet.io/hooks/metadata/',
                                             credentials['archive'], settings['archive'])
         expected_path = WaterButlerPath('/' + file_stream.writers['sha256'].hexdigest)
         inner_provider.metadata.assert_called_once_with(expected_path)
@@ -737,7 +737,7 @@ class TestUploads:
         provider, inner_provider = provider_and_mock
         path = WaterButlerPath('/{}'.format(upload_response['data']['name']),
                                _ids=('Test', upload_response['data']['id']))
-        url = 'https://waterbutler.io/{}/children/'.format(path.parent.identifier)
+        url = 'https://aquavalet.io/{}/children/'.format(path.parent.identifier)
 
         aiohttpretty.register_json_uri('POST', url, status=201, body=upload_response)
         inner_provider.metadata = utils.MockCoroutine(return_value=utils.MockFileMetadata())

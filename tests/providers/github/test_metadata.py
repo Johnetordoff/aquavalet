@@ -2,10 +2,10 @@ import re
 
 import pytest
 
-from waterbutler.providers.github.metadata import GitHubFileTreeMetadata
-from waterbutler.providers.github.metadata import GitHubFolderTreeMetadata
-from waterbutler.providers.github.metadata import GitHubFileContentMetadata
-from waterbutler.providers.github.metadata import GitHubFolderContentMetadata
+from aquavalet.providers.github.metadata import GitHubFileTreeMetadata
+from aquavalet.providers.github.metadata import GitHubFolderTreeMetadata
+from aquavalet.providers.github.metadata import GitHubFileContentMetadata
+from aquavalet.providers.github.metadata import GitHubFolderContentMetadata
 
 
 

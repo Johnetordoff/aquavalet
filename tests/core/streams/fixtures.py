@@ -3,7 +3,7 @@ from http import HTTPStatus
 import pytest
 
 from tests.utils import MockCoroutine
-from waterbutler.core.streams.http import ResponseStreamReader
+from aquavalet.core.streams.http import ResponseStreamReader
 
 
 @pytest.fixture

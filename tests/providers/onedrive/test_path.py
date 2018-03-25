@@ -1,6 +1,6 @@
 import pytest
 
-from waterbutler.providers.onedrive.path import OneDrivePath
+from aquavalet.providers.onedrive.path import OneDrivePath
 
 from tests.providers.onedrive.fixtures import (path_fixtures,
                                                root_provider_fixtures,

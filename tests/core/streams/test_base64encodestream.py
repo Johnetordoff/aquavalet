@@ -3,7 +3,7 @@ import base64
 import functools
 from unittest import mock
 
-from waterbutler.core import streams
+from aquavalet.core import streams
 
 
 class TestBase64Stream:

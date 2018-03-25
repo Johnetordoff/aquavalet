@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from waterbutler.core.path import WaterButlerPath
+from aquavalet.core.path import WaterButlerPath
 
 
 @pytest.fixture()

@@ -69,8 +69,8 @@ class TestServerFuzzingMocks(ServerTestCase):
         self.mock_auth = utils.MockCoroutine(return_value={'auth': {}, 'settings': {}, 'credentials': {}})
         self.mock_provider = mock.Mock(return_value=utils.MockProvider1({}, {}, {}))
 
-        self.mock_auth_patcher = mock.patch('waterbutler.server.api.v1.provider.auth_handler.get', self.mock_auth)
-        self.mock_provider_patcher = mock.patch('waterbutler.server.api.v1.provider.utils.make_provider', self.mock_provider)
+        self.mock_auth_patcher = mock.patch('aquavalet.server.api.v1.provider.auth_handler.get', self.mock_auth)
+        self.mock_provider_patcher = mock.patch('aquavalet.server.api.v1.provider.utils.make_provider', self.mock_provider)
         self.mock_auth_patcher.start()
         self.mock_provider_patcher.start()
 

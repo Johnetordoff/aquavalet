@@ -10,18 +10,18 @@ import furl
 import pytest
 import aiohttpretty
 
-from waterbutler.core import streams
-from waterbutler.core import exceptions
+from aquavalet.core import streams
+from aquavalet.core import exceptions
 
-from waterbutler.providers.github import GitHubProvider
-from waterbutler.providers.github.path import GitHubPath
-from waterbutler.providers.github.metadata import (GitHubRevision,
-                                                   GitHubFileTreeMetadata,
-                                                   GitHubFolderTreeMetadata,
-                                                   GitHubFileContentMetadata,
-                                                   GitHubFolderContentMetadata)
-from waterbutler.providers.github import settings as github_settings
-from waterbutler.providers.github.exceptions import GitHubUnsupportedRepoError
+from aquavalet.providers.github import GitHubProvider
+from aquavalet.providers.github.path import GitHubPath
+from aquavalet.providers.github.metadata import (GitHubRevision,
+                                                 GitHubFileTreeMetadata,
+                                                 GitHubFolderTreeMetadata,
+                                                 GitHubFileContentMetadata,
+                                                 GitHubFolderContentMetadata)
+from aquavalet.providers.github import settings as github_settings
+from aquavalet.providers.github.exceptions import GitHubUnsupportedRepoError
 
 
 from tests.providers.github.fixtures import (crud_fixtures,

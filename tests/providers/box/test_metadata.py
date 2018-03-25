@@ -1,9 +1,9 @@
 import pytest
 
-from waterbutler.core.path import WaterButlerPath
-from waterbutler.providers.box.metadata import (BoxFolderMetadata,
-                                                BoxFileMetadata,
-                                                BoxRevision)
+from aquavalet.core.path import WaterButlerPath
+from aquavalet.providers.box.metadata import (BoxFolderMetadata,
+                                              BoxFileMetadata,
+                                              BoxRevision)
 
 from tests.providers.box.fixtures import(intra_fixtures,
                                          revision_fixtures,

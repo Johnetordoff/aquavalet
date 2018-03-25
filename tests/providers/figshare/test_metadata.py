@@ -1,8 +1,8 @@
 import pytest
 
-from waterbutler.providers.figshare.metadata import (FigshareFileMetadata,
-                                                     FigshareFolderMetadata,
-                                                     FigshareFileRevisionMetadata)
+from aquavalet.providers.figshare.metadata import (FigshareFileMetadata,
+                                                   FigshareFolderMetadata,
+                                                   FigshareFileRevisionMetadata)
 
 from tests.providers.figshare.fixtures import root_provider_fixtures
 

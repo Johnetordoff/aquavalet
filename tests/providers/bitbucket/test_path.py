@@ -1,6 +1,6 @@
 import pytest
 
-from waterbutler.providers.bitbucket.path import BitbucketPath
+from aquavalet.providers.bitbucket.path import BitbucketPath
 
 COMMIT_SHA = 'abcea54a123'
 BRANCH = 'develop'

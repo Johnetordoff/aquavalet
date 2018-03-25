@@ -4,7 +4,7 @@ import string
 import functools
 from unittest import mock
 
-from waterbutler.core import streams
+from aquavalet.core import streams
 
 
 @pytest.fixture

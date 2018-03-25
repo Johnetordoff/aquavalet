@@ -8,16 +8,16 @@ from aiohttp import MultiDict
 import pytest
 import aiohttpretty
 
-from waterbutler.core.path import WaterButlerPath
-from waterbutler.core.streams import FileStreamReader, ResponseStreamReader
-from waterbutler.core import exceptions as core_exceptions
-from waterbutler.providers.googlecloud import utils
-from waterbutler.providers.googlecloud import settings as pd_settings
-from waterbutler.providers.googlecloud import (GoogleCloudProvider,
-                                               BaseGoogleCloudMetadata,
-                                               GoogleCloudFileMetadata,
-                                               GoogleCloudFolderMetadata,
-                                               )
+from aquavalet.core.path import WaterButlerPath
+from aquavalet.core.streams import FileStreamReader, ResponseStreamReader
+from aquavalet.core import exceptions as core_exceptions
+from aquavalet.providers.googlecloud import utils
+from aquavalet.providers.googlecloud import settings as pd_settings
+from aquavalet.providers.googlecloud import (GoogleCloudProvider,
+                                             BaseGoogleCloudMetadata,
+                                             GoogleCloudFileMetadata,
+                                             GoogleCloudFolderMetadata,
+                                             )
 
 from tests.providers.googlecloud.fixtures.providers import (mock_auth,
                                                             mock_auth_2,
