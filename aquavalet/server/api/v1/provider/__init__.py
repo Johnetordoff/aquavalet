@@ -52,17 +52,7 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
         self.provider = utils.make_provider(provider, self.auth['auth'], self.auth['credentials'], self.auth['settings'])
         self.path = await self.provider.validate_path(self.path)
 
-        # The one special case
-        if method == 'upload':
-            self.rsock, self.wsock = socket.socketpair()
-
-            self.reader, _ = await asyncio.open_unix_connection(sock=self.rsock)
-            _, self.writer = await asyncio.open_unix_connection(sock=self.wsock)
-
-            self.stream = RequestStreamReader(self.request, self.reader)
-            self.uploader = asyncio.ensure_future(self.provider.upload(self.stream, self.path))
-        else:
-            self.stream = None
+        self.stream = None
         self.body = b''
 
     async def metadata(self, provider,  path):
@@ -81,7 +71,11 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
         })
 
     async def rename(self, provider,  path):
-        pass
+        version = self.get_query_argument('version', default=None)
+
+        self.provider.rename()
+
+        self.metadata(provider, path)
 
     async def get(self, provider,  path):
         action = self.get_query_argument('serve', default=None)
@@ -100,6 +94,14 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
             return await self.children(provider,  path)
 
     async def upload(self, provider,  path):
+        self.rsock, self.wsock = socket.socketpair()
+
+        self.reader, _ = await asyncio.open_unix_connection(sock=self.rsock)
+        _, self.writer = await asyncio.open_unix_connection(sock=self.wsock)
+
+        self.stream = RequestStreamReader(self.request, self.reader)
+        self.uploader = asyncio.ensure_future(self.provider.upload(self.stream, self.path))
+
         self.writer.write_eof()
 
         metadata, created = await self.uploader

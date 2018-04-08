@@ -2,24 +2,12 @@ import os
 
 from invoke import task
 
-WHEELHOUSE_PATH = os.environ.get('WHEELHOUSE')
-
-
-@task
-def wheelhouse(ctx, develop=False, pty=True):
-    req_file = 'dev-requirements.txt' if develop else 'requirements.txt'
-    cmd = 'pip wheel --find-links={} -r {} --wheel-dir={}'.format(WHEELHOUSE_PATH, req_file, WHEELHOUSE_PATH)
-    ctx.run(cmd, pty=pty)
-
-
 @task
 def install(ctx, develop=False, pty=True):
     ctx.run('python setup.py develop')
     req_file = 'dev-requirements.txt' if develop else 'requirements.txt'
     cmd = 'pip install --upgrade -r {}'.format(req_file)
 
-    if WHEELHOUSE_PATH:
-        cmd += ' --no-index --find-links={}'.format(WHEELHOUSE_PATH)
     ctx.run(cmd, pty=pty)
 
 

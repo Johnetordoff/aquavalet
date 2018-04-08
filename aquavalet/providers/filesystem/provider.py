@@ -32,18 +32,11 @@ class FileSystemProvider(provider.BaseProvider):
     async def validate_path(self, path, **kwargs):
         return WaterButlerPath(path, prepend=self.folder)
 
-    def can_duplicate_names(self):
-        return False
-
     async def intra_copy(self, dest_provider, src_path, dest_path):
-        exists = await self.exists(dest_path)
         shutil.copy(src_path.full_path, dest_path.full_path)
-        return (await dest_provider.metadata(dest_path)), not exists
 
     async def intra_move(self, dest_provider, src_path, dest_path):
-        exists = await self.exists(dest_path)
         shutil.move(src_path.full_path, dest_path.full_path)
-        return (await dest_provider.metadata(dest_path)), not exists
 
     async def download(self, path, revision=None, range: typing.Tuple[int, int]=None, **kwargs):
         if not os.path.exists(path.full_path):
@@ -60,7 +53,6 @@ class FileSystemProvider(provider.BaseProvider):
 
     async def upload(self, stream, path):
         created = not os.path.exists(path.full_path)
-
         os.makedirs(os.path.split(path.full_path)[0], exist_ok=True)
 
         with open(path.full_path, 'wb') as file_pointer:
@@ -69,29 +61,24 @@ class FileSystemProvider(provider.BaseProvider):
                 file_pointer.write(chunk)
                 chunk = await stream.read(settings.CHUNK_SIZE)
 
-        metadata = await self.metadata(path)
-        return metadata, created
-
     async def delete(self, path, **kwargs):
         if path.is_file:
             os.remove(path.full_path)
         else:
-            shutil.rmtree(path.full_path)
             if path.is_root:
                 raise Exception('That\'s the root!')
-                #os.makedirs(self.folder, exist_ok=True)
+            shutil.rmtree(path.full_path)
 
     async def metadata(self, path, version=None):
         return self._format_metadata(path)
 
     async def children(self, path):
-        relative_path = path.full_path.replace(self.folder, '')
-
         try:
             children = os.listdir(path.full_path)
-        except:
-            raise exceptions.InvalidPathError(message='Not a directory')
+        except NotADirectoryError:
+            raise exceptions.InvalidPathError(message=f'{path.full_path} is not a directory, perhaps try using a trailing slash.')
 
+        relative_path = path.full_path.replace(self.folder, '')
         paths = [WaterButlerPath(os.path.join('/', relative_path, child), prepend=self.folder) for child in children]
         return [self._format_metadata(path) for path in paths]
 

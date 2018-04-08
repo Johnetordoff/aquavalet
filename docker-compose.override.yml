@@ -2,20 +2,20 @@ version: "3"
 
 services:
 
-  wb:
+  av:
     volumes:
-      - wb-sync:/code:nocopy
+      - av-sync:/code:nocopy
 
-  wb_worker:
+  av_worker:
     volumes:
-      - wb-sync:/code:nocopy
+      - av-sync:/code:nocopy
 
-  wb_requirements:
+  av_requirements:
     volumes:
-      - wb-sync:/code:nocopy
+      - av-sync:/code:nocopy
 
 volumes:
 
-   wb-sync:
+   av-sync:
      external: true
 

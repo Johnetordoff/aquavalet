@@ -8,7 +8,7 @@ options:
 
 syncs:
 
-   wb-sync:
+   av-sync:
      src: './'
      sync_strategy: 'native_osx'
      sync_args: [ '-prefer newer' ]

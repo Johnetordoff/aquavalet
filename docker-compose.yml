@@ -5,7 +5,7 @@ version: '3'
 volumes:
   rabbitmq_vol:
     external: false
-  wb_requirements_vol:
+  av_requirements_vol:
     external: false
 
 services:
@@ -23,7 +23,7 @@ services:
       - rabbitmq_vol:/var/lib/rabbitmq
     stdin_open: true
 
-  wb_requirements:
+  av_requirements:
     image: av:latest
     command: |-
       /bin/bash -c "
@@ -34,31 +34,31 @@ services:
       "
     restart: 'no'
     volumes:
-      - wb_requirements_vol:/python3.6
+      - av_requirements_vol:/python3.6
 
-  wb:
+  av:
     image: av:latest
     command: invoke server
     restart: unless-stopped
     ports:
       - 7777:7777
     env_file:
-      - .docker-compose.wb.env
+      - .docker-compose.av.env
     volumes:
-      - wb_requirements_vol:/usr/local/lib/python3.6
+      - av_requirements_vol:/usr/local/lib/python3.6
     stdin_open: true
 
-  wb_worker:
+  av_worker:
     image: av:latest
     command: invoke celery
     restart: unless-stopped
     depends_on:
-      - wb
+      - av
       - rabbitmq
     environment:
       C_FORCE_ROOT: 1
     env_file:
-      - .docker-compose.wb.env
+      - .docker-compose.av.env
     volumes:
-      - wb_requirements_vol:/usr/local/lib/python3.6
+      - av_requirements_vol:/usr/local/lib/python3.6
     stdin_open: true

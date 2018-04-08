@@ -8,7 +8,6 @@ import functools
 import itertools
 from urllib import parse
 
-import furl
 import aiohttp
 
 from aquavalet.core import streams
@@ -52,16 +51,13 @@ def throttle(concurrency=10, interval=1):
 
 
 def build_url(base, *segments, **query):
-    url = furl.furl(base)
+    url = parse(base)
     # Filters return generators
     # Cast to list to force "spin" it
     url.path.segments = list(filter(
         lambda segment: segment,
         map(
-            # Furl requires everything to be quoted or not, no mixtures allowed
-            # prequote everything so %signs don't break everything
             lambda segment: parse.quote(segment.strip('/')),
-            # Include any segments of the original url, effectively list+list but returns a generator
             itertools.chain(url.path.segments, segments)
         )
     ))
@@ -122,8 +118,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
         }
 
     def build_url(self, *segments, **query) -> str:
-        """A nice wrapper around furl, builds urls based on self.BASE_URL
-
+        """
         :param \*segments: ( :class:`tuple` ) A tuple of strings joined into /foo/bar/..
         :param \*\*query: ( :class:`dict` ) A dictionary that will be turned into query parameters ?foo=bar
         :rtype: :class:`str`
@@ -541,11 +536,6 @@ class BaseProvider(metaclass=abc.ABCMeta):
         :rtype: :class:`bool`  (True if both providers use the same storage root)
         """
         return self.NAME == other.NAME and self.settings == other.settings
-
-    @abc.abstractmethod
-    def can_duplicate_names(self) -> bool:
-        """Returns True if a file and a folder in the same directory can have identical names."""
-        raise NotImplementedError
 
     @abc.abstractmethod
     async def download(self, src_path: wb_path.WaterButlerPath, **kwargs) -> streams.ResponseStreamReader:

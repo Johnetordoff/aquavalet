@@ -5,7 +5,7 @@ setup(
     name='aquavalet',
     version='0.0.0',
     namespace_packages=['aquavalet', 'aquavalet.auth', 'aquavalet.providers'],
-    #description='AquaValet Storage Server',
+    description='AquaValet Storage Server',
     #author='Center for Open Science',
     #author_email='contact@cos.io',
     #url='https://github.com/CenterForOpenScience/waterbutler',
@@ -18,6 +18,7 @@ setup(
         'Intended Audience :: Developers',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7?',
     ],
     provides=[
         'aquavalet.providers',

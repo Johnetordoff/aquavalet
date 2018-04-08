@@ -2,7 +2,6 @@ name: py36
 dependencies:
 - pip=8.1.1=py36_0
 - python=3.6.4=0
-- setuptools=20.3=py35_0
 - wheel=0.29.0=py35_0
 - pip:
   - agent==0.1.2
