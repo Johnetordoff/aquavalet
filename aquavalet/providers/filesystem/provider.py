@@ -32,6 +32,9 @@ class FileSystemProvider(provider.BaseProvider):
     async def validate_path(self, path, **kwargs):
         return WaterButlerPath(path, prepend=self.folder)
 
+    def can_intra_copy(self, dest_provider, path=None):
+        return type(self) == type(dest_provider)
+
     async def intra_copy(self, dest_provider, src_path, dest_path):
         shutil.copy(src_path.full_path, dest_path.full_path)
 
@@ -95,9 +98,3 @@ class FileSystemProvider(provider.BaseProvider):
             'kind':  'folder' if os.path.isdir(path.full_path) else 'file'
         }
         return FileSystemItemMetadata(metadata, self.folder, path)
-
-    def can_intra_copy(self, dest_provider, path=None):
-        return type(self) == type(dest_provider)
-
-    def can_intra_move(self, dest_provider, path=None):
-        return self.can_intra_copy(dest_provider)

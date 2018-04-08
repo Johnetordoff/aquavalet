@@ -169,7 +169,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
             url = url()
         while retry >= 0:
             try:
-                response = await aiohttp.request(method, url, *args, **kwargs)
+                response = aiohttp.request(method, url, *args, **kwargs)
                 if expects and response.status not in expects:
                     raise (await exceptions.exception_from_response(response, error=throws, **kwargs))
                 return response

@@ -6,12 +6,13 @@ import logging
 from http import HTTPStatus
 
 import tornado.gen
-
+import mimetypes
 from aquavalet.core import utils
-from aquavalet.server.api.v1 import core
+from aquavalet.core import exceptions
 from aquavalet.core import remote_logging
-from aquavalet.server.auth import AuthHandler
 from aquavalet.core.streams import RequestStreamReader
+from aquavalet.server.auth import AuthHandler
+from aquavalet.server.api.v1 import core
 from aquavalet.server.api.v1.provider.movecopy import MoveCopyMixin
 
 logger = logging.getLogger(__name__)
@@ -20,6 +21,7 @@ auth_handler = AuthHandler(None)
 mime_types = {
     '.csv': 'text/csv',
     '.md': 'text/x-markdown',
+    '.txt': 'text/x-markdown',
 }
 
 
@@ -42,18 +44,15 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
     PATTERN = r'/providers/(?P<provider>(?:\w|\d)+)(?P<path>/.*/?)'
 
     async def prepare(self, *args, **kwargs):
-        method = self.request.method.lower()
+        self.stream = None
+        self.body = b''
 
         self.path = self.path_kwargs['path'] or '/'
         provider = self.path_kwargs['provider']
 
-        # Delay setup of the provider when method is post, as we need to evaluate the json body action.
         self.auth = await auth_handler.get(None, provider, self.request)
         self.provider = utils.make_provider(provider, self.auth['auth'], self.auth['credentials'], self.auth['settings'])
         self.path = await self.provider.validate_path(self.path)
-
-        self.stream = None
-        self.body = b''
 
     async def metadata(self, provider,  path):
         version = self.get_query_argument('version', default=None)
@@ -64,6 +63,9 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
         })
 
     async def children(self, provider,  path):
+        if self.path.is_file:
+            raise exceptions.InvalidPathError(message='Files have no children')
+
         metadata = await self.provider.children(self.path)
 
         return self.write({
@@ -100,25 +102,26 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
         _, self.writer = await asyncio.open_unix_connection(sock=self.wsock)
 
         self.stream = RequestStreamReader(self.request, self.reader)
-        self.uploader = asyncio.ensure_future(self.provider.upload(self.stream, self.path))
-
         self.writer.write_eof()
 
-        metadata, created = await self.uploader
         self.writer.close()
         self.wsock.close()
-        if created:
-            self.set_status(201)
 
-        self.write({'data': metadata.json_api_serialized(self.resource)})
+        await self.provider.upload(self.stream, self.path)
+        metadata = await self.provider.metadata(self.path)
+
+        self.write({'data': metadata.json_api_serialized()})
 
     async def create_folder(self, provider,  path):
-        return (await self.provider.create_folder(self.path))
+        if self.path.is_file:
+            raise exceptions.InvalidPathError(message=f'{path.full_path} is not a directory, perhaps try using a trailing slash.')
 
-    async def post(self, **_):
+        return await self.provider.create_folder(self.path)
+
+    async def post(self, provider,  path):
         return await self.move_or_copy()
 
-    async def copy(self, **_):
+    async def copy(self, provider,  path):
         return await self.move_or_copy()
 
     async def delete(self, provider,  path):
@@ -135,7 +138,10 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
             self.body += chunk
 
     async def revisions(self):
-        pass
+        if self.path.is_folder:
+            raise exceptions.InvalidPathError(message='Directories have no revisions')
+
+        raise self.provider.revisions()
 
     async def download(self, provider,  path):
         if 'Range' not in self.request.headers:
@@ -149,7 +155,7 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
             version=version,
             range=request_range,
         )
-        print(stream.__dict__)
+
         if getattr(stream, 'partial', None):
             # Use getattr here as not all stream may have a partial attribute
             # Plus it fixes tests
@@ -170,8 +176,8 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
         _, ext = os.path.splitext(name)
         # If the file extention is in mime_types
         # override the content type to fix issues with safari shoving in new file extensions
-        if ext in mime_types:
-            self.set_header('Content-Type', mime_types[ext])
+        if ext in mimetypes:
+            self.set_header('Content-Type', mimetypes(name))
 
         await self.write_stream(stream)
 
@@ -197,9 +203,6 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
         # For 202s, celery will send its own callback.  Osfstorage and s3 can return 302s for file
         # downloads, which should be tallied.
         if any((method in ('HEAD', 'OPTIONS'), status == 202, status > 302, status < 200)):
-            return
-
-        if method == 'GET' and 'meta' in self.request.query_arguments:
             return
 
         # Done here just because method is defined

@@ -1,6 +1,8 @@
+import os
 import abc
 import typing
 import hashlib
+import mimetypes
 
 from urllib.parse import urlparse
 
@@ -39,11 +41,13 @@ class BaseMetadata(metaclass=abc.ABCMeta):
 
         :rtype: dict
         """
+        _, ext = os.path.splitext(self.name)
         return {
             'extra': self.extra,
             'kind': self.kind,
             'name': self.name,
             'path': self.path,
+            'mimetype': mimetypes.types_map.get(ext),
             'provider': self.provider,
             'materialized': self.materialized_path,
             'etag': hashlib.sha256('{}::{}'.format(self.provider, self.etag).encode('utf-8')).hexdigest(),
@@ -63,14 +67,20 @@ class BaseMetadata(metaclass=abc.ABCMeta):
 
         :rtype: dict
         """
-        default_segments = ['v1', 'providers', self.provider]
-        segments = default_segments + [seg for seg in self.path.split('/') if seg]
-        url = urlparse(settings.DOMAIN + '/' + '/'.join(segments[:-1]) + '/?serve=meta')
         actions = {}
+
+        default_segments = ['v1', 'providers', self.provider]
+        path_segments = [seg for seg in self.path.split('/') if seg]
+        segments = default_segments + path_segments[:-1]
+        url = urlparse(settings.DOMAIN + '/' + '/'.join(segments) + '/?serve=meta')
+
         actions['parent'] = url.geturl()
+        if self.is_folder:
+            segments = default_segments + path_segments
+            url = urlparse(settings.DOMAIN + '/' + '/'.join(segments) + '/?serve=children')
+            actions['children'] = url.geturl()
 
         return actions
-
 
     def build_path(self, path) -> str:
         if not path.startswith('/'):

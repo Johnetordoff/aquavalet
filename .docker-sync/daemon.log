@@ -4,62 +4,85 @@ unison: ERROR (no such process)
 unison: ERROR (no such process)
      success  Sync container started
      success  Showing unison logs from your sync container: av-sync
-[2018-04-07 22:05:19 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 22:06:57.79 on 07 Apr 2018
-[2018-04-07 22:05:19 -0400] Sync Log:  [BGN] Copying .docker-sync/daemon.log from /host_sync to /app_sync
-[2018-04-07 22:05:19 -0400] Sync Log:  [END] Copying .docker-sync/daemon.log
-[2018-04-07 22:05:19 -0400] Sync Log:  [BGN] Copying .docker-sync/daemon.pid from /host_sync to /app_sync
-[2018-04-07 22:05:19 -0400] Sync Log:  [END] Copying .docker-sync/daemon.pid
-[2018-04-07 22:05:19 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 22:06:57.80 on 07 Apr 2018
-[2018-04-07 22:05:19 -0400] Sync Log:  Synchronization complete at 22:06:57  (2 items transferred, 0 skipped, 0 failed)
-[2018-04-07 22:05:33 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 22:07:11.07 on 07 Apr 2018
-[2018-04-07 22:05:33 -0400] Sync Log:  [BGN] Updating file aquavalet.egg-info/namespace_packages.txt from /app_sync to /host_sync
-[2018-04-07 22:05:33 -0400] Sync Log:  [END] Updating file aquavalet.egg-info/namespace_packages.txt
-[2018-04-07 22:05:33 -0400] Sync Log:  [BGN] Updating file aquavalet.egg-info/top_level.txt from /app_sync to /host_sync
-[2018-04-07 22:05:33 -0400] Sync Log:  [END] Updating file aquavalet.egg-info/top_level.txt
-[2018-04-07 22:05:33 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 22:07:11.10 on 07 Apr 2018
-[2018-04-07 22:05:33 -0400] Sync Log:  Synchronization complete at 22:07:11  (2 items transferred, 0 skipped, 0 failed)
-[2018-04-07 22:07:17 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 22:08:55.49 on 07 Apr 2018
-[2018-04-07 22:07:17 -0400] Sync Log:  [BGN] Updating file aquavalet/core/provider.py from /host_sync to /app_sync
-[2018-04-07 22:07:17 -0400] Sync Log:  [END] Updating file aquavalet/core/provider.py
-[2018-04-07 22:07:17 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 22:08:55.49 on 07 Apr 2018
-[2018-04-07 22:07:17 -0400] Sync Log:  Synchronization complete at 22:08:55  (1 item transferred, 0 skipped, 0 failed)
-[2018-04-07 22:07:58 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 22:09:36.67 on 07 Apr 2018
-[2018-04-07 22:07:58 -0400] Sync Log:  [BGN] Updating file aquavalet/core/provider.py from /host_sync to /app_sync
-[2018-04-07 22:07:58 -0400] Sync Log:  [END] Updating file aquavalet/core/provider.py
-[2018-04-07 22:07:58 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 22:09:36.67 on 07 Apr 2018
-[2018-04-07 22:07:58 -0400] Sync Log:  Synchronization complete at 22:09:36  (1 item transferred, 0 skipped, 0 failed)
-[2018-04-07 22:08:17 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 22:09:54.84 on 07 Apr 2018
-[2018-04-07 22:08:17 -0400] Sync Log:  [BGN] Updating file aquavalet/core/provider.py from /host_sync to /app_sync
-[2018-04-07 22:08:17 -0400] Sync Log:  [END] Updating file aquavalet/core/provider.py
-[2018-04-07 22:08:17 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 22:09:54.85 on 07 Apr 2018
-[2018-04-07 22:08:17 -0400] Sync Log:  Synchronization complete at 22:09:54  (1 item transferred, 0 skipped, 0 failed)
-[2018-04-07 22:08:28 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 22:10:06.60 on 07 Apr 2018
-[2018-04-07 22:08:28 -0400] Sync Log:  [BGN] Updating file aquavalet/core/provider.py from /host_sync to /app_sync
-[2018-04-07 22:08:28 -0400] Sync Log:  [END] Updating file aquavalet/core/provider.py
-[2018-04-07 22:08:28 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 22:10:06.64 on 07 Apr 2018
-[2018-04-07 22:08:28 -0400] Sync Log:  Synchronization complete at 22:10:06  (1 item transferred, 0 skipped, 0 failed)
-[2018-04-07 22:08:40 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 22:10:18.64 on 07 Apr 2018
-[2018-04-07 22:08:40 -0400] Sync Log:  [BGN] Updating file aquavalet/core/provider.py from /host_sync to /app_sync
-[2018-04-07 22:08:40 -0400] Sync Log:  [END] Updating file aquavalet/core/provider.py
-[2018-04-07 22:08:40 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 22:10:18.65 on 07 Apr 2018
-[2018-04-07 22:08:40 -0400] Sync Log:  Synchronization complete at 22:10:18  (1 item transferred, 0 skipped, 0 failed)
-[2018-04-07 22:10:13 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 22:11:51.18 on 07 Apr 2018
-[2018-04-07 22:10:13 -0400] Sync Log:  [BGN] Updating file aquavalet/core/provider.py from /host_sync to /app_sync
-[2018-04-07 22:10:13 -0400] Sync Log:  [END] Updating file aquavalet/core/provider.py
-[2018-04-07 22:10:13 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 22:11:51.18 on 07 Apr 2018
-[2018-04-07 22:10:13 -0400] Sync Log:  Synchronization complete at 22:11:51  (1 item transferred, 0 skipped, 0 failed)
-[2018-04-07 22:12:10 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 22:13:48.58 on 07 Apr 2018
-[2018-04-07 22:12:10 -0400] Sync Log:  [BGN] Updating file aquavalet/core/provider.py from /host_sync to /app_sync
-[2018-04-07 22:12:10 -0400] Sync Log:  [END] Updating file aquavalet/core/provider.py
-[2018-04-07 22:12:10 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 22:13:48.58 on 07 Apr 2018
-[2018-04-07 22:12:10 -0400] Sync Log:  Synchronization complete at 22:13:48  (1 item transferred, 0 skipped, 0 failed)
-[2018-04-07 22:12:23 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 22:14:01.26 on 07 Apr 2018
-[2018-04-07 22:12:23 -0400] Sync Log:  [BGN] Updating file aquavalet/core/provider.py from /host_sync to /app_sync
-[2018-04-07 22:12:23 -0400] Sync Log:  [END] Updating file aquavalet/core/provider.py
-[2018-04-07 22:12:23 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 22:14:01.26 on 07 Apr 2018
-[2018-04-07 22:12:23 -0400] Sync Log:  Synchronization complete at 22:14:01  (1 item transferred, 0 skipped, 0 failed)
-[2018-04-07 22:12:26 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 22:14:04.30 on 07 Apr 2018
-[2018-04-07 22:12:26 -0400] Sync Log:  [BGN] Updating file aquavalet/core/provider.py from /host_sync to /app_sync
-[2018-04-07 22:12:26 -0400] Sync Log:  [END] Updating file aquavalet/core/provider.py
-[2018-04-07 22:12:26 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 22:14:04.31 on 07 Apr 2018
-[2018-04-07 22:12:26 -0400] Sync Log:  Synchronization complete at 22:14:04  (1 item transferred, 0 skipped, 0 failed)
+[2018-04-07 23:17:01 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 23:18:44.56 on 07 Apr 2018
+[2018-04-07 23:17:01 -0400] Sync Log:  [BGN] Copying .docker-sync/daemon.log from /host_sync to /app_sync
+[2018-04-07 23:17:01 -0400] Sync Log:  [END] Copying .docker-sync/daemon.log
+[2018-04-07 23:17:01 -0400] Sync Log:  [BGN] Copying .docker-sync/daemon.pid from /host_sync to /app_sync
+[2018-04-07 23:17:01 -0400] Sync Log:  [END] Copying .docker-sync/daemon.pid
+[2018-04-07 23:17:01 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 23:18:44.56 on 07 Apr 2018
+[2018-04-07 23:17:01 -0400] Sync Log:  Synchronization complete at 23:18:44  (2 items transferred, 0 skipped, 0 failed)
+[2018-04-07 23:19:34 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 23:21:16.02 on 07 Apr 2018
+[2018-04-07 23:19:34 -0400] Sync Log:  [BGN] Updating file aquavalet/core/metadata.py from /host_sync to /app_sync
+[2018-04-07 23:19:34 -0400] Sync Log:  [END] Updating file aquavalet/core/metadata.py
+[2018-04-07 23:19:34 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 23:21:16.04 on 07 Apr 2018
+[2018-04-07 23:19:34 -0400] Sync Log:  Synchronization complete at 23:21:16  (1 item transferred, 0 skipped, 0 failed)
+[2018-04-07 23:21:25 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 23:23:07.32 on 07 Apr 2018
+[2018-04-07 23:21:25 -0400] Sync Log:  [BGN] Updating file aquavalet/server/api/v1/provider/__init__.py from /host_sync to /app_sync
+[2018-04-07 23:21:25 -0400] Sync Log:  [END] Updating file aquavalet/server/api/v1/provider/__init__.py
+[2018-04-07 23:21:25 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 23:23:07.33 on 07 Apr 2018
+[2018-04-07 23:21:25 -0400] Sync Log:  Synchronization complete at 23:23:07  (1 item transferred, 0 skipped, 0 failed)
+[2018-04-07 23:22:21 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 23:24:03.86 on 07 Apr 2018
+[2018-04-07 23:22:21 -0400] Sync Log:  [BGN] Updating file aquavalet/server/api/v1/provider/__init__.py from /host_sync to /app_sync
+[2018-04-07 23:22:21 -0400] Sync Log:  [END] Updating file aquavalet/server/api/v1/provider/__init__.py
+[2018-04-07 23:22:21 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 23:24:03.87 on 07 Apr 2018
+[2018-04-07 23:22:21 -0400] Sync Log:  Synchronization complete at 23:24:03  (1 item transferred, 0 skipped, 0 failed)
+[2018-04-07 23:25:17 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 23:26:59.98 on 07 Apr 2018
+[2018-04-07 23:25:17 -0400] Sync Log:  [BGN] Updating file aquavalet/server/api/v1/provider/__init__.py from /host_sync to /app_sync
+[2018-04-07 23:25:17 -0400] Sync Log:  [END] Updating file aquavalet/server/api/v1/provider/__init__.py
+[2018-04-07 23:25:17 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 23:26:59.99 on 07 Apr 2018
+[2018-04-07 23:25:17 -0400] Sync Log:  Synchronization complete at 23:26:59  (1 item transferred, 0 skipped, 0 failed)
+[2018-04-07 23:47:42 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 23:49:27.21 on 07 Apr 2018
+[2018-04-07 23:47:42 -0400] Sync Log:  [BGN] Updating file aquavalet/server/api/v1/provider/__init__.py from /host_sync to /app_sync
+[2018-04-07 23:47:42 -0400] Sync Log:  [END] Updating file aquavalet/server/api/v1/provider/__init__.py
+[2018-04-07 23:47:42 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 23:49:27.21 on 07 Apr 2018
+[2018-04-07 23:47:42 -0400] Sync Log:  Synchronization complete at 23:49:27  (1 item transferred, 0 skipped, 0 failed)
+[2018-04-07 23:49:15 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 23:51:00.25 on 07 Apr 2018
+[2018-04-07 23:49:15 -0400] Sync Log:  [BGN] Updating file aquavalet/server/api/v1/provider/__init__.py from /host_sync to /app_sync
+[2018-04-07 23:49:15 -0400] Sync Log:  [END] Updating file aquavalet/server/api/v1/provider/__init__.py
+[2018-04-07 23:49:15 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 23:51:00.25 on 07 Apr 2018
+[2018-04-07 23:49:15 -0400] Sync Log:  Synchronization complete at 23:51:00  (1 item transferred, 0 skipped, 0 failed)
+[2018-04-07 23:51:10 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 23:52:55.11 on 07 Apr 2018
+[2018-04-07 23:51:10 -0400] Sync Log:  [BGN] Updating file aquavalet/server/api/v1/provider/__init__.py from /host_sync to /app_sync
+[2018-04-07 23:51:10 -0400] Sync Log:  [END] Updating file aquavalet/server/api/v1/provider/__init__.py
+[2018-04-07 23:51:10 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 23:52:55.12 on 07 Apr 2018
+[2018-04-07 23:51:10 -0400] Sync Log:  Synchronization complete at 23:52:55  (1 item transferred, 0 skipped, 0 failed)
+[2018-04-07 23:52:40 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 23:54:24.93 on 07 Apr 2018
+[2018-04-07 23:52:40 -0400] Sync Log:  [BGN] Updating file aquavalet/core/metadata.py from /host_sync to /app_sync
+[2018-04-07 23:52:40 -0400] Sync Log:  [END] Updating file aquavalet/core/metadata.py
+[2018-04-07 23:52:40 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 23:54:24.94 on 07 Apr 2018
+[2018-04-07 23:52:40 -0400] Sync Log:  Synchronization complete at 23:54:24  (1 item transferred, 0 skipped, 0 failed)
+[2018-04-07 23:53:23 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 23:55:08.36 on 07 Apr 2018
+[2018-04-07 23:53:23 -0400] Sync Log:  [BGN] Updating file aquavalet/core/metadata.py from /host_sync to /app_sync
+[2018-04-07 23:53:23 -0400] Sync Log:  [END] Updating file aquavalet/core/metadata.py
+[2018-04-07 23:53:23 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 23:55:08.36 on 07 Apr 2018
+[2018-04-07 23:53:23 -0400] Sync Log:  Synchronization complete at 23:55:08  (1 item transferred, 0 skipped, 0 failed)
+[2018-04-07 23:54:17 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 23:56:02.60 on 07 Apr 2018
+[2018-04-07 23:54:17 -0400] Sync Log:  [BGN] Updating file aquavalet/core/metadata.py from /host_sync to /app_sync
+[2018-04-07 23:54:17 -0400] Sync Log:  [END] Updating file aquavalet/core/metadata.py
+[2018-04-07 23:54:17 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 23:56:02.61 on 07 Apr 2018
+[2018-04-07 23:54:17 -0400] Sync Log:  Synchronization complete at 23:56:02  (1 item transferred, 0 skipped, 0 failed)
+[2018-04-07 23:56:36 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 23:58:21.05 on 07 Apr 2018
+[2018-04-07 23:56:36 -0400] Sync Log:  [BGN] Updating file aquavalet/core/metadata.py from /host_sync to /app_sync
+[2018-04-07 23:56:36 -0400] Sync Log:  [END] Updating file aquavalet/core/metadata.py
+[2018-04-07 23:56:36 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 23:58:21.06 on 07 Apr 2018
+[2018-04-07 23:56:36 -0400] Sync Log:  Synchronization complete at 23:58:21  (1 item transferred, 0 skipped, 0 failed)
+[2018-04-07 23:57:16 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 23:59:01.48 on 07 Apr 2018
+[2018-04-07 23:57:16 -0400] Sync Log:  [BGN] Updating file aquavalet/core/metadata.py from /host_sync to /app_sync
+[2018-04-07 23:57:16 -0400] Sync Log:  [END] Updating file aquavalet/core/metadata.py
+[2018-04-07 23:57:16 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 23:59:01.49 on 07 Apr 2018
+[2018-04-07 23:57:16 -0400] Sync Log:  Synchronization complete at 23:59:01  (1 item transferred, 0 skipped, 0 failed)
+[2018-04-08 00:01:46 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 00:03:32.41 on 08 Apr 2018
+[2018-04-08 00:01:46 -0400] Sync Log:  [BGN] Updating file aquavalet/core/metadata.py from /host_sync to /app_sync
+[2018-04-08 00:01:46 -0400] Sync Log:  [END] Updating file aquavalet/core/metadata.py
+[2018-04-08 00:01:46 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 00:03:32.44 on 08 Apr 2018
+[2018-04-08 00:01:46 -0400] Sync Log:  Synchronization complete at 00:03:32  (1 item transferred, 0 skipped, 0 failed)
+[2018-04-08 00:02:00 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 00:03:45.87 on 08 Apr 2018
+[2018-04-08 00:02:00 -0400] Sync Log:  [BGN] Updating file aquavalet/core/metadata.py from /host_sync to /app_sync
+[2018-04-08 00:02:00 -0400] Sync Log:  [END] Updating file aquavalet/core/metadata.py
+[2018-04-08 00:02:00 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 00:03:45.88 on 08 Apr 2018
+[2018-04-08 00:02:00 -0400] Sync Log:  Synchronization complete at 00:03:45  (1 item transferred, 0 skipped, 0 failed)
+[2018-04-08 00:02:42 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) started propagating changes at 00:04:27.58 on 08 Apr 2018
+[2018-04-08 00:02:42 -0400] Sync Log:  [BGN] Updating file aquavalet/core/metadata.py from /host_sync to /app_sync
+[2018-04-08 00:02:42 -0400] Sync Log:  [END] Updating file aquavalet/core/metadata.py
+[2018-04-08 00:02:42 -0400] Sync Log:  UNISON 2.51.2 (OCAML 4.06.1) finished propagating changes at 00:04:27.60 on 08 Apr 2018
+[2018-04-08 00:02:42 -0400] Sync Log:  Synchronization complete at 00:04:27  (1 item transferred, 0 skipped, 0 failed)
