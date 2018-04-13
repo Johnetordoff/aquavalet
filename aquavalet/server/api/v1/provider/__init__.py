@@ -73,19 +73,30 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
         })
 
     async def rename(self, provider,  path):
-        version = self.get_query_argument('version', default=None)
+        new_name = self.get_query_argument('new_name', default=None)
 
-        self.provider.rename()
+        if new_name is None:
+            raise exceptions.InvalidPathError('new_name is a required parameter for renaming.')
 
-        self.metadata(provider, path)
+        await self.provider.rename(self.path, new_name)
+
+        metadata = await self.provider.metadata(self.path)
+
+        return self.write({
+            'data': metadata.json_api_serialized()
+        })
 
     async def get(self, provider,  path):
         action = self.get_query_argument('serve', default=None)
 
         if action == 'children':
             return await self.children(provider,  path)
+        if action == 'delete':
+            return await self.delete(provider,  path)
         elif action == 'meta':
             return await self.metadata(provider,  path)
+        elif action == 'rename':
+            return await self.rename(provider,  path)
         elif action == 'upload':
             return await self.upload(provider,  path)
         elif action == 'create_folder':
@@ -106,17 +117,18 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
 
         self.writer.close()
         self.wsock.close()
-
-        await self.provider.upload(self.stream, self.path)
+        new_name = self.get_query_argument('new_name', default=None)
+        await self.provider.upload(self.stream, self.path, new_name=new_name)
         metadata = await self.provider.metadata(self.path)
 
         self.write({'data': metadata.json_api_serialized()})
 
     async def create_folder(self, provider,  path):
         if self.path.is_file:
-            raise exceptions.InvalidPathError(message=f'{path.full_path} is not a directory, perhaps try using a trailing slash.')
+            raise exceptions.InvalidPathError(message=f'{self.path.full_path} is not a directory, perhaps try using a trailing slash.')
 
-        return await self.provider.create_folder(self.path)
+        new_name = self.get_query_argument('new_name', default=None)
+        return await self.provider.create_folder(self.path, new_name)
 
     async def post(self, provider,  path):
         return await self.move_or_copy()

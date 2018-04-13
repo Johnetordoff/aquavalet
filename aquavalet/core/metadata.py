@@ -31,6 +31,7 @@ class BaseMetadata(metaclass=abc.ABCMeta):
 
     def __init__(self, raw: dict) -> None:
         self.raw = raw
+        self.default_segments = ['v1', 'providers', self.provider]
 
     def serialized(self) -> dict:
         """Returns a dict of primitives suitable for serializing into JSON.
@@ -69,16 +70,16 @@ class BaseMetadata(metaclass=abc.ABCMeta):
         """
         actions = {}
 
-        default_segments = ['v1', 'providers', self.provider]
         path_segments = [seg for seg in self.path.split('/') if seg]
-        segments = default_segments + path_segments[:-1]
-        url = urlparse(settings.DOMAIN + '/' + '/'.join(segments) + '/?serve=meta')
+        print(path_segments)
 
-        actions['parent'] = url.geturl()
+        actions['self'] = self.construction_path(path_segments, 'meta')
+        actions['delete'] = self.construction_path(path_segments, 'delete')
+        actions['parent'] = self.construction_path(path_segments[:-1], 'meta')
+
         if self.is_folder:
-            segments = default_segments + path_segments
-            url = urlparse(settings.DOMAIN + '/' + '/'.join(segments) + '/?serve=children')
-            actions['children'] = url.geturl()
+            actions['children'] = self.construction_path(path_segments, 'children')
+            actions['upload'] = self.construction_path(path_segments, 'upload')
 
         return actions
 
@@ -88,6 +89,11 @@ class BaseMetadata(metaclass=abc.ABCMeta):
         if self.kind == 'folder' and not path.endswith('/'):
             path += '/'
         return path
+
+    def construction_path(self, path, action) -> str:
+        segments = self.default_segments + path
+        trailing_slash = '/' if self.path.endswith('/') or not path else ''
+        return urlparse(settings.DOMAIN + '/' + '/'.join(segments) + trailing_slash + '?serve=' + action).geturl()
 
     @property
     def is_folder(self) -> bool:
