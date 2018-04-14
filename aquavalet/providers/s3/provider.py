@@ -17,7 +17,7 @@ from boto.s3.connection import OrdinaryCallingFormat
 from aquavalet.core import streams
 from aquavalet.core import provider
 from aquavalet.core import exceptions
-from aquavalet.core.path import WaterButlerPath
+from aquavalet.core.path import AquaValetPath
 
 from aquavalet.providers.s3 import settings
 from aquavalet.providers.s3.metadata import S3Revision
@@ -67,7 +67,7 @@ class S3Provider(provider.BaseProvider):
         await self._check_region()
 
         if path == '/':
-            return WaterButlerPath(path)
+            return AquaValetPath(path)
 
         implicit_folder = path.endswith('/')
 
@@ -93,10 +93,10 @@ class S3Provider(provider.BaseProvider):
         if resp.status == 404:
             raise exceptions.NotFoundError(str(path))
 
-        return WaterButlerPath(path)
+        return AquaValetPath(path)
 
     async def validate_path(self, path, **kwargs):
-        return WaterButlerPath(path)
+        return AquaValetPath(path)
 
     def can_duplicate_names(self):
         return True
@@ -372,7 +372,7 @@ class S3Provider(provider.BaseProvider):
     async def metadata(self, path, version=None, **kwargs):
         """Get Metadata about the requested file or folder
 
-        :param WaterButlerPath path: The path to a key or folder
+        :param AquaValetPath path: The path to a key or folder
         :rtype: dict or list
         """
         await self._check_region()
@@ -388,7 +388,7 @@ class S3Provider(provider.BaseProvider):
         """
         await self._check_region()
 
-        WaterButlerPath.validate_folder(path)
+        AquaValetPath.validate_folder(path)
 
         if folder_precheck:
             if (await self.exists(path)):

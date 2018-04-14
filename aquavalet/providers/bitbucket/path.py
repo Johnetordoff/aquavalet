@@ -4,7 +4,7 @@ from urllib import parse
 from aquavalet.core import path
 
 
-class BitbucketPathPart(path.WaterButlerPathPart):
+class BitbucketPathPart(path.AquaValetPathPart):
 
     bitbucket_safe_chars = '~`!@$^&*()_-+={}|[];:,<.>"\' '
 
@@ -19,7 +19,7 @@ class BitbucketPathPart(path.WaterButlerPathPart):
         return self
 
 
-class BitbucketPath(path.WaterButlerPath):
+class BitbucketPath(path.AquaValetPath):
     """The ``identifier`` for BitbucketPaths are tuples of ``(commit_sha, branch_name)``. Children
     of BitbucketPaths inherit their parent's ``commit_sha`` and ``branch_name``.  Either one may be
     ``None``.

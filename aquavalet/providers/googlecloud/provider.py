@@ -7,7 +7,7 @@ from http import HTTPStatus
 
 from google.oauth2 import service_account
 
-from aquavalet.core.path import WaterButlerPath
+from aquavalet.core.path import AquaValetPath
 from aquavalet.core.provider import BaseProvider
 from aquavalet.core.streams import BaseStream, HashStreamWriter, ResponseStreamReader
 from aquavalet.core.exceptions import (WaterButlerError, MetadataError, NotFoundError,
@@ -95,15 +95,15 @@ class GoogleCloudProvider(BaseProvider):
         # `self.region` has no functional usage or impact
         self.region = settings.get('region')
 
-    async def validate_v1_path(self, path: str, **kwargs) -> WaterButlerPath:
+    async def validate_v1_path(self, path: str, **kwargs) -> AquaValetPath:
         return await self.validate_path(path)
 
-    async def validate_path(self, path: str, **kwargs) -> WaterButlerPath:
-        return WaterButlerPath(path)
+    async def validate_path(self, path: str, **kwargs) -> AquaValetPath:
+        return AquaValetPath(path)
 
     async def metadata(
             self,
-            path: WaterButlerPath,
+            path: AquaValetPath,
             **kwargs
     ) -> typing.Union[BaseGoogleCloudMetadata, typing.List[BaseGoogleCloudMetadata]]:
         """Get the metadata about the object with the given WaterButler path.
@@ -124,7 +124,7 @@ class GoogleCloudProvider(BaseProvider):
     async def upload(
             self,
             stream: BaseStream,
-            path: WaterButlerPath,
+            path: AquaValetPath,
             *args,
             **kwargs
     ) -> typing.Tuple[GoogleCloudFileMetadata, bool]:
@@ -193,7 +193,7 @@ class GoogleCloudProvider(BaseProvider):
 
     async def download(
             self,
-            path: WaterButlerPath,
+            path: AquaValetPath,
             accept_url=False,
             range=None,
             **kwargs
@@ -246,7 +246,7 @@ class GoogleCloudProvider(BaseProvider):
         )
         return ResponseStreamReader(resp)
 
-    async def delete(self, path: WaterButlerPath, *args, **kwargs) -> None:
+    async def delete(self, path: AquaValetPath, *args, **kwargs) -> None:
         """Deletes the file object with the specified WaterButler path.
 
         Similarly to intra-copy folders, delete folders requires "BATCH" request support which is
@@ -270,8 +270,8 @@ class GoogleCloudProvider(BaseProvider):
     async def intra_copy(
             self,
             dest_provider: BaseProvider,
-            source_path: WaterButlerPath,
-            dest_path: WaterButlerPath
+            source_path: AquaValetPath,
+            dest_path: AquaValetPath
     ) -> typing.Tuple[typing.Union[GoogleCloudFileMetadata, GoogleCloudFolderMetadata], bool]:
         """Copy file objects within the same Google Cloud Storage Provider.
 
@@ -297,7 +297,7 @@ class GoogleCloudProvider(BaseProvider):
 
         raise CopyError('Cannot copy between a file and a folder')
 
-    def can_intra_copy(self, other: BaseProvider, path: WaterButlerPath = None) -> bool:
+    def can_intra_copy(self, other: BaseProvider, path: AquaValetPath = None) -> bool:
         """Google Cloud Storage XML API supports intra-copy for files.  Intra-copy for folders
         requires "BATCH" request support which is available for JSON API. However, there is no
         documentation on the XML API.  It may be eligible given the fact that Amazon S3 supports
@@ -307,7 +307,7 @@ class GoogleCloudProvider(BaseProvider):
         """
         return self == other and not getattr(path, 'is_folder', False)
 
-    def can_intra_move(self, other: BaseProvider, path: WaterButlerPath = None) -> bool:
+    def can_intra_move(self, other: BaseProvider, path: AquaValetPath = None) -> bool:
         """Google Cloud Storage XML API supports intra move for files.  It is a combination of
         intra-copy and delete. Please refer to ``can_intra_copy()`` for more information.
         """
@@ -319,7 +319,7 @@ class GoogleCloudProvider(BaseProvider):
         """
         return True
 
-    async def _exists_folder(self, path: WaterButlerPath) -> bool:
+    async def _exists_folder(self, path: AquaValetPath) -> bool:
         """Check if a folder with the given WaterButler path exists. Calls ``_metadata_object()``.
 
         For folders, ``exists()`` from the core provider calls ``metadata()``, which further calls
@@ -347,7 +347,7 @@ class GoogleCloudProvider(BaseProvider):
 
     async def _metadata_object(
             self,
-            path: WaterButlerPath,
+            path: AquaValetPath,
             is_folder: bool = False
     ) -> typing.Union[GoogleCloudFileMetadata, GoogleCloudFolderMetadata]:
         """Get the metadata about the object itself with the given WaterButler path.
@@ -394,7 +394,7 @@ class GoogleCloudProvider(BaseProvider):
         else:
             return GoogleCloudFileMetadata(parsed_resp_headers)
 
-    async def _delete_file(self, path: WaterButlerPath) -> None:
+    async def _delete_file(self, path: AquaValetPath) -> None:
         """Deletes the file with the specified WaterButler path.
 
         Delete Object:
@@ -423,8 +423,8 @@ class GoogleCloudProvider(BaseProvider):
     async def _intra_copy_file(
             self,
             dest_provider: BaseProvider,
-            source_path: WaterButlerPath,
-            dest_path: WaterButlerPath
+            source_path: AquaValetPath,
+            dest_path: AquaValetPath
     ) -> typing.Tuple[GoogleCloudFileMetadata, bool]:
         """Copy files within the same Google Cloud Storage provider, overwrite existing ones if
         there are any.  Return the metadata of the destination file, created or overwritten.

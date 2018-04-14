@@ -1,6 +1,6 @@
 import pytest
 
-from aquavalet.core.path import WaterButlerPath
+from aquavalet.core.path import AquaValetPath
 from aquavalet.providers.box.metadata import (BoxFolderMetadata,
                                               BoxFileMetadata,
                                               BoxRevision)
@@ -14,7 +14,7 @@ class TestBoxMetadata:
 
     def test_file_metadata(self, root_provider_fixtures):
         item = root_provider_fixtures['file_metadata']['entries'][0]
-        dest_path = WaterButlerPath('/charmander/name.txt', _ids=('0', item['id'], item['id']))
+        dest_path = AquaValetPath('/charmander/name.txt', _ids=('0', item['id'], item['id']))
         data = BoxFileMetadata(item, dest_path)
         assert data.name == 'tigers.jpeg'
         assert data.path == '/5000948880'
@@ -85,7 +85,7 @@ class TestBoxMetadata:
 
     def test_folder_metadata(self, intra_fixtures):
         item = intra_fixtures['intra_folder_metadata']
-        dest_path = WaterButlerPath('/moveablefolder/', _ids=('0', item['id']), folder=True)
+        dest_path = AquaValetPath('/moveablefolder/', _ids=('0', item['id']), folder=True)
         data = BoxFolderMetadata(item, dest_path)
         assert data.name == 'moveablefolder'
         assert data.path == '/36833297084/'

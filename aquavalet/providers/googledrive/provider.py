@@ -28,13 +28,13 @@ def clean_query(query: str):
     return query.replace('\\', r'\\').replace("'", r"\'")
 
 
-class GoogleDrivePathPart(wb_path.WaterButlerPathPart):
+class GoogleDrivePathPart(wb_path.AquaValetPathPart):
     DECODE = parse.unquote
     # TODO: mypy lacks a syntax to define kwargs for callables
     ENCODE = functools.partial(parse.quote, safe='')  # type: ignore
 
 
-class GoogleDrivePath(wb_path.WaterButlerPath):
+class GoogleDrivePath(wb_path.AquaValetPath):
     PART_CLASS = GoogleDrivePathPart
 
 
@@ -107,9 +107,9 @@ class GoogleDriveProvider(provider.BaseProvider):
         return GoogleDrivePath('/'.join(names), _ids=ids, folder='folder' in parts[-1]['mimeType'])
 
     async def revalidate_path(self,
-                              base: wb_path.WaterButlerPath,
+                              base: wb_path.AquaValetPath,
                               name: str,
-                              folder: bool = None) -> wb_path.WaterButlerPath:
+                              folder: bool = None) -> wb_path.AquaValetPath:
         # TODO Redo the logic here folders names ending in /s
         # Will probably break
         if '/' in name.lstrip('/') and '%' not in name:
@@ -148,8 +148,8 @@ class GoogleDriveProvider(provider.BaseProvider):
 
     async def intra_move(self,  # type: ignore
                          dest_provider: provider.BaseProvider,
-                         src_path: wb_path.WaterButlerPath,
-                         dest_path: wb_path.WaterButlerPath) \
+                         src_path: wb_path.AquaValetPath,
+                         dest_path: wb_path.AquaValetPath) \
                          -> typing.Tuple[BaseGoogleDriveMetadata, bool]:
         self.metrics.add('intra_move.destination_exists', dest_path.identifier is not None)
         if dest_path.identifier:
@@ -184,8 +184,8 @@ class GoogleDriveProvider(provider.BaseProvider):
 
     async def intra_copy(self,
                          dest_provider: provider.BaseProvider,
-                         src_path: wb_path.WaterButlerPath,
-                         dest_path: wb_path.WaterButlerPath) \
+                         src_path: wb_path.AquaValetPath,
+                         dest_path: wb_path.AquaValetPath) \
                          -> typing.Tuple[GoogleDriveFileMetadata, bool]:
         self.metrics.add('intra_copy.destination_exists', dest_path.identifier is not None)
         if dest_path.identifier:
@@ -254,7 +254,7 @@ class GoogleDriveProvider(provider.BaseProvider):
         stream.name = metadata.export_name  # type: ignore
         return stream
 
-    async def upload(self, stream, path: wb_path.WaterButlerPath, *args, **kwargs) \
+    async def upload(self, stream, path: wb_path.AquaValetPath, *args, **kwargs) \
             -> typing.Tuple[GoogleDriveFileMetadata, bool]:
         assert path.is_file
 
@@ -279,7 +279,7 @@ class GoogleDriveProvider(provider.BaseProvider):
                      path: GoogleDrivePath,
                      confirm_delete: int=0,
                      **kwargs) -> None:
-        """Given a WaterButlerPath, delete that path
+        """Given a AquaValetPath, delete that path
         :param GoogleDrivePath: Path to be deleted
         :param int confirm_delete: Must be 1 to confirm root folder delete
         :rtype: None
@@ -287,7 +287,7 @@ class GoogleDriveProvider(provider.BaseProvider):
         :raises: :class:`aquavalet.core.exceptions.DeleteError`
 
         Quirks:
-            If the WaterButlerPath given is for the provider root path, then
+            If the AquaValetPath given is for the provider root path, then
             the contents of provider root path will be deleted. But not the
             provider root itself.
         """
@@ -381,7 +381,7 @@ class GoogleDriveProvider(provider.BaseProvider):
         })]
 
     async def create_folder(self,
-                            path: wb_path.WaterButlerPath,
+                            path: wb_path.AquaValetPath,
                             folder_precheck: bool=True,
                             **kwargs) -> GoogleDriveFolderMetadata:
         GoogleDrivePath.validate_folder(path)
@@ -416,7 +416,7 @@ class GoogleDriveProvider(provider.BaseProvider):
         return provider.build_url(settings.BASE_UPLOAD_URL, *segments, **query)
 
     def _serialize_item(self,
-                        path: wb_path.WaterButlerPath,
+                        path: wb_path.AquaValetPath,
                         item: dict,
                         raw: bool=False) -> typing.Union[BaseGoogleDriveMetadata, dict]:
         if raw:
@@ -576,7 +576,7 @@ class GoogleDriveProvider(provider.BaseProvider):
 
         return self._serialize_item(path, item, raw=raw)
 
-    async def _folder_metadata(self, path: wb_path.WaterButlerPath, raw: bool=False) \
+    async def _folder_metadata(self, path: wb_path.AquaValetPath, raw: bool=False) \
             -> typing.List[typing.Union[BaseGoogleDriveMetadata, dict]]:
         query = self._build_query(path.identifier)
         built_url = self.build_url('files', q=query, alt='json', maxResults=1000)
@@ -670,10 +670,10 @@ class GoogleDriveProvider(provider.BaseProvider):
 
         return data if raw else GoogleDriveFileMetadata(data, path)
 
-    async def _delete_folder_contents(self, path: wb_path.WaterButlerPath) -> None:
-        """Given a WaterButlerPath, delete all contents of folder
+    async def _delete_folder_contents(self, path: wb_path.AquaValetPath) -> None:
+        """Given a AquaValetPath, delete all contents of folder
 
-        :param WaterButlerPath path: Folder to be emptied
+        :param AquaValetPath path: Folder to be emptied
         :rtype: None
         :raises: :class:`aquavalet.core.exceptions.NotFoundError`
         :raises: :class:`aquavalet.core.exceptions.MetadataError`

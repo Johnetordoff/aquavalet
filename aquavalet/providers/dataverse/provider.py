@@ -7,7 +7,7 @@ from http import HTTPStatus
 from aquavalet.core import streams
 from aquavalet.core import provider
 from aquavalet.core import exceptions
-from aquavalet.core.path import WaterButlerPath
+from aquavalet.core.path import AquaValetPath
 from aquavalet.core.utils import AsyncIterator
 
 from aquavalet.providers.dataverse import settings
@@ -77,7 +77,7 @@ class DataverseProvider(provider.BaseProvider):
         """
         self.metrics.add('validate_path.revision', revision)
         if path == '/':
-            wbpath = WaterButlerPath('/')
+            wbpath = AquaValetPath('/')
             wbpath.revision = revision
             return wbpath
 
@@ -86,8 +86,8 @@ class DataverseProvider(provider.BaseProvider):
         wbpath = None
         for item in (await self._maybe_fetch_metadata(version=revision)):
             if path == item.extra['fileId']:
-                wbpath = WaterButlerPath('/' + item.name, _ids=(None, item.extra['fileId']))
-        wbpath = wbpath or WaterButlerPath('/' + path)
+                wbpath = AquaValetPath('/' + item.name, _ids=(None, item.extra['fileId']))
+        wbpath = wbpath or AquaValetPath('/' + path)
 
         wbpath.revision = revision
         return wbpath

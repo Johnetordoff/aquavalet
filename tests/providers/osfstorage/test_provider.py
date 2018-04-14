@@ -8,7 +8,7 @@ import aiohttpretty
 
 from aquavalet.core import metadata
 from aquavalet.core import exceptions
-from aquavalet.core.path import WaterButlerPath
+from aquavalet.core.path import AquaValetPath
 from aquavalet.providers.osfstorage.settings import FILE_PATH_COMPLETE, FILE_PATH_PENDING
 from aquavalet.providers.osfstorage.metadata import (OsfStorageFileMetadata,
                                                      OsfStorageFolderMetadata,
@@ -84,7 +84,7 @@ class TestDownload:
 
         assert aiohttpretty.has_call(method='GET', uri=uri, params=params)
         provider.make_provider.assert_called_once_with(download_response['settings'])
-        expected_path = WaterButlerPath('/' + download_response['data']['path'])
+        expected_path = AquaValetPath('/' + download_response['data']['path'])
         expected_display_name = download_response['data']['name']
         inner_provider.download.assert_called_once_with(path=expected_path,
                                                         displayName=expected_display_name)
@@ -107,7 +107,7 @@ class TestDownload:
         assert aiohttpretty.has_call(method='GET', uri=url, params=params)
         provider.make_provider.assert_called_once_with(download_response['settings'])
 
-        expected_path = WaterButlerPath('/' + download_response['data']['path'])
+        expected_path = AquaValetPath('/' + download_response['data']['path'])
         expected_display_name = download_response['data']['name']
         inner_provider.download.assert_called_once_with(path=expected_path,
                                                         displayName=expected_display_name)
@@ -295,11 +295,11 @@ class TestIntraCopy:
         dest_mock.nid = 'abcde'
         dest_mock._children_metadata = utils.MockCoroutine(return_value=folder_children_metadata)
         dest_mock.validate_v1_path = utils.MockCoroutine(
-            return_value=WaterButlerPath('/folder1/', _ids=('rootId', 'folder1'))
+            return_value=AquaValetPath('/folder1/', _ids=('rootId', 'folder1'))
         )
 
-        src_path = WaterButlerPath('/folder1/', _ids=['RootId', 'folder1'], folder=True)
-        dest_path = WaterButlerPath('/folder1/', folder=True)
+        src_path = AquaValetPath('/folder1/', _ids=['RootId', 'folder1'], folder=True)
+        dest_path = AquaValetPath('/folder1/', folder=True)
 
         data=json.dumps({
             'user': src_provider.auth['id'],
@@ -321,7 +321,7 @@ class TestIntraCopy:
         assert created
         assert isinstance(folder_meta, OsfStorageFolderMetadata)
         assert len(folder_meta.children) == 4
-        dest_mock._children_metadata.assert_called_once_with(WaterButlerPath('/folder1/'))
+        dest_mock._children_metadata.assert_called_once_with(AquaValetPath('/folder1/'))
         assert dest_mock.validate_v1_path.call_count == 1
 
         src_mock._children_metadata.assert_not_called()
@@ -338,8 +338,8 @@ class TestIntraCopy:
         dest_provider, dest_mock = provider_and_mock2
         dest_mock.nid = 'abcde'
 
-        src_path = WaterButlerPath('/test_file', _ids=['RootId', 'fileId'], folder=False)
-        dest_path = WaterButlerPath('/folder1/', folder=True)
+        src_path = AquaValetPath('/test_file', _ids=['RootId', 'fileId'], folder=False)
+        dest_path = AquaValetPath('/folder1/', folder=True)
 
         data=json.dumps({
             'user': src_provider.auth['id'],
@@ -369,11 +369,11 @@ class TestIntraCopy:
         dest_provider, dest_mock = provider_and_mock2
         dest_mock.nid = 'abcde'
         dest_mock.validate_v1_path = utils.MockCoroutine(
-            return_value=WaterButlerPath('/file', _ids=('rootId', 'fileId'))
+            return_value=AquaValetPath('/file', _ids=('rootId', 'fileId'))
         )
 
-        src_path = WaterButlerPath('/folder1/', _ids=['RootId', 'folder1'], folder=True)
-        dest_path = WaterButlerPath('/folder1/',_ids=['RootId', 'folder1'], folder=True)
+        src_path = AquaValetPath('/folder1/', _ids=['RootId', 'folder1'], folder=True)
+        dest_path = AquaValetPath('/folder1/', _ids=['RootId', 'folder1'], folder=True)
 
         data=json.dumps({
             'user': src_provider.auth['id'],
@@ -412,11 +412,11 @@ class TestIntraMove:
         dest_mock.nid = 'abcde'
         dest_mock._children_metadata = utils.MockCoroutine(return_value=folder_children_metadata)
         dest_mock.validate_v1_path = utils.MockCoroutine(
-            return_value=WaterButlerPath('/folder1/', _ids=('rootId', 'folder1'))
+            return_value=AquaValetPath('/folder1/', _ids=('rootId', 'folder1'))
         )
 
-        src_path = WaterButlerPath('/folder1/', _ids=['RootId', 'folder1'], folder=True)
-        dest_path = WaterButlerPath('/folder1/', _ids=['RootId', 'folder1'], folder=True)
+        src_path = AquaValetPath('/folder1/', _ids=['RootId', 'folder1'], folder=True)
+        dest_path = AquaValetPath('/folder1/', _ids=['RootId', 'folder1'], folder=True)
 
         data=json.dumps({
             'user': src_provider.auth['id'],
@@ -437,7 +437,7 @@ class TestIntraMove:
         assert created == False
         assert isinstance(folder_meta, OsfStorageFolderMetadata)
         assert len(folder_meta.children) == 4
-        dest_mock._children_metadata.assert_called_once_with(WaterButlerPath('/folder1/'))
+        dest_mock._children_metadata.assert_called_once_with(AquaValetPath('/folder1/'))
         assert dest_mock.validate_v1_path.call_count == 1
 
         src_mock._children_metadata.assert_not_called()
@@ -452,8 +452,8 @@ class TestIntraMove:
         dest_provider, dest_mock = provider_and_mock2
         dest_mock.nid = 'abcde'
 
-        src_path = WaterButlerPath('/file', _ids=['RootId', 'fileId'], folder=False)
-        dest_path = WaterButlerPath('/folder1/', folder=True)
+        src_path = AquaValetPath('/file', _ids=['RootId', 'fileId'], folder=False)
+        dest_path = AquaValetPath('/folder1/', folder=True)
 
         data = json.dumps({
             'user': src_provider.auth['id'],
@@ -518,7 +518,7 @@ class TestValidatePath:
         wb_path_v0 = await provider.validate_path('/' + file_id)
         wb_path_v1 = await provider.validate_v1_path('/' + file_id)
 
-        expected = WaterButlerPath('/doc.rst')
+        expected = AquaValetPath('/doc.rst')
         assert wb_path_v0 == expected
         assert wb_path_v1 == expected
 
@@ -536,7 +536,7 @@ class TestValidatePath:
         wb_path_v0 = await provider.validate_path('/' + folder_id)
         wb_path_v1 = await provider.validate_v1_path('/' + folder_id + '/')
 
-        expected = WaterButlerPath('/New Folder/')
+        expected = AquaValetPath('/New Folder/')
         assert wb_path_v0 == expected
         assert wb_path_v1 == expected
 
@@ -553,7 +553,7 @@ class TestValidatePath:
 
         wb_path_v0 = await provider.validate_path('/' + file_id)
 
-        assert wb_path_v0 == WaterButlerPath(file_lineage['data'][0]['path'], prepend=None)
+        assert wb_path_v0 == AquaValetPath(file_lineage['data'][0]['path'], prepend=None)
 
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
@@ -629,10 +629,10 @@ class TestUploads:
         assert res.extra['checkout'] is None
         assert upload_path.identifier_path == res.path
 
-        inner_provider.delete.assert_called_once_with(WaterButlerPath('/patched_path'))
-        expected_path = WaterButlerPath('/' + file_stream.writers['sha256'].hexdigest)
+        inner_provider.delete.assert_called_once_with(AquaValetPath('/patched_path'))
+        expected_path = AquaValetPath('/' + file_stream.writers['sha256'].hexdigest)
         inner_provider.metadata.assert_called_once_with(expected_path)
-        inner_provider.upload.assert_called_once_with(file_stream, WaterButlerPath('/patched_path'),
+        inner_provider.upload.assert_called_once_with(file_stream, AquaValetPath('/patched_path'),
                                                       check_created=False, fetch_metadata=False)
 
     @pytest.mark.asyncio
@@ -659,14 +659,14 @@ class TestUploads:
         assert res.extra['checkout'] is None
         assert upload_path.identifier_path == res.path
 
-        expected_path = WaterButlerPath('/' + file_stream.writers['sha256'].hexdigest)
+        expected_path = AquaValetPath('/' + file_stream.writers['sha256'].hexdigest)
         inner_provider.metadata.assert_called_once_with(expected_path)
         inner_provider.upload.assert_called_once_with(file_stream,
-                                                      WaterButlerPath('/patched_path'),
+                                                      AquaValetPath('/patched_path'),
                                                       check_created=False,
                                                       fetch_metadata=False)
         inner_provider.move.assert_called_once_with(inner_provider,
-                                                    WaterButlerPath('/patched_path'),
+                                                    AquaValetPath('/patched_path'),
                                                     expected_path)
 
     @pytest.mark.asyncio
@@ -690,8 +690,8 @@ class TestUploads:
                                     upload_response, credentials, settings, mock_time):
         provider, inner_provider = provider_and_mock
         basepath = 'aquavalet.providers.osfstorage.provider.{}'
-        path = WaterButlerPath('/' + upload_response['data']['name'],
-                               _ids=('Test', upload_response['data']['id']))
+        path = AquaValetPath('/' + upload_response['data']['name'],
+                             _ids=('Test', upload_response['data']['id']))
         url = 'https://aquavalet.io/{}/children/'.format(path.parent.identifier)
 
         mock_parity = mock.Mock()
@@ -715,7 +715,7 @@ class TestUploads:
         assert res.extra['downloads'] == 0
         assert res.extra['checkout'] is None
 
-        inner_provider.upload.assert_called_once_with(file_stream, WaterButlerPath('/uniquepath'),
+        inner_provider.upload.assert_called_once_with(file_stream, AquaValetPath('/uniquepath'),
                                                       check_created=False, fetch_metadata=False)
         complete_path = os.path.join(FILE_PATH_COMPLETE, file_stream.writers['sha256'].hexdigest)
         mock_parity.assert_called_once_with(complete_path, upload_response['version'],
@@ -724,9 +724,9 @@ class TestUploads:
         mock_backup.assert_called_once_with(complete_path, upload_response['version'],
                                             'https://aquavalet.io/hooks/metadata/',
                                             credentials['archive'], settings['archive'])
-        expected_path = WaterButlerPath('/' + file_stream.writers['sha256'].hexdigest)
+        expected_path = AquaValetPath('/' + file_stream.writers['sha256'].hexdigest)
         inner_provider.metadata.assert_called_once_with(expected_path)
-        inner_provider.move.assert_called_once_with(inner_provider, WaterButlerPath('/uniquepath'),
+        inner_provider.move.assert_called_once_with(inner_provider, AquaValetPath('/uniquepath'),
                                                     expected_path)
 
     @pytest.mark.asyncio
@@ -735,8 +735,8 @@ class TestUploads:
                                 mock_time):
         self.patch_tasks(monkeypatch)
         provider, inner_provider = provider_and_mock
-        path = WaterButlerPath('/{}'.format(upload_response['data']['name']),
-                               _ids=('Test', upload_response['data']['id']))
+        path = AquaValetPath('/{}'.format(upload_response['data']['name']),
+                             _ids=('Test', upload_response['data']['id']))
         url = 'https://aquavalet.io/{}/children/'.format(path.parent.identifier)
 
         aiohttpretty.register_json_uri('POST', url, status=201, body=upload_response)
@@ -749,7 +749,7 @@ class TestUploads:
         assert not os.path.isfile(FILE_PATH_PENDING + '/patched_path')
         inner_provider.upload.assert_called_once_with(
             file_stream,
-            WaterButlerPath('/patched_path'),
+            AquaValetPath('/patched_path'),
             check_created=False,
             fetch_metadata=False
         )

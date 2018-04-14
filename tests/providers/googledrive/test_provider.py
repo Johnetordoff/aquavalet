@@ -10,7 +10,7 @@ import aiohttpretty
 
 from aquavalet.core import streams
 from aquavalet.core import exceptions
-from aquavalet.core.path import WaterButlerPath
+from aquavalet.core.path import AquaValetPath
 
 from aquavalet.providers.googledrive import settings as ds
 from aquavalet.providers.googledrive import GoogleDriveProvider
@@ -376,7 +376,7 @@ class TestUpload:
     async def test_upload_create(self, provider, file_stream, root_provider_fixtures):
         upload_id = '7'
         item = root_provider_fixtures['list_file']['items'][0]
-        path = WaterButlerPath('/birdie.jpg', _ids=(provider.folder['id'], None))
+        path = AquaValetPath('/birdie.jpg', _ids=(provider.folder['id'], None))
 
         start_upload_url = provider._build_upload_url('files', uploadType='resumable')
         finish_upload_url = provider._build_upload_url('files', uploadType='resumable',
@@ -424,7 +424,7 @@ class TestUpload:
     async def test_upload_update(self, provider, file_stream, root_provider_fixtures):
         upload_id = '7'
         item = root_provider_fixtures['list_file']['items'][0]
-        path = WaterButlerPath('/birdie.jpg', _ids=(provider.folder['id'], item['id']))
+        path = AquaValetPath('/birdie.jpg', _ids=(provider.folder['id'], item['id']))
 
         start_upload_url = provider._build_upload_url('files', path.identifier,
                                                       uploadType='resumable')
@@ -447,7 +447,7 @@ class TestUpload:
     async def test_upload_create_nested(self, provider, file_stream, root_provider_fixtures):
         upload_id = '7'
         item = root_provider_fixtures['list_file']['items'][0]
-        path = WaterButlerPath(
+        path = AquaValetPath(
             '/ed/sullivan/show.mp3',
             _ids=[str(x) for x in range(3)]
         )
@@ -470,7 +470,7 @@ class TestUpload:
     @pytest.mark.aiohttpretty
     async def test_upload_checksum_mismatch(self, provider, file_stream, root_provider_fixtures):
         upload_id = '7'
-        path = WaterButlerPath('/birdie.jpg', _ids=(provider.folder['id'], None))
+        path = AquaValetPath('/birdie.jpg', _ids=(provider.folder['id'], None))
 
         start_upload_url = provider._build_upload_url('files', uploadType='resumable')
         finish_upload_url = provider._build_upload_url('files', uploadType='resumable',
@@ -494,7 +494,7 @@ class TestDelete:
     @pytest.mark.aiohttpretty
     async def test_delete(self, provider, root_provider_fixtures):
         item = root_provider_fixtures['list_file']['items'][0]
-        path = WaterButlerPath('/birdie.jpg', _ids=(None, item['id']))
+        path = AquaValetPath('/birdie.jpg', _ids=(None, item['id']))
         delete_url = provider.build_url('files', item['id'])
         del_url_body = json.dumps({'labels': {'trashed': 'true'}})
         aiohttpretty.register_uri('PUT',
@@ -514,7 +514,7 @@ class TestDelete:
         del_url = provider.build_url('files', item['id'])
         del_url_body = json.dumps({'labels': {'trashed': 'true'}})
 
-        path = WaterButlerPath('/foobar/', _ids=('doesntmatter', item['id']))
+        path = AquaValetPath('/foobar/', _ids=('doesntmatter', item['id']))
 
         aiohttpretty.register_uri('PUT',
                                   del_url,
@@ -529,12 +529,12 @@ class TestDelete:
     @pytest.mark.aiohttpretty
     async def test_delete_not_existing(self, provider):
         with pytest.raises(exceptions.NotFoundError):
-            await provider.delete(WaterButlerPath('/foobar/'))
+            await provider.delete(AquaValetPath('/foobar/'))
 
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_delete_root_no_confirm(self, provider):
-        path = WaterButlerPath('/', _ids=('0'))
+        path = AquaValetPath('/', _ids=('0'))
 
         with pytest.raises(exceptions.DeleteError) as e:
             await provider.delete(path)
@@ -546,7 +546,7 @@ class TestDelete:
     @pytest.mark.aiohttpretty
     async def test_delete_root(self, provider, root_provider_fixtures):
         item = root_provider_fixtures['delete_contents_metadata']['items'][0]
-        root_path = WaterButlerPath('/', _ids=('0'))
+        root_path = AquaValetPath('/', _ids=('0'))
 
         url = provider.build_url('files', q="'{}' in parents".format('0'), fields='items(id)')
         aiohttpretty.register_json_uri('GET', url,
@@ -983,7 +983,7 @@ class TestMetadata:
     @pytest.mark.aiohttpretty
     async def test_metadata_file_root(self, provider, root_provider_fixtures):
         file_metadata = root_provider_fixtures['list_file']['items'][0]
-        path = WaterButlerPath('/birdie.jpg', _ids=(provider.folder['id'], file_metadata['id']))
+        path = AquaValetPath('/birdie.jpg', _ids=(provider.folder['id'], file_metadata['id']))
 
         list_file_url = provider.build_url('files', path.identifier)
         aiohttpretty.register_json_uri('GET', list_file_url, body=file_metadata)
@@ -996,8 +996,8 @@ class TestMetadata:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_metadata_string_error_response(self, provider, root_provider_fixtures):
-        path = WaterButlerPath('/birdie.jpg',
-                               _ids=(provider.folder['id'],
+        path = AquaValetPath('/birdie.jpg',
+                             _ids=(provider.folder['id'],
                                      root_provider_fixtures['list_file']['items'][0]['id']))
 
         list_file_url = provider.build_url('files', path.identifier)
@@ -1013,7 +1013,7 @@ class TestMetadata:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_metadata_file_root_not_found(self, provider):
-        path = WaterButlerPath('/birdie.jpg', _ids=(provider.folder['id'], None))
+        path = AquaValetPath('/birdie.jpg', _ids=(provider.folder['id'], None))
 
         with pytest.raises(exceptions.MetadataError) as exc_info:
             await provider.metadata(path)
@@ -1397,7 +1397,7 @@ class TestRevisions:
     @pytest.mark.aiohttpretty
     async def test_get_revisions(self, provider, revision_fixtures, root_provider_fixtures):
         item = root_provider_fixtures['list_file']['items'][0]
-        path = WaterButlerPath('/birdie.jpg', _ids=('doesntmatter', item['id']))
+        path = AquaValetPath('/birdie.jpg', _ids=('doesntmatter', item['id']))
 
         revisions_url = provider.build_url('files', item['id'], 'revisions')
         aiohttpretty.register_json_uri('GET', revisions_url,
@@ -1417,7 +1417,7 @@ class TestRevisions:
         item = root_provider_fixtures['list_file']['items'][0]
         metadata_url = provider.build_url('files', item['id'])
         revisions_url = provider.build_url('files', item['id'], 'revisions')
-        path = WaterButlerPath('/birdie.jpg', _ids=('doesntmatter', item['id']))
+        path = AquaValetPath('/birdie.jpg', _ids=('doesntmatter', item['id']))
 
         aiohttpretty.register_json_uri('GET', metadata_url, body=item)
         aiohttpretty.register_json_uri('GET', revisions_url,
@@ -1439,7 +1439,7 @@ class TestRevisions:
         item = file_fixtures['metadata']
         metadata_url = provider.build_url('files', item['id'])
         revisions_url = provider.build_url('files', item['id'], 'revisions')
-        path = WaterButlerPath('/birdie.jpg', _ids=('doesntmatter', item['id']))
+        path = AquaValetPath('/birdie.jpg', _ids=('doesntmatter', item['id']))
 
         aiohttpretty.register_json_uri('GET', metadata_url, body=item)
         aiohttpretty.register_json_uri(
@@ -1458,7 +1458,7 @@ class TestRevisions:
     @pytest.mark.aiohttpretty
     async def test_get_revisions_doesnt_exist(self, provider):
         with pytest.raises(exceptions.NotFoundError):
-            await provider.revisions(WaterButlerPath('/birdie.jpg'))
+            await provider.revisions(AquaValetPath('/birdie.jpg'))
 
 
 class TestCreateFolder:
@@ -1466,7 +1466,7 @@ class TestCreateFolder:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_already_exists(self, provider):
-        path = WaterButlerPath('/hugo/', _ids=('doesnt', 'matter'))
+        path = AquaValetPath('/hugo/', _ids=('doesnt', 'matter'))
 
         with pytest.raises(exceptions.FolderNamingConflict) as e:
             await provider.create_folder(path)
@@ -1478,7 +1478,7 @@ class TestCreateFolder:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_returns_metadata(self, provider, root_provider_fixtures):
-        path = WaterButlerPath('/osf%20test/', _ids=(provider.folder['id'], None))
+        path = AquaValetPath('/osf%20test/', _ids=(provider.folder['id'], None))
 
         aiohttpretty.register_json_uri('POST', provider.build_url('files'),
                                        body=root_provider_fixtures['folder_metadata'])
@@ -1492,7 +1492,7 @@ class TestCreateFolder:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_raises_non_404(self, provider):
-        path = WaterButlerPath('/hugo/kim/pins/', _ids=(provider.folder['id'],
+        path = AquaValetPath('/hugo/kim/pins/', _ids=(provider.folder['id'],
                                                         'something', 'something', None))
 
         url = provider.build_url('files')
@@ -1507,7 +1507,7 @@ class TestCreateFolder:
     @pytest.mark.aiohttpretty
     async def test_must_be_folder(self, provider, monkeypatch):
         with pytest.raises(exceptions.CreateFolderError) as e:
-            await provider.create_folder(WaterButlerPath('/carp.fish', _ids=('doesnt', 'matter')))
+            await provider.create_folder(AquaValetPath('/carp.fish', _ids=('doesnt', 'matter')))
 
 
 class TestIntraFunctions:
@@ -1516,9 +1516,9 @@ class TestIntraFunctions:
     @pytest.mark.aiohttpretty
     async def test_intra_move_file(self, provider, root_provider_fixtures):
         item = root_provider_fixtures['docs_file_metadata']
-        src_path = WaterButlerPath('/unsure.txt', _ids=(provider.folder['id'], item['id']))
-        dest_path = WaterButlerPath('/really/unsure.txt', _ids=(provider.folder['id'],
-                                                                item['id'], item['id']))
+        src_path = AquaValetPath('/unsure.txt', _ids=(provider.folder['id'], item['id']))
+        dest_path = AquaValetPath('/really/unsure.txt', _ids=(provider.folder['id'],
+                                                              item['id'], item['id']))
 
         url = provider.build_url('files', src_path.identifier)
         data = json.dumps({
@@ -1543,9 +1543,9 @@ class TestIntraFunctions:
     @pytest.mark.aiohttpretty
     async def test_intra_move_folder(self, provider, root_provider_fixtures):
         item = root_provider_fixtures['folder_metadata']
-        src_path = WaterButlerPath('/unsure/', _ids=(provider.folder['id'], item['id']))
-        dest_path = WaterButlerPath('/really/unsure/', _ids=(provider.folder['id'],
-                                                             item['id'], item['id']))
+        src_path = AquaValetPath('/unsure/', _ids=(provider.folder['id'], item['id']))
+        dest_path = AquaValetPath('/really/unsure/', _ids=(provider.folder['id'],
+                                                           item['id'], item['id']))
 
         url = provider.build_url('files', src_path.identifier)
         data = json.dumps({
@@ -1579,9 +1579,9 @@ class TestIntraFunctions:
     @pytest.mark.aiohttpretty
     async def test_intra_copy_file(self, provider, root_provider_fixtures):
         item = root_provider_fixtures['docs_file_metadata']
-        src_path = WaterButlerPath('/unsure.txt', _ids=(provider.folder['id'], item['id']))
-        dest_path = WaterButlerPath('/really/unsure.txt', _ids=(provider.folder['id'],
-                                                                item['id'], item['id']))
+        src_path = AquaValetPath('/unsure.txt', _ids=(provider.folder['id'], item['id']))
+        dest_path = AquaValetPath('/really/unsure.txt', _ids=(provider.folder['id'],
+                                                              item['id'], item['id']))
 
         url = provider.build_url('files', src_path.identifier, 'copy')
         data = json.dumps({
@@ -1633,14 +1633,14 @@ class TestOperationsOrMisc:
     @pytest.mark.aiohttpretty
     async def test_can_intra_copy(self, provider, other_provider, root_provider_fixtures):
         item = root_provider_fixtures['list_file']['items'][0]
-        path = WaterButlerPath('/birdie.jpg', _ids=(provider.folder['id'], item['id']))
+        path = AquaValetPath('/birdie.jpg', _ids=(provider.folder['id'], item['id']))
 
         assert provider.can_intra_copy(other_provider, path) is False
         assert provider.can_intra_copy(provider, path) is True
 
     def test_path_from_metadata(self, provider, root_provider_fixtures):
         item = root_provider_fixtures['docs_file_metadata']
-        src_path = WaterButlerPath('/version-test.docx', _ids=(provider.folder['id'], item['id']))
+        src_path = AquaValetPath('/version-test.docx', _ids=(provider.folder['id'], item['id']))
 
         metadata = GoogleDriveFileMetadata(item, src_path)
         child_path = provider.path_from_metadata(src_path.parent, metadata)

@@ -46,7 +46,7 @@ class TestPathAndNameForObjects:
     2. For files, it does not end with a '/'
     3. For folders, it does end with a '/'
 
-    For ``WaterButlerPath``, ``generic_path_validation()`` expects one and only one leading `/`.
+    For ``AquaValetPath``, ``generic_path_validation()`` expects one and only one leading `/`.
     """
 
     def test_path_and_obj_name_for_file(self, file_obj_name, file_wb_path):

@@ -3,7 +3,7 @@ import typing
 from http import HTTPStatus
 
 from aquavalet.core import provider, streams
-from aquavalet.core.path import WaterButlerPath
+from aquavalet.core.path import AquaValetPath
 from aquavalet.core import exceptions as core_exceptions
 
 from aquavalet.providers.dropbox import settings as provider_settings
@@ -16,7 +16,7 @@ class DropboxProvider(provider.BaseProvider):
     """Provider for the Dropbox.com cloud storage service.
 
     This provider uses the v2 Dropbox API. The v2 API assigns IDs to files and folders, but not all
-    endpoints currently support IDs. Dropbox WaterButlerPath objects will continue to use string
+    endpoints currently support IDs. Dropbox AquaValetPath objects will continue to use string
     paths until they do. As of Jan. 2, 2018, endpoint ID support is classified as follows.
 
     Can use ID as path::
@@ -114,9 +114,9 @@ class DropboxProvider(provider.BaseProvider):
                 raise provider_exceptions.DropboxNamingConflictError(error_path)
         raise provider_exceptions.DropboxUnhandledConflictError(str(data))
 
-    async def validate_v1_path(self, path: str, **kwargs) -> WaterButlerPath:
+    async def validate_v1_path(self, path: str, **kwargs) -> AquaValetPath:
         if path == '/':
-            return WaterButlerPath(path, prepend=self.folder)
+            return AquaValetPath(path, prepend=self.folder)
         implicit_folder = path.endswith('/')
         data = await self.dropbox_request(
             self.build_url('files', 'get_metadata'),
@@ -126,10 +126,10 @@ class DropboxProvider(provider.BaseProvider):
         explicit_folder = data['.tag'] == 'folder'
         if explicit_folder != implicit_folder:
             raise core_exceptions.NotFoundError(str(path))
-        return WaterButlerPath(path, prepend=self.folder)
+        return AquaValetPath(path, prepend=self.folder)
 
-    async def validate_path(self, path: str, **kwargs) -> WaterButlerPath:
-        return WaterButlerPath(path, prepend=self.folder)
+    async def validate_path(self, path: str, **kwargs) -> AquaValetPath:
+        return AquaValetPath(path, prepend=self.folder)
 
     def can_duplicate_names(self) -> bool:
         return False
@@ -148,8 +148,8 @@ class DropboxProvider(provider.BaseProvider):
 
     async def intra_copy(self,  # type: ignore
                          dest_provider: 'DropboxProvider',
-                         src_path: WaterButlerPath,
-                         dest_path: WaterButlerPath) \
+                         src_path: AquaValetPath,
+                         dest_path: AquaValetPath) \
             -> typing.Tuple[typing.Union[DropboxFileMetadata, DropboxFolderMetadata], bool]:
         dest_folder = dest_provider.folder
         try:
@@ -191,8 +191,8 @@ class DropboxProvider(provider.BaseProvider):
 
     async def intra_move(self,  # type: ignore
                          dest_provider: 'DropboxProvider',
-                         src_path: WaterButlerPath,
-                         dest_path: WaterButlerPath) -> typing.Tuple[BaseDropboxMetadata, bool]:
+                         src_path: AquaValetPath,
+                         dest_path: AquaValetPath) -> typing.Tuple[BaseDropboxMetadata, bool]:
         if dest_path.full_path.lower() == src_path.full_path.lower():
             # Dropbox does not support changing the casing in a file name
             raise core_exceptions.InvalidPathError(
@@ -222,7 +222,7 @@ class DropboxProvider(provider.BaseProvider):
         return folder, True
 
     async def download(self,  # type: ignore
-                       path: WaterButlerPath,
+                       path: AquaValetPath,
                        revision: str=None,
                        range: typing.Tuple[int, int]=None,
                        **kwargs) -> streams.ResponseStreamReader:
@@ -246,7 +246,7 @@ class DropboxProvider(provider.BaseProvider):
 
     async def upload(self,  # type: ignore
                      stream: streams.BaseStream,
-                     path: WaterButlerPath,
+                     path: AquaValetPath,
                      conflict: str='replace',
                      **kwargs) -> typing.Tuple[DropboxFileMetadata, bool]:
         path, exists = await self.handle_name_conflict(path, conflict=conflict)
@@ -271,11 +271,11 @@ class DropboxProvider(provider.BaseProvider):
             self.dropbox_conflict_error_handler(data, path.path)
         return DropboxFileMetadata(data, self.folder), not exists
 
-    async def delete(self, path: WaterButlerPath, confirm_delete: int=0,  # type: ignore
+    async def delete(self, path: AquaValetPath, confirm_delete: int=0,  # type: ignore
                      **kwargs) -> None:  # type: ignore
         """Delete file, folder, or provider root contents
 
-        :param WaterButlerPath path: WaterButlerPath path object for folder
+        :param AquaValetPath path: WaterButlerPath path object for folder
         :param int confirm_delete: Must be 1 to confirm root folder delete
         """
         if path.is_root:
@@ -293,7 +293,7 @@ class DropboxProvider(provider.BaseProvider):
         )
 
     async def metadata(self,  # type: ignore
-                       path: WaterButlerPath,
+                       path: AquaValetPath,
                        revision: str=None,
                        **kwargs) \
                        -> typing.Union[BaseDropboxMetadata, typing.List[BaseDropboxMetadata]]:
@@ -342,7 +342,7 @@ class DropboxProvider(provider.BaseProvider):
 
         return DropboxFileMetadata(data, self.folder)
 
-    async def revisions(self, path: WaterButlerPath, **kwargs) -> typing.List[DropboxRevision]:
+    async def revisions(self, path: AquaValetPath, **kwargs) -> typing.List[DropboxRevision]:
         # Dropbox v2 API limits the number of revisions returned to a maximum
         # of 100, default 10. Previously we had set the limit to 250.
 
@@ -360,11 +360,11 @@ class DropboxProvider(provider.BaseProvider):
             return []
         return [DropboxRevision(item) for item in data['entries']]
 
-    async def create_folder(self, path: WaterButlerPath, **kwargs) -> DropboxFolderMetadata:
+    async def create_folder(self, path: AquaValetPath, **kwargs) -> DropboxFolderMetadata:
         """
         :param str path: The path to create a folder at
         """
-        WaterButlerPath.validate_folder(path)
+        AquaValetPath.validate_folder(path)
         data = await self.dropbox_request(
             self.build_url('files', 'create_folder_v2'),
             {'path': path.full_path.rstrip('/')},
@@ -373,20 +373,20 @@ class DropboxProvider(provider.BaseProvider):
         return DropboxFolderMetadata(data['metadata'], self.folder)
 
     def can_intra_copy(self, dest_provider: provider.BaseProvider,
-                       path: WaterButlerPath=None) -> bool:
+                       path: AquaValetPath=None) -> bool:
         return type(self) == type(dest_provider)
 
     def can_intra_move(self, dest_provider: provider.BaseProvider,
-                       path: WaterButlerPath=None) -> bool:
+                       path: AquaValetPath=None) -> bool:
         return self == dest_provider  # dropbox can only intra move on same account
 
     def _build_content_url(self, *segments, **query):
         return provider.build_url(provider_settings.BASE_CONTENT_URL, *segments, **query)
 
-    async def _delete_folder_contents(self, path: WaterButlerPath, **kwargs) -> None:
+    async def _delete_folder_contents(self, path: AquaValetPath, **kwargs) -> None:
         """Delete the contents of a folder. For use against provider root.
 
-        :param WaterButlerPath path: WaterButlerPath path object for folder
+        :param AquaValetPath path: WaterButlerPath path object for folder
         """
         meta = (await self.metadata(path))
         for child in meta:  # type: ignore

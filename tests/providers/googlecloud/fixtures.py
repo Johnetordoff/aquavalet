@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from aquavalet.core.path import WaterButlerPath
+from aquavalet.core.path import AquaValetPath
 
 
 @pytest.fixture()
@@ -53,17 +53,17 @@ def mock_settings_2():
 
 @pytest.fixture()
 def file_wb_path():
-    return WaterButlerPath('/test-folder-1-copy/DSC_0235.JPG')
+    return AquaValetPath('/test-folder-1-copy/DSC_0235.JPG')
 
 
 @pytest.fixture()
 def src_file_wb_path():
-    return WaterButlerPath('/test-folder-1/DSC_0244.JPG')
+    return AquaValetPath('/test-folder-1/DSC_0244.JPG')
 
 
 @pytest.fixture()
 def dest_file_wb_path():
-    return WaterButlerPath('/test-folder-1/DSC_0244_COPY.JPG')
+    return AquaValetPath('/test-folder-1/DSC_0244_COPY.JPG')
 
 
 @pytest.fixture()
@@ -103,7 +103,7 @@ def dest_file_path():
 
 @pytest.fixture()
 def src_folder_wb_path():
-    return WaterButlerPath('/test-folder-1/')
+    return AquaValetPath('/test-folder-1/')
 
 
 @pytest.fixture()

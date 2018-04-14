@@ -7,7 +7,7 @@ import aiohttpretty
 
 from aquavalet.core import streams
 from aquavalet.core import exceptions
-from aquavalet.core.path import WaterButlerPath
+from aquavalet.core.path import AquaValetPath
 
 from aquavalet.providers.box import BoxProvider
 from aquavalet.providers.box.metadata import (BoxRevision,
@@ -171,7 +171,7 @@ class TestValidatePath:
                                        status=200)
 
         result = await provider.validate_path('/bulbasaur')
-        assert result == WaterButlerPath('/bulbasaur', folder=False)
+        assert result == AquaValetPath('/bulbasaur', folder=False)
 
 
 class TestDownload:
@@ -180,7 +180,7 @@ class TestDownload:
     @pytest.mark.aiohttpretty
     async def test_download(self, provider, root_provider_fixtures):
         item = root_provider_fixtures['file_metadata']['entries'][0]
-        path = WaterButlerPath('/triangles.txt', _ids=(provider.folder, item['id']))
+        path = AquaValetPath('/triangles.txt', _ids=(provider.folder, item['id']))
 
         metadata_url = provider.build_url('files', item['id'])
         content_url = provider.build_url('files', item['id'], 'content')
@@ -198,7 +198,7 @@ class TestDownload:
     async def test_download_revision(self, provider, root_provider_fixtures):
         revision = '21753842'
         item = root_provider_fixtures['file_metadata']['entries'][0]
-        path = WaterButlerPath('/triangles.txt', _ids=(provider.folder, item['id']))
+        path = AquaValetPath('/triangles.txt', _ids=(provider.folder, item['id']))
 
         metadata_url = provider.build_url('files', item['id'])
         content_url = provider.build_url('files', item['id'], 'content', **{'version': revision})
@@ -215,7 +215,7 @@ class TestDownload:
     @pytest.mark.aiohttpretty
     async def test_download_not_found(self, provider, root_provider_fixtures):
         item = root_provider_fixtures['file_metadata']['entries'][0]
-        path = WaterButlerPath('/vectors.txt', _ids=(provider.folder, None))
+        path = AquaValetPath('/vectors.txt', _ids=(provider.folder, None))
         metadata_url = provider.build_url('files', item['id'])
         aiohttpretty.register_uri('GET', metadata_url, status=404)
 
@@ -228,7 +228,7 @@ class TestDownload:
     @pytest.mark.aiohttpretty
     async def test_download_range(self, provider, root_provider_fixtures):
         item = root_provider_fixtures['file_metadata']['entries'][0]
-        path = WaterButlerPath('/triangles.txt', _ids=(provider.folder, item['id']))
+        path = AquaValetPath('/triangles.txt', _ids=(provider.folder, item['id']))
 
         metadata_url = provider.build_url('files', item['id'])
         content_url = provider.build_url('files', item['id'], 'content')
@@ -251,7 +251,7 @@ class TestUpload:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_upload_create(self, provider, root_provider_fixtures, file_stream):
-        path = WaterButlerPath('/newfile', _ids=(provider.folder, None))
+        path = AquaValetPath('/newfile', _ids=(provider.folder, None))
         upload_url = provider._build_upload_url('files', 'content')
         upload_metadata = root_provider_fixtures['upload_metadata']
         aiohttpretty.register_json_uri('POST', upload_url, status=201, body=upload_metadata)
@@ -269,7 +269,7 @@ class TestUpload:
     async def test_upload_conflict_keep(self, provider, root_provider_fixtures, file_stream):
         upload_metadata = root_provider_fixtures['upload_metadata']
         item = upload_metadata['entries'][0]
-        path = WaterButlerPath('/newfile', _ids=(provider.folder, item['id']))
+        path = AquaValetPath('/newfile', _ids=(provider.folder, item['id']))
 
         upload_url = provider._build_upload_url('files', 'content')
         aiohttpretty.register_json_uri('POST', upload_url, status=201, body=upload_metadata)
@@ -297,7 +297,7 @@ class TestUpload:
     async def test_upload_update(self, provider, root_provider_fixtures, file_stream):
         upload_metadata = root_provider_fixtures['upload_metadata']
         item_to_overwrite = root_provider_fixtures['folder_list_metadata']['entries'][0]
-        path = WaterButlerPath('/newfile', _ids=(provider.folder, item_to_overwrite['id']))
+        path = AquaValetPath('/newfile', _ids=(provider.folder, item_to_overwrite['id']))
         upload_url = provider._build_upload_url('files', item_to_overwrite['id'], 'content')
         aiohttpretty.register_json_uri('POST', upload_url, status=201, body=upload_metadata)
 
@@ -311,7 +311,7 @@ class TestUpload:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_upload_checksum_mismatch(self, provider, root_provider_fixtures, file_stream):
-        path = WaterButlerPath('/newfile', _ids=(provider.folder, None))
+        path = AquaValetPath('/newfile', _ids=(provider.folder, None))
         upload_url = provider._build_upload_url('files', 'content')
         aiohttpretty.register_json_uri('POST', upload_url, status=201,
                                        body=root_provider_fixtures['checksum_mismatch_metadata'])
@@ -328,7 +328,7 @@ class TestDelete:
     @pytest.mark.aiohttpretty
     async def test_delete_file(self, provider, root_provider_fixtures):
         item = root_provider_fixtures['file_metadata']['entries'][0]
-        path = WaterButlerPath('/{}'.format(item['name']), _ids=(provider.folder, item['id']))
+        path = AquaValetPath('/{}'.format(item['name']), _ids=(provider.folder, item['id']))
         url = provider.build_url('files', path.identifier)
 
         aiohttpretty.register_uri('DELETE', url, status=204)
@@ -341,7 +341,7 @@ class TestDelete:
     @pytest.mark.aiohttpretty
     async def test_delete_folder(self, provider, root_provider_fixtures):
         item = root_provider_fixtures['folder_object_metadata']
-        path = WaterButlerPath('/{}/'.format(item['name']), _ids=(provider.folder, item['id']))
+        path = AquaValetPath('/{}/'.format(item['name']), _ids=(provider.folder, item['id']))
         url = provider.build_url('folders', path.identifier, recursive=True)
 
         aiohttpretty.register_uri('DELETE', url, status=204)
@@ -352,7 +352,7 @@ class TestDelete:
 
     @pytest.mark.asyncio
     async def test_must_not_be_none(self, provider):
-        path = WaterButlerPath('/Goats', _ids=(provider.folder, None))
+        path = AquaValetPath('/Goats', _ids=(provider.folder, None))
 
         with pytest.raises(exceptions.NotFoundError) as e:
             await provider.delete(path)
@@ -363,7 +363,7 @@ class TestDelete:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_delete_root_no_confirm(self, provider, root_provider_fixtures):
-        path = WaterButlerPath('/', _ids=('0'))
+        path = AquaValetPath('/', _ids=('0'))
 
         with pytest.raises(exceptions.DeleteError) as e:
             await provider.delete(path)
@@ -375,8 +375,8 @@ class TestDelete:
     @pytest.mark.aiohttpretty
     async def test_delete_root(self, provider, root_provider_fixtures):
         item = root_provider_fixtures['file_metadata']['entries'][0]
-        path = WaterButlerPath('/newfile', _ids=(provider.folder, item['id']))
-        root_path = WaterButlerPath('/', _ids=('0'))
+        path = AquaValetPath('/newfile', _ids=(provider.folder, item['id']))
+        root_path = AquaValetPath('/', _ids=('0'))
 
         url = provider.build_url('folders', root_path.identifier, 'items',
                                  fields='id,name,size,modified_at,etag,total_count',
@@ -399,7 +399,7 @@ class TestMetadata:
 
     @pytest.mark.asyncio
     async def test_must_not_be_none(self, provider):
-        path = WaterButlerPath('/Goats', _ids=(provider.folder, None))
+        path = AquaValetPath('/Goats', _ids=(provider.folder, None))
 
         with pytest.raises(exceptions.NotFoundError) as e:
             await provider.metadata(path)
@@ -413,7 +413,7 @@ class TestMetadata:
         list_metadata = revision_fixtures['revisions_list_metadata']
         item = list_metadata['entries'][0]
 
-        path = WaterButlerPath('/goats', _ids=(provider.folder, item['id']))
+        path = AquaValetPath('/goats', _ids=(provider.folder, item['id']))
         url = provider.build_url('files', path.identifier, 'versions')
 
         aiohttpretty.register_json_uri('GET', url, body=list_metadata)
@@ -430,7 +430,7 @@ class TestMetadata:
         list_metadata = revision_fixtures['revisions_list_metadata']
         item = list_metadata['entries'][0]
 
-        path = WaterButlerPath('/goats', _ids=(provider.folder, item['id']))
+        path = AquaValetPath('/goats', _ids=(provider.folder, item['id']))
         url = provider.build_url('files', path.identifier, 'versions')
 
         aiohttpretty.register_json_uri('GET', url, body=list_metadata)
@@ -446,7 +446,7 @@ class TestMetadata:
     async def test_metadata_bad_response(self, provider, root_provider_fixtures):
         item = root_provider_fixtures['file_metadata']['entries'][0]
 
-        path = WaterButlerPath('/goats', _ids=(provider.folder, item['id']))
+        path = AquaValetPath('/goats', _ids=(provider.folder, item['id']))
         url = provider.build_url('files', path.identifier)
 
         aiohttpretty.register_json_uri('GET', url, body=None)
@@ -461,7 +461,7 @@ class TestMetadata:
     @pytest.mark.aiohttpretty
     async def test_folder_metadata(self, provider, root_provider_fixtures):
         item = root_provider_fixtures['folder_object_metadata']
-        path = WaterButlerPath('/goats/', _ids=(provider.folder, item['id']))
+        path = AquaValetPath('/goats/', _ids=(provider.folder, item['id']))
         url = provider.build_url('folders', path.identifier)
 
         aiohttpretty.register_json_uri('GET', url, body=item)
@@ -473,7 +473,7 @@ class TestMetadata:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_metadata(self, provider, root_provider_fixtures):
-        path = WaterButlerPath('/', _ids=(provider.folder, ))
+        path = AquaValetPath('/', _ids=(provider.folder,))
 
         list_url = provider.build_url('folders', provider.folder, 'items',
                                       fields='id,name,size,modified_at,etag,total_count',
@@ -498,7 +498,7 @@ class TestMetadata:
     @pytest.mark.aiohttpretty
     async def test_metadata_raw(self, provider, root_provider_fixtures):
         item = root_provider_fixtures['folder_list_metadata']
-        path = WaterButlerPath('/', _ids=(provider.folder, ))
+        path = AquaValetPath('/', _ids=(provider.folder,))
 
         list_url = provider.build_url('folders', provider.folder, 'items',
                                       fields='id,name,size,modified_at,etag,total_count',
@@ -514,7 +514,7 @@ class TestMetadata:
     @pytest.mark.aiohttpretty
     async def test_metadata_nested(self, provider, root_provider_fixtures):
         item = root_provider_fixtures['file_metadata']['entries'][0]
-        path = WaterButlerPath('/name.txt', _ids=(provider, item['id']))
+        path = AquaValetPath('/name.txt', _ids=(provider, item['id']))
 
         file_url = provider.build_url('files', path.identifier)
         aiohttpretty.register_json_uri('GET', file_url, body=item)
@@ -534,7 +534,7 @@ class TestMetadata:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_metadata_missing(self, provider):
-        path = WaterButlerPath('/Something', _ids=(provider.folder, None))
+        path = AquaValetPath('/Something', _ids=(provider.folder, None))
 
         with pytest.raises(exceptions.NotFoundError) as exc:
             await provider.metadata(path)
@@ -550,7 +550,7 @@ class TestRevisions:
         item = root_provider_fixtures['file_metadata']['entries'][0]
         revisions_list = revision_fixtures['revisions_list_metadata']
 
-        path = WaterButlerPath('/name.txt', _ids=(provider, item['id']))
+        path = AquaValetPath('/name.txt', _ids=(provider, item['id']))
 
         file_url = provider.build_url('files', path.identifier)
         revisions_url = provider.build_url('files', path.identifier, 'versions')
@@ -573,7 +573,7 @@ class TestRevisions:
     @pytest.mark.aiohttpretty
     async def test_get_revisions_free_account(self, provider, root_provider_fixtures):
         item = root_provider_fixtures['file_metadata']['entries'][0]
-        path = WaterButlerPath('/name.txt', _ids=(provider, item['id']))
+        path = AquaValetPath('/name.txt', _ids=(provider, item['id']))
 
         file_url = provider.build_url('files', path.identifier)
         revisions_url = provider.build_url('files', path.identifier, 'versions')
@@ -593,8 +593,8 @@ class TestIntraCopy:
     @pytest.mark.aiohttpretty
     async def test_intra_copy_file(self, provider, root_provider_fixtures):
         item = root_provider_fixtures['file_metadata']['entries'][0]
-        src_path = WaterButlerPath('/name.txt', _ids=(provider, item['id']))
-        dest_path = WaterButlerPath('/charmander/name.txt', _ids=(provider, item['id']))
+        src_path = AquaValetPath('/name.txt', _ids=(provider, item['id']))
+        dest_path = AquaValetPath('/charmander/name.txt', _ids=(provider, item['id']))
 
         file_url = provider.build_url('files', src_path.identifier, 'copy')
         aiohttpretty.register_json_uri('POST', file_url, body=item)
@@ -608,8 +608,8 @@ class TestIntraCopy:
     @pytest.mark.aiohttpretty
     async def test_intra_copy_file_replace(self, provider, root_provider_fixtures):
         item = root_provider_fixtures['file_metadata']['entries'][0]
-        src_path = WaterButlerPath('/name.txt', _ids=(provider, item['id']))
-        dest_path = WaterButlerPath('/charmander/name.txt', _ids=(provider, item['id'], item['id']))
+        src_path = AquaValetPath('/name.txt', _ids=(provider, item['id']))
+        dest_path = AquaValetPath('/charmander/name.txt', _ids=(provider, item['id'], item['id']))
 
         file_url = provider.build_url('files', src_path.identifier, 'copy')
         delete_url = provider.build_url('files', dest_path.identifier)
@@ -627,8 +627,8 @@ class TestIntraCopy:
         item = intra_fixtures['intra_folder_metadata']
         list_metadata = root_provider_fixtures['folder_list_metadata']
 
-        src_path = WaterButlerPath('/name/', _ids=(provider, item['id']))
-        dest_path = WaterButlerPath('/charmander/name/', _ids=(provider, item['id']))
+        src_path = AquaValetPath('/name/', _ids=(provider, item['id']))
+        dest_path = AquaValetPath('/charmander/name/', _ids=(provider, item['id']))
 
         file_url = provider.build_url('folders', src_path.identifier, 'copy')
         list_url = provider.build_url('folders', item['id'], 'items',
@@ -656,8 +656,8 @@ class TestIntraCopy:
         item = intra_fixtures['intra_folder_metadata']
         list_metadata = root_provider_fixtures['folder_list_metadata']
 
-        src_path = WaterButlerPath('/name/', _ids=(provider, item['id']))
-        dest_path = WaterButlerPath('/charmander/name/', _ids=(provider, item['id'], item['id']))
+        src_path = AquaValetPath('/name/', _ids=(provider, item['id']))
+        dest_path = AquaValetPath('/charmander/name/', _ids=(provider, item['id'], item['id']))
 
         file_url = provider.build_url('folders', src_path.identifier, 'copy')
         delete_url = provider.build_url('folders', dest_path.identifier, recursive=True)
@@ -689,8 +689,8 @@ class TestIntraMove:
     @pytest.mark.aiohttpretty
     async def test_intra_move_file(self, provider, root_provider_fixtures):
         item = root_provider_fixtures['file_metadata']['entries'][0]
-        src_path = WaterButlerPath('/name.txt', _ids=(provider, item['id']))
-        dest_path = WaterButlerPath('/charmander/name.txt', _ids=(provider, item['id']))
+        src_path = AquaValetPath('/name.txt', _ids=(provider, item['id']))
+        dest_path = AquaValetPath('/charmander/name.txt', _ids=(provider, item['id']))
 
         file_url = provider.build_url('files', src_path.identifier)
         aiohttpretty.register_json_uri('PUT', file_url, body=item)
@@ -704,8 +704,8 @@ class TestIntraMove:
     @pytest.mark.aiohttpretty
     async def test_intra_move_file_replace(self, provider, root_provider_fixtures):
         item = root_provider_fixtures['file_metadata']['entries'][0]
-        src_path = WaterButlerPath('/name.txt', _ids=(provider, item['id']))
-        dest_path = WaterButlerPath('/charmander/name.txt', _ids=(provider, item['id'], item['id']))
+        src_path = AquaValetPath('/name.txt', _ids=(provider, item['id']))
+        dest_path = AquaValetPath('/charmander/name.txt', _ids=(provider, item['id'], item['id']))
 
         file_url = provider.build_url('files', src_path.identifier)
         delete_url = provider.build_url('files', dest_path.identifier)
@@ -723,8 +723,8 @@ class TestIntraMove:
         item = intra_fixtures['intra_folder_metadata']
         list_metadata = root_provider_fixtures['folder_list_metadata']
 
-        src_path = WaterButlerPath('/name/', _ids=(provider, item['id']))
-        dest_path = WaterButlerPath('/charmander/name/', _ids=(provider, item['id']))
+        src_path = AquaValetPath('/name/', _ids=(provider, item['id']))
+        dest_path = AquaValetPath('/charmander/name/', _ids=(provider, item['id']))
 
         file_url = provider.build_url('folders', src_path.identifier)
         list_url = provider.build_url('folders', item['id'], 'items',
@@ -753,8 +753,8 @@ class TestIntraMove:
         item = intra_fixtures['intra_folder_metadata']
         list_metadata = root_provider_fixtures['folder_list_metadata']
 
-        src_path = WaterButlerPath('/name/', _ids=(provider, item['id']))
-        dest_path = WaterButlerPath('/charmander/name/', _ids=(provider, item['id'], item['id']))
+        src_path = AquaValetPath('/name/', _ids=(provider, item['id']))
+        dest_path = AquaValetPath('/charmander/name/', _ids=(provider, item['id'], item['id']))
 
         file_url = provider.build_url('folders', src_path.identifier)
         delete_url = provider.build_url('folders', dest_path.identifier, recursive=True)
@@ -785,7 +785,7 @@ class TestCreateFolder:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_must_be_folder(self, provider):
-        path = WaterButlerPath('/Just a poor file from a poor folder', _ids=(provider.folder, None))
+        path = AquaValetPath('/Just a poor file from a poor folder', _ids=(provider.folder, None))
 
         with pytest.raises(exceptions.CreateFolderError) as e:
             await provider.create_folder(path)
@@ -796,8 +796,8 @@ class TestCreateFolder:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_id_must_be_none(self, provider):
-        path = WaterButlerPath('/Just a poor file from a poor folder/',
-                               _ids=(provider.folder, 'someid'))
+        path = AquaValetPath('/Just a poor file from a poor folder/',
+                             _ids=(provider.folder, 'someid'))
 
         assert path.identifier is not None
 
@@ -813,7 +813,7 @@ class TestCreateFolder:
     async def test_already_exists(self, provider):
         url = provider.build_url('folders')
         data_url = provider.build_url('folders', provider.folder)
-        path = WaterButlerPath('/50 shades of nope/', _ids=(provider.folder, None))
+        path = AquaValetPath('/50 shades of nope/', _ids=(provider.folder, None))
 
         aiohttpretty.register_json_uri('POST', url, status=409)
         aiohttpretty.register_json_uri('GET', data_url, body={
@@ -838,7 +838,7 @@ class TestCreateFolder:
         url = provider.build_url('folders')
         folder_metadata = root_provider_fixtures['folder_object_metadata']
         folder_metadata['name'] = '50 shades of nope'
-        path = WaterButlerPath('/50 shades of nope/', _ids=(provider.folder, None))
+        path = AquaValetPath('/50 shades of nope/', _ids=(provider.folder, None))
 
         aiohttpretty.register_json_uri('POST', url, status=201, body=folder_metadata)
 

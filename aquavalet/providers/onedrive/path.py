@@ -1,11 +1,11 @@
 from itertools import repeat
 from urllib import parse as urlparse
 
-from aquavalet.core.path import WaterButlerPath
+from aquavalet.core.path import AquaValetPath
 
 
-class OneDrivePath(WaterButlerPath):
-    """OneDrive specific WaterButlerPath class to handle some of the idiosyncrasies of
+class OneDrivePath(AquaValetPath):
+    """OneDrive specific AquaValetPath class to handle some of the idiosyncrasies of
     file paths in OneDrive."""
 
     @classmethod

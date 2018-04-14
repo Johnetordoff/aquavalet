@@ -8,7 +8,7 @@ import mimetypes
 from aquavalet.core import streams
 from aquavalet.core import provider
 from aquavalet.core import exceptions
-from aquavalet.core.path import WaterButlerPath
+from aquavalet.core.path import AquaValetPath
 
 from aquavalet.providers.filesystem import settings
 from aquavalet.providers.filesystem.metadata import FileSystemItemMetadata
@@ -30,7 +30,7 @@ class FileSystemProvider(provider.BaseProvider):
         os.makedirs(self.folder, exist_ok=True)
 
     async def validate_path(self, path, **kwargs):
-        return WaterButlerPath(path, prepend=self.folder)
+        return AquaValetPath(path, prepend=self.folder)
 
     def can_intra_copy(self, dest_provider, path=None):
         return type(self) == type(dest_provider)
@@ -76,7 +76,6 @@ class FileSystemProvider(provider.BaseProvider):
             shutil.rmtree(path.full_path)
 
     async def metadata(self, path, version=None):
-        print(os.path.exists(path.full_path))
         if not os.path.exists(path.full_path):
             raise exceptions.NotFoundError(path.full_path)
 
@@ -90,7 +89,7 @@ class FileSystemProvider(provider.BaseProvider):
             raise exceptions.NotFoundError(path.full_path)
 
         relative_path = path.full_path.replace(self.folder, '')
-        paths = [WaterButlerPath(os.path.join('/', relative_path, child), prepend=self.folder) for child in children]
+        paths = [AquaValetPath(os.path.join('/', relative_path, child), prepend=self.folder) for child in children]
         return [self._format_metadata(path) for path in paths]
 
     async def create_folder(self, path, new_name):

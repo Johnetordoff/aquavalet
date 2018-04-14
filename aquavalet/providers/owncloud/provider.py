@@ -3,7 +3,7 @@ import aiohttp
 from aquavalet.core import streams
 from aquavalet.core import provider
 from aquavalet.core import exceptions
-from aquavalet.core.path import WaterButlerPath
+from aquavalet.core.path import AquaValetPath
 
 from aquavalet.providers.owncloud import utils
 from aquavalet.providers.owncloud.metadata import OwnCloudFileRevisionMetadata
@@ -74,18 +74,18 @@ class OwnCloudProvider(provider.BaseProvider):
         return super().shares_storage_root(other) and self.credentials == other.credentials
 
     async def validate_v1_path(self, path, **kwargs):
-        """Verifies that ``path`` exists and if so, returns a WaterButlerPath object that
+        """Verifies that ``path`` exists and if so, returns a AquaValetPath object that
         represents it. WebDAV returns 200 for a single file, 207 for a multipart (folder), and 404
         for Does Not Exist.
 
         :param str path: user-supplied path to validate
-        :return: WaterButlerPath object representing ``path``
-        :rtype: `waterbutler.core.path.WaterButlerPath`
+        :return: AquaValetPath object representing ``path``
+        :rtype: `waterbutler.core.path.AquaValetPath`
         :raises `aquavalet.core.exceptions.NotFoundError`: if the path doesn't exist
         """
         if path == '/':
-            return WaterButlerPath(path, prepend=self.folder)
-        full_path = WaterButlerPath(path, prepend=self.folder)
+            return AquaValetPath(path, prepend=self.folder)
+        full_path = AquaValetPath(path, prepend=self.folder)
 
         response = await self.make_request('PROPFIND',
             self._webdav_url_ + full_path.full_path,
@@ -110,15 +110,15 @@ class OwnCloudProvider(provider.BaseProvider):
 
     async def validate_path(self, path, **kwargs):
         """Similar to `validate_v1_path`, but will not throw a 404 if the path doesn't yet exist.
-        Instead, returns a WaterButlerPath object for the potential path (such as before uploads).
+        Instead, returns a AquaValetPath object for the potential path (such as before uploads).
 
         :param str path: user-supplied path to validate
-        :return: WaterButlerPath object representing ``path``
-        :rtype: :class:`waterbutler.core.path.WaterButlerPath`
+        :return: AquaValetPath object representing ``path``
+        :rtype: :class:`waterbutler.core.path.AquaValetPath`
         """
         if path == '/':
-            return WaterButlerPath(path, prepend=self.folder)
-        full_path = WaterButlerPath(path, prepend=self.folder)
+            return AquaValetPath(path, prepend=self.folder)
+        full_path = AquaValetPath(path, prepend=self.folder)
         response = await self.make_request('PROPFIND',
             self._webdav_url_ + full_path.full_path,
             expects=(200, 207, 404),
@@ -139,7 +139,7 @@ class OwnCloudProvider(provider.BaseProvider):
         """Creates a stream for downloading files from the remote host. If the metadata query for
         the file has no size metadata, downloads to memory.
 
-        :param waterbutler.core.path.WaterButlerPath path: user-supplied path to download
+        :param waterbutler.core.path.AquaValetPath path: user-supplied path to download
         :raises: `aquavalet.core.exceptions.DownloadError`
         """
 
@@ -163,7 +163,7 @@ class OwnCloudProvider(provider.BaseProvider):
         creates the upload request.
 
         :param waterbutler.core.streams.RequestStreamReader stream: stream containing file contents
-        :param waterbutler.core.path.WaterButlerPath path: user-supplied path to upload to
+        :param waterbutler.core.path.AquaValetPath path: user-supplied path to upload to
         :raises: `aquavalet.core.exceptions.UploadError`
         """
         if path.identifier and conflict == 'keep':
@@ -187,7 +187,7 @@ class OwnCloudProvider(provider.BaseProvider):
     async def delete(self, path, **kwargs):
         """Deletes ``path`` on remote host
 
-        :param waterbutler.core.path.WaterButlerPath path: user-supplied path to delete
+        :param waterbutler.core.path.AquaValetPath path: user-supplied path to delete
         :raises: `aquavalet.core.exceptions.DeleteError`
         """
         delete_resp = await self.make_request(
@@ -205,7 +205,7 @@ class OwnCloudProvider(provider.BaseProvider):
         """Queries the remote host for metadata and returns metadata objects based on the return
         value.
 
-        :param waterbutler.core.path.WaterButlerPath path: user-supplied path to query
+        :param waterbutler.core.path.AquaValetPath path: user-supplied path to query
         :raises: `aquavalet.core.exceptions.MetadataError`
         """
         if path.is_dir:
@@ -243,7 +243,7 @@ class OwnCloudProvider(provider.BaseProvider):
         """Create a folder in the current provider at ``path``. Returns an
         `.metadata.OwnCloudFolderMetadata` object if successful.
 
-        :param waterbutler.core.path.WaterButlerPath path: user-supplied directory path to create
+        :param waterbutler.core.path.AquaValetPath path: user-supplied directory path to create
         :param boolean precheck_folder: flag to check for folder before attempting create
         :rtype: `.metadata.OwnCloudFolderMetadata`
         :raises: `aquavalet.core.exceptions.CreateFolderError`
@@ -281,8 +281,8 @@ class OwnCloudProvider(provider.BaseProvider):
     async def _do_dav_move_copy(self, src_path, dest_path, operation):
         """Performs a quick copy or move operation on the remote host.
 
-        :param waterbutler.core.path.WaterButlerPath src_path: path for the source object
-        :param waterbutler.core.path.WaterButlerPath dest_path: path for the destination object
+        :param waterbutler.core.path.AquaValetPath src_path: path for the source object
+        :param waterbutler.core.path.AquaValetPath dest_path: path for the destination object
         :param str operation: Either `COPY` or `MOVE`
         :rtype: `.metadata.OwnCloudFileMetadata`
         :rtype: `.metadata.OwnCloudFolderMetadata`

@@ -2,20 +2,20 @@ import logging
 import functools
 from urllib import parse
 
-from aquavalet.core.path import WaterButlerPath
-from aquavalet.core.path import WaterButlerPathPart
+from aquavalet.core.path import AquaValetPath
+from aquavalet.core.path import AquaValetPathPart
 
 
 logger = logging.getLogger(__name__)
 
 
-class GitLabPathPart(WaterButlerPathPart):
+class GitLabPathPart(AquaValetPathPart):
     DECODE = parse.unquote
     # TODO: mypy lacks a syntax to define kwargs for callables
     ENCODE = functools.partial(parse.quote, safe='')  # type: ignore
 
 
-class GitLabPath(WaterButlerPath):
+class GitLabPath(AquaValetPath):
     """The ``identifier`` for GitLabPaths are tuples of ``(commit_sha, branch_name)``. Children
     of GitLabPaths inherit their parent's ``commit_sha`` and ``branch_name``.  Either one may be
     ``None`` at object creation, but the provider will look up and set the commit SHA if so.

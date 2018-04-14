@@ -1,6 +1,6 @@
 from aquavalet.core import provider
 from aquavalet.core import exceptions, streams
-from aquavalet.core.path import WaterButlerPath
+from aquavalet.core.path import AquaValetPath
 from aquavalet.providers.filesystem.metadata import FileSystemItemMetadata
 
 class OsfProvider(provider.BaseProvider):
@@ -47,7 +47,7 @@ class OsfProvider(provider.BaseProvider):
                 ids.append(metadata['path'])
 
         file_path = '/' + '/'.join(segment_list[2:]) if len(segment_list) > 2 else '/'
-        return WaterButlerPath(file_path, _ids=ids, folder=metadata['kind'] == 'folder')
+        return AquaValetPath(file_path, _ids=ids, folder=metadata['kind'] == 'folder')
 
     def can_duplicate_names(self):
         return True

@@ -6,7 +6,7 @@ import aiohttpretty
 
 from aquavalet.core import streams
 from aquavalet.core import exceptions
-from aquavalet.core.path import WaterButlerPath
+from aquavalet.core.path import AquaValetPath
 from aquavalet.providers.owncloud import OwnCloudProvider
 from aquavalet.providers.owncloud.metadata import (OwnCloudFileMetadata,
                                                    OwnCloudFileRevisionMetadata)
@@ -68,12 +68,12 @@ class TestValidatePath:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_validate_v1_path_root(self, provider):
-        assert WaterButlerPath('/', prepend=provider.folder) == await provider.validate_v1_path('/')
+        assert AquaValetPath('/', prepend=provider.folder) == await provider.validate_v1_path('/')
 
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_validate_v1_path_file(self, provider, file_metadata):
-        path = WaterButlerPath('/triangles.txt', prepend=provider.folder)
+        path = AquaValetPath('/triangles.txt', prepend=provider.folder)
         url = provider._webdav_url_ + path.full_path
         aiohttpretty.register_uri('PROPFIND', url, body=file_metadata, auto_length=True, status=207)
         try:
@@ -88,7 +88,7 @@ class TestValidatePath:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_validate_v1_path_folder(self, provider, folder_metadata):
-        path = WaterButlerPath('/myfolder/', prepend=provider.folder)
+        path = AquaValetPath('/myfolder/', prepend=provider.folder)
         url = provider._webdav_url_ + path.full_path
         aiohttpretty.register_uri('PROPFIND',
                                   url,
@@ -107,7 +107,7 @@ class TestValidatePath:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_unparsable_dav_response(self, provider, file_metadata_unparsable_response):
-        path = WaterButlerPath('/triangles.txt', prepend=provider.folder)
+        path = AquaValetPath('/triangles.txt', prepend=provider.folder)
         url = provider._webdav_url_ + path.full_path
         aiohttpretty.register_uri('PROPFIND',
                                   url,
@@ -126,7 +126,7 @@ class TestValidatePath:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_v1_own_cloud_404(self, provider, file_metadata_unparsable_response):
-        path = WaterButlerPath('/triangles.txt', prepend=provider.folder)
+        path = AquaValetPath('/triangles.txt', prepend=provider.folder)
         url = provider._webdav_url_ + path.full_path
         aiohttpretty.register_uri('PROPFIND',
                                   url,
@@ -140,7 +140,7 @@ class TestValidatePath:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_response_different_of_kind_than_path(self, provider, folder_metadata):
-        path = WaterButlerPath('/triangles.txt', prepend=provider.folder)
+        path = AquaValetPath('/triangles.txt', prepend=provider.folder)
         url = provider._webdav_url_ + path.full_path
         aiohttpretty.register_uri('PROPFIND',
                                   url,
@@ -157,7 +157,7 @@ class TestCRUD:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_download(self, provider, file_metadata):
-        path = WaterButlerPath('/triangles.txt', prepend=provider.folder)
+        path = AquaValetPath('/triangles.txt', prepend=provider.folder)
         url = provider._webdav_url_ + path.full_path
         aiohttpretty.register_uri('PROPFIND', url, body=file_metadata, auto_length=True, status=207)
         aiohttpretty.register_uri('GET', url, body=b'squares', auto_length=True, status=200)
@@ -168,7 +168,7 @@ class TestCRUD:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_download_range(self, provider, file_metadata):
-        path = WaterButlerPath('/triangles.txt', prepend=provider.folder)
+        path = AquaValetPath('/triangles.txt', prepend=provider.folder)
         url = provider._webdav_url_ + path.full_path
         aiohttpretty.register_uri('PROPFIND', url, body=file_metadata, auto_length=True, status=207)
         aiohttpretty.register_uri('GET', url, body=b'sq', auto_length=True, status=206)
@@ -181,7 +181,7 @@ class TestCRUD:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_upload(self, provider, file_stream, file_metadata, file_metadata_object):
-        path = WaterButlerPath('/phile', prepend=provider.folder)
+        path = AquaValetPath('/phile', prepend=provider.folder)
         url = provider._webdav_url_ + path.full_path
         aiohttpretty.register_uri('PROPFIND', url, body=file_metadata, auto_length=True, status=207)
         aiohttpretty.register_uri('PUT', url, body=b'squares', auto_length=True, status=201)
@@ -195,8 +195,8 @@ class TestCRUD:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_upload_keep(self, provider, file_stream, file_metadata, file_metadata_object):
-        path = WaterButlerPath('/phile', prepend=provider.folder)
-        renamed_path = WaterButlerPath('/phile (1)', prepend=provider.folder)
+        path = AquaValetPath('/phile', prepend=provider.folder)
+        renamed_path = AquaValetPath('/phile (1)', prepend=provider.folder)
         path._parts[-1]._id = 'fake_id'
 
         provider.handle_name_conflict = utils.MockCoroutine(return_value=(renamed_path, True))
@@ -218,7 +218,7 @@ class TestCRUD:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_delete(self, provider, file_metadata):
-        path = WaterButlerPath('/phile', prepend=provider.folder)
+        path = AquaValetPath('/phile', prepend=provider.folder)
         url = provider._webdav_url_ + path.full_path
         aiohttpretty.register_uri('PROPFIND', url, body=file_metadata, auto_length=True, status=207)
         path = await provider.validate_path('/phile')
@@ -229,7 +229,7 @@ class TestCRUD:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_create_folder(self, provider, folder_contents_metadata):
-        path = WaterButlerPath('/pumpkin/', prepend=provider.folder)
+        path = AquaValetPath('/pumpkin/', prepend=provider.folder)
         folder_url = provider._webdav_url_ + path.full_path
         aiohttpretty.register_uri('MKCOL', folder_url, status=201)
 
@@ -244,7 +244,7 @@ class TestCRUD:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_create_folder_naming_conflict(self, provider, folder_contents_metadata):
-        path = WaterButlerPath('/pumpkin/', prepend=provider.folder)
+        path = AquaValetPath('/pumpkin/', prepend=provider.folder)
         folder_url = provider._webdav_url_ + path.full_path
         aiohttpretty.register_uri('MKCOL', folder_url, status=405)
 
@@ -261,10 +261,10 @@ class TestIntraMoveCopy:
                                      moved_folder_metadata,
                                      moved_parent_folder_metadata):
         provider.folder = '/'
-        src_path = WaterButlerPath('/moved_folder/', prepend=provider.folder, folder=True)
-        dest_path = WaterButlerPath('/parent_folder/moved_folder/',
-                                    prepend=provider.folder,
-                                    folder=True)
+        src_path = AquaValetPath('/moved_folder/', prepend=provider.folder, folder=True)
+        dest_path = AquaValetPath('/parent_folder/moved_folder/',
+                                  prepend=provider.folder,
+                                  folder=True)
 
         url = provider._webdav_url_ + src_path.full_path
         metadata_parent_url = provider._webdav_url_ + dest_path.parent.full_path
@@ -292,10 +292,10 @@ class TestIntraMoveCopy:
                                      moved_folder_metadata,
                                      moved_parent_folder_metadata):
         provider.folder = '/'
-        src_path = WaterButlerPath('/moved_folder/', prepend=provider.folder, folder=True)
-        dest_path = WaterButlerPath('/parent_folder/moved_folder/',
-                                    prepend=provider.folder,
-                                    folder=True)
+        src_path = AquaValetPath('/moved_folder/', prepend=provider.folder, folder=True)
+        dest_path = AquaValetPath('/parent_folder/moved_folder/',
+                                  prepend=provider.folder,
+                                  folder=True)
 
         url = provider._webdav_url_ + src_path.full_path
         metadata_parent_url = provider._webdav_url_ + dest_path.parent.full_path
@@ -320,8 +320,8 @@ class TestIntraMoveCopy:
     @pytest.mark.aiohttpretty
     async def test_intra_copy_file(self, provider, file_metadata):
         provider.folder = '/'
-        src_path = WaterButlerPath('/dissertation.aux', prepend=provider.folder, folder=True)
-        dest_path = WaterButlerPath('/parent_folder/', prepend=provider.folder, folder=False)
+        src_path = AquaValetPath('/dissertation.aux', prepend=provider.folder, folder=True)
+        dest_path = AquaValetPath('/parent_folder/', prepend=provider.folder, folder=False)
 
         url = provider._webdav_url_ + src_path.full_path
         metadata_url = provider._webdav_url_ + dest_path.full_path
@@ -340,7 +340,7 @@ class TestMetadata:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_metadata(self, provider, folder_list):
-        path = WaterButlerPath('/', prepend=provider.folder)
+        path = AquaValetPath('/', prepend=provider.folder)
         url = provider._webdav_url_ + path.full_path
         aiohttpretty.register_uri('PROPFIND', url, body=folder_list, auto_length=True, status=207)
         path = await provider.validate_path('/')
@@ -359,7 +359,7 @@ class TestRevisions:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_revisions(self, provider, file_metadata):
-        path = WaterButlerPath('/dissertation.aux', prepend=provider.folder)
+        path = AquaValetPath('/dissertation.aux', prepend=provider.folder)
         url = provider._webdav_url_ + path.full_path
         aiohttpretty.register_uri('PROPFIND', url, body=file_metadata, auto_length=True, status=207)
 

@@ -1,7 +1,7 @@
-from aquavalet.core.path import WaterButlerPath
+from aquavalet.core.path import AquaValetPath
 
 
-class FigsharePath(WaterButlerPath):
+class FigsharePath(AquaValetPath):
 
     def __init__(self, path,
                  folder: bool,
@@ -25,7 +25,7 @@ class FigsharePath(WaterButlerPath):
 
     @property
     def parent(self):
-        """ Returns a new WaterButlerPath that represents the parent of the current path.
+        """ Returns a new AquaValetPath that represents the parent of the current path.
 
         Calling `.parent()` on the root path returns None.
         """
@@ -35,7 +35,7 @@ class FigsharePath(WaterButlerPath):
                                          is_public=self.is_public, prepend=self._prepend)
 
     def child(self, name, _id=None, folder=False, parent_is_folder=True):
-        """ Create a child of the current WaterButlerPath, propagating prepend and id information to it.
+        """ Create a child of the current AquaValetPath, propagating prepend and id information to it.
 
         :param str name: the name of the child entity
         :param _id: the id of the child entity (defaults to None)

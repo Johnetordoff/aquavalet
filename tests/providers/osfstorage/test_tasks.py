@@ -10,7 +10,7 @@ from boto.glacier.exceptions import UnexpectedHTTPResponseError
 from tests import utils as test_utils
 
 from aquavalet.core import signing
-from aquavalet.core.path import WaterButlerPath
+from aquavalet.core.path import AquaValetPath
 from aquavalet.providers.osfstorage.tasks import utils
 from aquavalet.providers.osfstorage.tasks import backup
 from aquavalet.providers.osfstorage.tasks import parity
@@ -97,7 +97,7 @@ class TestParityTask:
 
         mock_provider.upload.assert_called_once_with(
             stream,
-            WaterButlerPath('/' + os.path.split(path)[1])
+            AquaValetPath('/' + os.path.split(path)[1])
         )
 
     def test_calls_complete(self, monkeypatch, event_loop, mock_provider, credentials, settings):

@@ -29,8 +29,9 @@ class BaseMetadata(metaclass=abc.ABCMeta):
         }
     """
 
-    def __init__(self, raw: dict) -> None:
+    def __init__(self, raw: dict, path) -> None:
         self.raw = raw
+        self.path = path
         self.default_segments = ['v1', 'providers', self.provider]
 
     def serialized(self) -> dict:
@@ -56,7 +57,7 @@ class BaseMetadata(metaclass=abc.ABCMeta):
 
     def json_api_serialized(self) -> dict:
         json_api = {
-            'id': self.provider + self.path,
+            'id': self.path.name,
             'type': 'files',
             'attributes': self.serialized(),
             'links': self._json_api_links(),
@@ -70,8 +71,7 @@ class BaseMetadata(metaclass=abc.ABCMeta):
         """
         actions = {}
 
-        path_segments = [seg for seg in self.path.split('/') if seg]
-        print(path_segments)
+        path_segments = [seg for seg in self.path.full_path.split('/') if seg]
 
         actions['self'] = self.construction_path(path_segments, 'meta')
         actions['delete'] = self.construction_path(path_segments, 'delete')
@@ -92,7 +92,7 @@ class BaseMetadata(metaclass=abc.ABCMeta):
 
     def construction_path(self, path, action) -> str:
         segments = self.default_segments + path
-        trailing_slash = '/' if self.path.endswith('/') or not path else ''
+        trailing_slash = '/' if self.path.is_file else ''
         return urlparse(settings.DOMAIN + '/' + '/'.join(segments) + trailing_slash + '?serve=' + action).geturl()
 
     @property
@@ -131,21 +131,6 @@ class BaseMetadata(metaclass=abc.ABCMeta):
 
             /bar/foo.txt -> foo.txt
             /<someid> -> whatever.png
-        """
-        raise NotImplementedError
-
-    @property
-    @abc.abstractmethod
-    def path(self) -> str:
-        """ The canonical string representation of a aquavalet file or folder.  For providers
-        that track entities with unique IDs, this will be the ID.  For providers that do not, this
-        will usually be the full unix-style path of the file or folder.
-
-        .. note::
-
-            All paths MUST start with a `/`
-            All folder entities MUST end with a `/`
-            File entities MUST never end with a `/`
         """
         raise NotImplementedError
 

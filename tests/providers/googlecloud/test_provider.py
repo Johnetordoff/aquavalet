@@ -8,7 +8,7 @@ from aiohttp import MultiDict
 import pytest
 import aiohttpretty
 
-from aquavalet.core.path import WaterButlerPath
+from aquavalet.core.path import AquaValetPath
 from aquavalet.core.streams import FileStreamReader, ResponseStreamReader
 from aquavalet.core import exceptions as core_exceptions
 from aquavalet.providers.googlecloud import utils

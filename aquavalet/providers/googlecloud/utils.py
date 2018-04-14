@@ -5,11 +5,11 @@ from urllib.parse import urlparse, quote
 
 import typing
 
-from aquavalet.core.path import WaterButlerPath
+from aquavalet.core.path import AquaValetPath
 from aquavalet.core.exceptions import WaterButlerError
 
 
-def get_obj_name(path: WaterButlerPath, is_folder: bool=False) -> str:
+def get_obj_name(path: AquaValetPath, is_folder: bool=False) -> str:
     """Get the object name of the object with the given Waterbutler Path.
 
     "Object Name" is used by Google Cloud API in request path, queries and headers to refer to the

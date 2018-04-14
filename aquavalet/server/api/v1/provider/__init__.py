@@ -18,12 +18,6 @@ from aquavalet.server.api.v1.provider.movecopy import MoveCopyMixin
 logger = logging.getLogger(__name__)
 auth_handler = AuthHandler(None)
 
-mime_types = {
-    '.csv': 'text/csv',
-    '.md': 'text/x-markdown',
-    '.txt': 'text/x-markdown',
-}
-
 
 @tornado.web.stream_request_body
 class ProviderHandler(core.BaseHandler, MoveCopyMixin):

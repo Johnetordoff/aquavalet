@@ -6,8 +6,8 @@ from aquavalet.core import metadata
 from aquavalet.core import exceptions
 
 
-class WaterButlerPathPart:
-    """ A WaterButlerPathPart represents one level of a unix-style path.  For instance,
+class AquaValetPathPart:
+    """ A AquaValetPathPart represents one level of a unix-style path.  For instance,
     `/foo/bar/baz.txt` would be composed of four PathParts: the root, `foo`, `bar`, and `baz.txt`.
     Each PathPart has a `value`, an `_id`, a `count`, and an `ext`.  The `value` is the
     human-readable component of the path, such as `baz.txt` or `bar`.  The `_id` is the unique
@@ -54,21 +54,21 @@ class WaterButlerPathPart:
     def ext(self) -> str:
         return self._ext
 
-    def increment_name(self, _id=None) -> 'WaterButlerPathPart':
+    def increment_name(self, _id=None) -> 'AquaValetPathPart':
         self._id = _id
         self._count += 1
         return self
 
-    def renamed(self, name: str) -> 'WaterButlerPathPart':
+    def renamed(self, name: str) -> 'AquaValetPathPart':
         return self.__class__(self.__class__.ENCODE(name), _id=self._id)  # type: ignore
 
     def __repr__(self):
         return '{}({!r}, count={})'.format(self.__class__.__name__, self._orig_part, self._count)
 
 
-class WaterButlerPath:
+class AquaValetPath:
     """ A standardized and validated immutable WaterButler path.  This is our abstraction around
-    file paths in storage providers.  A WaterButlerPath is an array of WaterButlerPathPart objects.
+    file paths in storage providers.  A AquaValetPath is an array of AquaValetPathPart objects.
     Each PathPart has two important attributes, `value` and `_id`.  `value` is always the
     human-readable component of the path. If the provider assigns ids to entities (see: Box, Google
     Drive, OSFStorage), that id belongs in the `_id` attribute. If `/Foo/Bar/baz.txt` is stored on
@@ -81,16 +81,16 @@ class WaterButlerPath:
           { value: 'baz.txt', _id: '1113345897' },
         ]
 
-    If :func:`WaterButlerPath.identifier` is called on this object, it'll return the `_id` of the
-    last path part. :func:`WaterButlerPath.path` will return `/Foo/Bar/baz.txt`.
+    If :func:`AquaValetPath.identifier` is called on this object, it'll return the `_id` of the
+    last path part. :func:`AquaValetPath.path` will return `/Foo/Bar/baz.txt`.
 
-    A valid WaterButlerPath should always have a root path part.
+    A valid AquaValetPath should always have a root path part.
 
     Some providers, such as Google Drive, require paths to be encoded when used in URLs.
-    WaterButlerPathPart has `ENCODE` and `DECODE` class methods that handle this. The encoded path
+    AquaValetPathPart has `ENCODE` and `DECODE` class methods that handle this. The encoded path
     is available through the `.raw_path()` method.
 
-    To get a human-readable materialized path, call `str()` on the WaterButlerPath.
+    To get a human-readable materialized path, call `str()` on the AquaValetPath.
 
     Representations::
 
@@ -101,7 +101,7 @@ class WaterButlerPath:
 
     """
 
-    PART_CLASS = WaterButlerPathPart
+    PART_CLASS = AquaValetPathPart
 
     @classmethod
     def generic_path_validation(cls, path: str) -> None:
@@ -122,7 +122,7 @@ class WaterButlerPath:
             raise exceptions.InvalidPathError('Invalid path \'{}\' specified'.format(absolute_path))
 
     @classmethod
-    def validate_folder(cls, path: 'WaterButlerPath') -> None:
+    def validate_folder(cls, path: 'AquaValetPath') -> None:
         if not path.is_dir:
             raise exceptions.CreateFolderError('Path must be a directory', code=400)
 
@@ -131,9 +131,9 @@ class WaterButlerPath:
 
     @classmethod
     def from_parts(cls,
-                   parts: typing.Iterable[WaterButlerPathPart],
+                   parts: typing.Iterable[AquaValetPathPart],
                    folder: bool=False,
-                   **kwargs) -> 'WaterButlerPath':
+                   **kwargs) -> 'AquaValetPath':
         _ids, _parts = [], []
         for part in parts:
             _ids.append(part.identifier)
@@ -167,7 +167,7 @@ class WaterButlerPath:
         if prepend:
             self._prepend_parts = [self.PART_CLASS(part) for part in prepend.rstrip('/').split('/')]
         else:
-            self._prepend_parts = []  # type: typing.List[WaterButlerPathPart]
+            self._prepend_parts = []  # type: typing.List[AquaValetPathPart]
 
         self._parts = [
             self.PART_CLASS(part, _id=_id)
@@ -209,7 +209,7 @@ class WaterButlerPath:
 
     @property
     def parts(self) -> list:
-        """ Returns the list of WaterButlerPathParts that comprise this WaterButlerPath. """
+        """ Returns the list of WaterButlerPathParts that comprise this AquaValetPath. """
         return self._parts
 
     @property
@@ -266,7 +266,7 @@ class WaterButlerPath:
 
     @property
     def parent(self):
-        """ Returns a new WaterButlerPath that represents the parent of the current path.
+        """ Returns a new AquaValetPath that represents the parent of the current path.
 
         Calling `.parent()` on the root path returns None.
         """
@@ -280,7 +280,7 @@ class WaterButlerPath:
         return {}
 
     def child(self, name: str, _id=None, folder: bool=False):
-        """ Create a child of the current WaterButlerPath, propagating prepend and id information to it.
+        """ Create a child of the current AquaValetPath, propagating prepend and id information to it.
 
         :param str name: the name of the child entity
         :param _id: the id of the child entity (defaults to None)
@@ -291,11 +291,11 @@ class WaterButlerPath:
             folder=folder, prepend=self._prepend
         )
 
-    def increment_name(self) -> 'WaterButlerPath':
+    def increment_name(self) -> 'AquaValetPath':
         self._parts[-1].increment_name()
         return self
 
-    def rename(self, name) -> 'WaterButlerPath':
+    def rename(self, name) -> 'AquaValetPath':
         self._parts[-1] = self._parts[-1].renamed(name)
         return self
 

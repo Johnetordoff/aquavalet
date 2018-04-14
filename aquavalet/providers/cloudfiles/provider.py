@@ -11,7 +11,7 @@ import furl
 from aquavalet.core import streams
 from aquavalet.core import provider
 from aquavalet.core import exceptions
-from aquavalet.core.path import WaterButlerPath
+from aquavalet.core.path import AquaValetPath
 
 from aquavalet.providers.cloudfiles import settings
 from aquavalet.providers.cloudfiles.metadata import CloudFilesFileMetadata
@@ -53,7 +53,7 @@ class CloudFilesProvider(provider.BaseProvider):
         return await self.validate_path(path, **kwargs)
 
     async def validate_path(self, path, **kwargs):
-        return WaterButlerPath(path)
+        return AquaValetPath(path)
 
     @property
     def default_headers(self):

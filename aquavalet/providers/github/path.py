@@ -1,7 +1,7 @@
 from aquavalet.core import path
 
 
-class GitHubPathPart(path.WaterButlerPathPart):
+class GitHubPathPart(path.AquaValetPathPart):
     def increment_name(self, _id=None):
         """Overridden to preserve branch from _id upon incrementing"""
         self._id = _id or (self._id[0], None)
@@ -9,7 +9,7 @@ class GitHubPathPart(path.WaterButlerPathPart):
         return self
 
 
-class GitHubPath(path.WaterButlerPath):
+class GitHubPath(path.AquaValetPath):
     """The ``identifier`` for GitHubPaths are tuples of ``(branch_name, file_sha)``.  Children
     of GitHubPaths inherit their parent's ``branch_name``.  ``file_sha`` may be None if the path
     has not yet been validated.

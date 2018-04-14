@@ -7,7 +7,7 @@ from unittest import mock
 import pytest
 
 from aquavalet.core import streams
-from aquavalet.core.path import WaterButlerPath
+from aquavalet.core.path import AquaValetPath
 from aquavalet.providers.osfstorage.provider import OSFStorageProvider
 from aquavalet.providers.osfstorage.metadata import (OsfStorageFileMetadata,
                                                      OsfStorageFolderMetadata,
@@ -66,8 +66,8 @@ def download_response():
 
 @pytest.fixture
 def download_path(download_response):
-    return WaterButlerPath('/' + download_response['data']['name'],
-                           _ids=('rootId',  download_response['data']['path']))
+    return AquaValetPath('/' + download_response['data']['name'],
+                         _ids=('rootId',  download_response['data']['path']))
 
 
 @pytest.fixture
@@ -78,8 +78,8 @@ def upload_response():
 
 @pytest.fixture
 def upload_path(upload_response):
-    return WaterButlerPath('/' + upload_response['data']['name'],
-                           _ids=('rootId',  upload_response['data']['id']))
+    return AquaValetPath('/' + upload_response['data']['name'],
+                         _ids=('rootId',  upload_response['data']['id']))
 
 
 @pytest.fixture
@@ -96,9 +96,9 @@ def folder_lineage():
 
 @pytest.fixture
 def folder_path(folder_lineage):
-    return WaterButlerPath(folder_lineage['data'][0]['path'],
-                           _ids=(folder_lineage['data'][-1]['id'], folder_lineage['data'][0]['id']),
-                           folder=True)
+    return AquaValetPath(folder_lineage['data'][0]['path'],
+                         _ids=(folder_lineage['data'][-1]['id'], folder_lineage['data'][0]['id']),
+                         folder=True)
 
 
 @pytest.fixture
@@ -115,8 +115,8 @@ def file_lineage():
 
 @pytest.fixture
 def file_path(file_lineage):
-    return WaterButlerPath(file_lineage['data'][0]['path'],
-                           _ids=(file_lineage['data'][-1]['id'], file_lineage['data'][0]['id']))
+    return AquaValetPath(file_lineage['data'][0]['path'],
+                         _ids=(file_lineage['data'][-1]['id'], file_lineage['data'][0]['id']))
 
 
 @pytest.fixture
@@ -127,18 +127,18 @@ def revisions_metadata():
 
 @pytest.fixture
 def root_path(provider):
-    return WaterButlerPath('/', _ids=[provider.root_id], folder=True)
+    return AquaValetPath('/', _ids=[provider.root_id], folder=True)
 
 
 @pytest.fixture
 def file_metadata_object(file_metadata):
-    path = WaterButlerPath('/' + file_metadata['name'])
+    path = AquaValetPath('/' + file_metadata['name'])
     return OsfStorageFileMetadata(file_metadata, path)
 
 
 @pytest.fixture
 def folder_metadata_object(folder_metadata):
-    path = WaterButlerPath('/' + folder_metadata['data']['name'], folder=True)
+    path = AquaValetPath('/' + folder_metadata['data']['name'], folder=True)
     return OsfStorageFolderMetadata(folder_metadata['data'], path)
 
 

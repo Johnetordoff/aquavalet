@@ -4,7 +4,7 @@ from http import client
 from unittest import mock
 
 from aquavalet.core import exceptions
-from aquavalet.core.path import WaterButlerPath
+from aquavalet.core.path import AquaValetPath
 from aquavalet.server.api.v1.provider.create import CreateMixin
 
 from tests.utils import MockCoroutine
@@ -75,7 +75,7 @@ class TestValidatePut(BaseCreateMixinTest):
 
     @pytest.mark.asyncio
     async def test_name_required_for_dir(self):
-        self.mixin.path = WaterButlerPath('/', folder=True)
+        self.mixin.path = AquaValetPath('/', folder=True)
         self.mixin.get_query_argument.return_value = None
 
         with pytest.raises(exceptions.InvalidParameters) as e:
@@ -85,7 +85,7 @@ class TestValidatePut(BaseCreateMixinTest):
 
     @pytest.mark.asyncio
     async def test_name_refused_for_file(self):
-        self.mixin.path = WaterButlerPath('/foo.txt', folder=False)
+        self.mixin.path = AquaValetPath('/foo.txt', folder=False)
         self.mixin.get_query_argument.return_value = 'bar.txt'
 
         with pytest.raises(exceptions.InvalidParameters) as e:
@@ -95,7 +95,7 @@ class TestValidatePut(BaseCreateMixinTest):
 
     @pytest.mark.asyncio
     async def test_kind_must_be_folder(self):
-        self.mixin.path = WaterButlerPath('/adlkjf')
+        self.mixin.path = AquaValetPath('/adlkjf')
         self.mixin.get_query_argument.return_value = None
         self.mixin.kind = 'folder'
 
@@ -117,7 +117,7 @@ class TestCreateFolder(BaseCreateMixinTest):
         self.mixin.provider = mock.Mock(
             create_folder=MockCoroutine(return_value=metadata)
         )
-        target = WaterButlerPath('/apath/')
+        target = AquaValetPath('/apath/')
         self.mixin.target_path = target
 
         await self.mixin.create_folder()

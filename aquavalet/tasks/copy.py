@@ -4,7 +4,7 @@ import logging
 from aquavalet.core import utils
 from aquavalet.tasks import core
 from aquavalet.core import remote_logging
-from aquavalet.core.path import WaterButlerPath
+from aquavalet.core.path import AquaValetPath
 
 
 logger = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ async def copy(src_bundle, dest_bundle, request={}, start_time=None, **kwargs):
         raise  # Ensure sentry sees this
     else:
         logger.info('Copy succeeded')
-        dest_path = WaterButlerPath.from_metadata(metadata)
+        dest_path = AquaValetPath.from_metadata(metadata)
     finally:
         source = LogPayload(src_bundle['nid'], src_provider, path=src_path)
         destination = LogPayload(

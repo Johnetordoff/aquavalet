@@ -14,7 +14,7 @@ import aiohttp.multidict
 
 from aquavalet.core import streams
 from aquavalet.core import exceptions
-from aquavalet.core.path import WaterButlerPath
+from aquavalet.core.path import AquaValetPath
 from aquavalet.providers.cloudfiles import CloudFilesProvider
 from aquavalet.providers.cloudfiles import settings as cloud_settings
 
@@ -334,7 +334,7 @@ class TestCRUD:
     @pytest.mark.aiohttpretty
     async def test_download(self, connected_provider):
         body = b'dearly-beloved'
-        path = WaterButlerPath('/lets-go-crazy')
+        path = AquaValetPath('/lets-go-crazy')
         url = connected_provider.sign_url(path)
 
         aiohttpretty.register_uri('GET', url, body=body, auto_length=True)
@@ -348,7 +348,7 @@ class TestCRUD:
     @pytest.mark.aiohttpretty
     async def test_download_accept_url(self, connected_provider):
         body = b'dearly-beloved'
-        path = WaterButlerPath('/lets-go-crazy')
+        path = AquaValetPath('/lets-go-crazy')
 
         url = connected_provider.sign_url(path)
         parsed_url = furl.furl(url)
@@ -365,7 +365,7 @@ class TestCRUD:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_download_not_found(self, connected_provider):
-        path = WaterButlerPath('/lets-go-crazy')
+        path = AquaValetPath('/lets-go-crazy')
         url = connected_provider.sign_url(path)
         aiohttpretty.register_uri('GET', url, status=404)
         with pytest.raises(exceptions.DownloadError):
@@ -374,7 +374,7 @@ class TestCRUD:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_upload(self, connected_provider, file_content, file_stream, file_metadata):
-        path = WaterButlerPath('/foo.bar')
+        path = AquaValetPath('/foo.bar')
         content_md5 = hashlib.md5(file_content).hexdigest()
         metadata_url = connected_provider.build_url(path.path)
         url = connected_provider.sign_url(path, 'PUT')
@@ -399,7 +399,7 @@ class TestCRUD:
     @pytest.mark.aiohttpretty
     async def test_upload_check_none(self, connected_provider,
                                     file_content, file_stream, file_metadata):
-        path = WaterButlerPath('/foo.bar')
+        path = AquaValetPath('/foo.bar')
         content_md5 = hashlib.md5(file_content).hexdigest()
         metadata_url = connected_provider.build_url(path.path)
         url = connected_provider.sign_url(path, 'PUT')
@@ -423,7 +423,7 @@ class TestCRUD:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_upload_checksum_mismatch(self, connected_provider, file_stream, file_metadata):
-        path = WaterButlerPath('/foo.bar')
+        path = AquaValetPath('/foo.bar')
         metadata_url = connected_provider.build_url(path.path)
         url = connected_provider.sign_url(path, 'PUT')
         aiohttpretty.register_uri(
@@ -448,7 +448,7 @@ class TestCRUD:
     #     # This test will probably fail on a live
     #     # version of the provider because build_url is called wrong.
     #     # Will comment out parts of this test till that is fixed.
-    #     path = WaterButlerPath('/delete/')
+    #     path = AquaValetPath('/delete/')
     #     query = {'prefix': path.path}
     #     url = connected_provider.build_url('', **query)
     #     body = json.dumps(folder_root_empty).encode('utf-8')
@@ -470,7 +470,7 @@ class TestCRUD:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_delete_file(self, connected_provider):
-        path = WaterButlerPath('/delete.file')
+        path = AquaValetPath('/delete.file')
         url = connected_provider.build_url(path.path)
         aiohttpretty.register_uri('DELETE', url, status=204)
         await connected_provider.delete(path)
@@ -480,8 +480,8 @@ class TestCRUD:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_intra_copy(self, connected_provider, file_metadata):
-        src_path = WaterButlerPath('/delete.file')
-        dest_path = WaterButlerPath('/folder1/delete.file')
+        src_path = AquaValetPath('/delete.file')
+        dest_path = AquaValetPath('/folder1/delete.file')
 
         dest_url = connected_provider.build_url(dest_path.path)
 
@@ -500,7 +500,7 @@ class TestMetadata:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_metadata_folder_root_empty(self, connected_provider, folder_root_empty):
-        path = WaterButlerPath('/')
+        path = AquaValetPath('/')
         body = json.dumps(folder_root_empty).encode('utf-8')
         url = connected_provider.build_url(path.path, prefix=path.path, delimiter='/')
         aiohttpretty.register_uri('GET', url, status=200, body=body)
@@ -512,7 +512,7 @@ class TestMetadata:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_metadata_folder_root(self, connected_provider, folder_root):
-        path = WaterButlerPath('/')
+        path = AquaValetPath('/')
         body = json.dumps(folder_root).encode('utf-8')
         url = connected_provider.build_url('', prefix=path.path, delimiter='/')
         aiohttpretty.register_uri('GET', url, status=200, body=body)
@@ -535,7 +535,7 @@ class TestMetadata:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_metadata_folder_root_level1(self, connected_provider, folder_root_level1):
-        path = WaterButlerPath('/level1/')
+        path = AquaValetPath('/level1/')
         body = json.dumps(folder_root_level1).encode('utf-8')
         url = connected_provider.build_url('', prefix=path.path, delimiter='/')
         aiohttpretty.register_uri('GET', url, status=200, body=body)
@@ -550,7 +550,7 @@ class TestMetadata:
     @pytest.mark.aiohttpretty
     async def test_metadata_folder_root_level1_level2(self, connected_provider,
                                                       folder_root_level1_level2):
-        path = WaterButlerPath('/level1/level2/')
+        path = AquaValetPath('/level1/level2/')
         body = json.dumps(folder_root_level1_level2).encode('utf-8')
         url = connected_provider.build_url('', prefix=path.path, delimiter='/')
         aiohttpretty.register_uri('GET', url, status=200, body=body)
@@ -565,7 +565,7 @@ class TestMetadata:
     @pytest.mark.aiohttpretty
     async def test_metadata_file_root_level1_level2_file2_txt(self, connected_provider,
                                                               file_root_level1_level2_file2_txt):
-        path = WaterButlerPath('/level1/level2/file2.txt')
+        path = AquaValetPath('/level1/level2/file2.txt')
         url = connected_provider.build_url(path.path)
         aiohttpretty.register_uri('HEAD', url, status=200,
                         headers=file_root_level1_level2_file2_txt)
@@ -581,7 +581,7 @@ class TestMetadata:
     @pytest.mark.aiohttpretty
     async def test_metadata_folder_root_level1_empty(self, connected_provider,
                                                         folder_root_level1_empty):
-        path = WaterButlerPath('/level1_empty/')
+        path = AquaValetPath('/level1_empty/')
         folder_url = connected_provider.build_url('', prefix=path.path, delimiter='/')
         folder_body = json.dumps([]).encode('utf-8')
         file_url = connected_provider.build_url(path.path.rstrip('/'))
@@ -594,7 +594,7 @@ class TestMetadata:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_metadata_file_root_similar(self, connected_provider, file_root_similar):
-        path = WaterButlerPath('/similar')
+        path = AquaValetPath('/similar')
         url = connected_provider.build_url(path.path)
         aiohttpretty.register_uri('HEAD', url, status=200, headers=file_root_similar)
         result = await connected_provider.metadata(path)
@@ -608,7 +608,7 @@ class TestMetadata:
     @pytest.mark.aiohttpretty
     async def test_metadata_file_root_similar_name(self, connected_provider,
                                                    file_root_similar_name):
-        path = WaterButlerPath('/similar.file')
+        path = AquaValetPath('/similar.file')
         url = connected_provider.build_url(path.path)
         aiohttpretty.register_uri('HEAD', url, status=200, headers=file_root_similar_name)
         result = await connected_provider.metadata(path)
@@ -621,7 +621,7 @@ class TestMetadata:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_metadata_file_does_not_exist(self, connected_provider):
-        path = WaterButlerPath('/does_not.exist')
+        path = AquaValetPath('/does_not.exist')
         url = connected_provider.build_url(path.path)
         aiohttpretty.register_uri('HEAD', url, status=404)
         with pytest.raises(exceptions.MetadataError):
@@ -630,7 +630,7 @@ class TestMetadata:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_metadata_folder_does_not_exist(self, connected_provider):
-        path = WaterButlerPath('/does_not_exist/')
+        path = AquaValetPath('/does_not_exist/')
         folder_url = connected_provider.build_url('', prefix=path.path, delimiter='/')
         folder_body = json.dumps([]).encode('utf-8')
         file_url = connected_provider.build_url(path.path.rstrip('/'))
@@ -644,7 +644,7 @@ class TestMetadata:
     async def test_metadata_file_bad_content_type(self, connected_provider, file_metadata):
         item = file_metadata
         item['Content-Type'] = 'application/directory'
-        path = WaterButlerPath('/does_not.exist')
+        path = AquaValetPath('/does_not.exist')
         url = connected_provider.build_url(path.path)
         aiohttpretty.register_uri('HEAD', url, headers=item)
         with pytest.raises(exceptions.MetadataError):

@@ -5,9 +5,8 @@ from aquavalet.core import metadata
 class BaseFileSystemMetadata(metadata.BaseMetadata):
 
     def __init__(self, raw, folder, path):
-        super().__init__(raw)
+        super().__init__(raw, path)
         self._folder = folder
-        self.path_obj = path
 
     @property
     def provider(self):
@@ -23,10 +22,6 @@ class FileSystemItemMetadata(BaseFileSystemMetadata, metadata.BaseMetadata):
     @property
     def name(self):
         return self.raw.get('name') or os.path.split(self.raw['path'])[1]
-
-    @property
-    def path(self):
-        return self.build_path(self.raw['path'])
 
     @property
     def size(self):

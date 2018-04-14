@@ -8,7 +8,7 @@ import aiohttpretty
 
 from aquavalet.core import streams
 from aquavalet.core import exceptions
-from aquavalet.core.path import WaterButlerPath
+from aquavalet.core.path import AquaValetPath
 from aquavalet.providers.dataverse import settings as dvs
 from aquavalet.providers.dataverse import DataverseProvider
 from aquavalet.providers.dataverse.metadata import DataverseFileMetadata, DataverseRevision
@@ -346,7 +346,7 @@ class TestRevisions:
                                  key=provider.token)
         aiohttpretty.register_json_uri('GET', url, status=200, body=native_dataset_metadata)
 
-        path = WaterButlerPath('/thefile.txt', _ids=('?', '19'))
+        path = AquaValetPath('/thefile.txt', _ids=('?', '19'))
         result = await provider.revisions(path, version='latest')
 
         isinstance(result, DataverseRevision)
@@ -367,7 +367,7 @@ class TestMetadata:
                                  key=provider.token)
         aiohttpretty.register_json_uri('GET', url, status=200, body=native_dataset_metadata)
 
-        path = WaterButlerPath('/thefile.txt', _ids=('?', '19'))
+        path = AquaValetPath('/thefile.txt', _ids=('?', '19'))
         result = await provider.metadata(path, version='latest')
 
         assert result.provider == 'dataverse'
@@ -418,7 +418,7 @@ class TestMetadata:
                                  key=provider.token)
         aiohttpretty.register_json_uri('GET', url, status=200, body=native_dataset_metadata)
 
-        path = WaterButlerPath('/thefilenotfound.txt', _ids=('?', 'nobody has this fileId'))
+        path = AquaValetPath('/thefilenotfound.txt', _ids=('?', 'nobody has this fileId'))
 
         with pytest.raises(exceptions.MetadataError):
             await provider.metadata(path, version='latest')

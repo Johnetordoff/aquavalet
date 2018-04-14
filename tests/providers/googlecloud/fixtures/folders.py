@@ -2,12 +2,12 @@ import os
 
 import pytest
 
-from aquavalet.core.path import WaterButlerPath
+from aquavalet.core.path import AquaValetPath
 
 
 @pytest.fixture()
 def folder_wb_path():
-    return WaterButlerPath('/xml-api/folder-1/')
+    return AquaValetPath('/xml-api/folder-1/')
 
 
 @pytest.fixture()

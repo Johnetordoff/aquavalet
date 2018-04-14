@@ -13,7 +13,7 @@ from tornado.platform.asyncio import AsyncIOMainLoop
 from aquavalet.core import metadata
 from aquavalet.core import provider
 from aquavalet.server.app import make_app
-from aquavalet.core.path import WaterButlerPath
+from aquavalet.core.path import AquaValetPath
 
 
 class MockCoroutine(mock.Mock):
@@ -97,7 +97,7 @@ class MockProvider1(provider.BaseProvider):
         return await self.validate_path(path, **kwargs)
 
     async def validate_path(self, path, **kwargs):
-        return WaterButlerPath(path)
+        return AquaValetPath(path)
 
     async def upload(self, stream, path, **kwargs):
         return MockFileMetadata(), True

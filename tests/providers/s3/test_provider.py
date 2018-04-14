@@ -14,7 +14,7 @@ from aquavalet.core import (streams,
                             metadata,
                             exceptions)
 from aquavalet.providers.s3 import S3Provider
-from aquavalet.core.path import WaterButlerPath
+from aquavalet.core.path import AquaValetPath
 
 from tests.utils import MockCoroutine
 from tests.providers.s3.fixtures import (
@@ -163,7 +163,7 @@ class TestValidatePath:
         aiohttpretty.register_uri('HEAD', good_metadata_url, headers=file_header_metadata)
         aiohttpretty.register_uri('GET', bad_metadata_url, params=params, status=404)
 
-        assert WaterButlerPath('/') == await provider.validate_v1_path('/')
+        assert AquaValetPath('/') == await provider.validate_v1_path('/')
 
         try:
             wb_path_v1 = await provider.validate_v1_path('/' + file_path)
@@ -240,7 +240,7 @@ class TestCRUD:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_download(self, provider, mock_time):
-        path = WaterButlerPath('/muhtriangle')
+        path = AquaValetPath('/muhtriangle')
         response_headers = {'response-content-disposition': 'attachment'}
         url = provider.bucket.new_key(path.path).generate_url(100,
                                                               response_headers=response_headers)
@@ -254,7 +254,7 @@ class TestCRUD:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_download_range(self, provider, mock_time):
-        path = WaterButlerPath('/muhtriangle')
+        path = AquaValetPath('/muhtriangle')
         response_headers = {'response-content-disposition': 'attachment'}
         url = provider.bucket.new_key(path.path).generate_url(100,
                                                               response_headers=response_headers)
@@ -269,7 +269,7 @@ class TestCRUD:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_download_version(self, provider, mock_time):
-        path = WaterButlerPath('/muhtriangle')
+        path = AquaValetPath('/muhtriangle')
         url = provider.bucket.new_key(path.path).generate_url(
             100,
             query_parameters={'versionId': 'someversion'},
@@ -285,7 +285,7 @@ class TestCRUD:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_download_display_name(self, provider, mock_time):
-        path = WaterButlerPath('/muhtriangle')
+        path = AquaValetPath('/muhtriangle')
         response_headers = {'response-content-disposition': "attachment; filename*=UTF-8''tuna"}
         url = provider.bucket.new_key(path.path).generate_url(100,
                                                               response_headers=response_headers)
@@ -299,7 +299,7 @@ class TestCRUD:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_download_not_found(self, provider, mock_time):
-        path = WaterButlerPath('/muhtriangle')
+        path = AquaValetPath('/muhtriangle')
         response_headers = {'response-content-disposition': 'attachment'}
         url = provider.bucket.new_key(path.path).generate_url(100,
                                                               response_headers=response_headers)
@@ -312,7 +312,7 @@ class TestCRUD:
     @pytest.mark.aiohttpretty
     async def test_download_folder_400s(self, provider, mock_time):
         with pytest.raises(exceptions.DownloadError) as e:
-            await provider.download(WaterButlerPath('/cool/folder/mom/'))
+            await provider.download(AquaValetPath('/cool/folder/mom/'))
         assert e.value.code == 400
 
     @pytest.mark.asyncio
@@ -324,7 +324,7 @@ class TestCRUD:
                                  file_header_metadata,
                                  mock_time):
 
-        path = WaterButlerPath('/foobah')
+        path = AquaValetPath('/foobah')
         content_md5 = hashlib.md5(file_content).hexdigest()
         url = provider.bucket.new_key(path.path).generate_url(100, 'PUT')
         metadata_url = provider.bucket.new_key(path.path).generate_url(100, 'HEAD')
@@ -350,7 +350,7 @@ class TestCRUD:
 
         # Set trigger for encrypt_key=True in s3.provider.upload
         provider.encrypt_uploads = True
-        path = WaterButlerPath('/foobah')
+        path = AquaValetPath('/foobah')
         content_md5 = hashlib.md5(file_content).hexdigest()
         url = provider.bucket.new_key(path.path).generate_url(100, 'PUT', encrypt_key=True)
         metadata_url = provider.bucket.new_key(path.path).generate_url(100, 'HEAD')
@@ -376,7 +376,7 @@ class TestCRUD:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_delete(self, provider, mock_time):
-        path = WaterButlerPath('/some-file')
+        path = AquaValetPath('/some-file')
         url = provider.bucket.new_key(path.path).generate_url(100, 'DELETE')
         aiohttpretty.register_uri('DELETE', url, status=200)
 
@@ -387,7 +387,7 @@ class TestCRUD:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_delete_comfirm_delete(self, provider, folder_and_contents, mock_time):
-        path = WaterButlerPath('/')
+        path = AquaValetPath('/')
 
         query_url = provider.bucket.generate_url(100, 'GET')
         aiohttpretty.register_uri(
@@ -419,7 +419,7 @@ class TestCRUD:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_folder_delete(self, provider, folder_and_contents, mock_time):
-        path = WaterButlerPath('/some-folder/')
+        path = AquaValetPath('/some-folder/')
 
         params = {'prefix': 'some-folder/'}
         query_url = provider.bucket.generate_url(100, 'GET')
@@ -455,7 +455,7 @@ class TestCRUD:
                                              provider,
                                              folder_single_item_metadata,
                                              mock_time):
-        path = WaterButlerPath('/single-thing-folder/')
+        path = AquaValetPath('/single-thing-folder/')
 
         params = {'prefix': 'single-thing-folder/'}
         query_url = provider.bucket.generate_url(100, 'GET')
@@ -486,7 +486,7 @@ class TestCRUD:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_empty_folder_delete(self, provider, folder_empty_metadata, mock_time):
-        path = WaterButlerPath('/empty-folder/')
+        path = AquaValetPath('/empty-folder/')
 
         params = {'prefix': 'empty-folder/'}
         query_url = provider.bucket.generate_url(100, 'GET')
@@ -506,7 +506,7 @@ class TestCRUD:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_large_folder_delete(self, provider, mock_time):
-        path = WaterButlerPath('/some-folder/')
+        path = AquaValetPath('/some-folder/')
 
         query_url = provider.bucket.generate_url(100, 'GET')
 
@@ -563,7 +563,7 @@ class TestCRUD:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_accepts_url(self, provider, mock_time):
-        path = WaterButlerPath('/my-image')
+        path = AquaValetPath('/my-image')
         response_headers = {'response-content-disposition': 'attachment'}
         url = provider.bucket.new_key(path.path).generate_url(100,
                                                               'GET',
@@ -579,7 +579,7 @@ class TestMetadata:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_metadata_folder(self, provider, folder_metadata, mock_time):
-        path = WaterButlerPath('/darp/')
+        path = AquaValetPath('/darp/')
         url = provider.bucket.generate_url(100)
         params = build_folder_params(path)
         aiohttpretty.register_uri('GET', url, params=params, body=folder_metadata,
@@ -597,7 +597,7 @@ class TestMetadata:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_metadata_folder_self_listing(self, provider, folder_and_contents, mock_time):
-        path = WaterButlerPath('/thisfolder/')
+        path = AquaValetPath('/thisfolder/')
         url = provider.bucket.generate_url(100)
         params = build_folder_params(path)
         aiohttpretty.register_uri('GET', url, params=params, body=folder_and_contents)
@@ -612,7 +612,7 @@ class TestMetadata:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_folder_metadata_folder_item(self, provider, folder_item_metadata, mock_time):
-        path = WaterButlerPath('/')
+        path = AquaValetPath('/')
         url = provider.bucket.generate_url(100)
         params = build_folder_params(path)
         aiohttpretty.register_uri('GET', url, params=params, body=folder_item_metadata,
@@ -627,7 +627,7 @@ class TestMetadata:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_empty_metadata_folder(self, provider, folder_empty_metadata, mock_time):
-        path = WaterButlerPath('/this-is-not-the-root/')
+        path = AquaValetPath('/this-is-not-the-root/')
         metadata_url = provider.bucket.new_key(path.path).generate_url(100, 'HEAD')
 
         url = provider.bucket.generate_url(100)
@@ -648,7 +648,7 @@ class TestMetadata:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_metadata_file(self, provider, file_header_metadata, mock_time):
-        path = WaterButlerPath('/Foo/Bar/my-image.jpg')
+        path = AquaValetPath('/Foo/Bar/my-image.jpg')
         url = provider.bucket.new_key(path.path).generate_url(100, 'HEAD')
         aiohttpretty.register_uri('HEAD', url, headers=file_header_metadata)
 
@@ -663,7 +663,7 @@ class TestMetadata:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_metadata_file_lastest_revision(self, provider, file_header_metadata, mock_time):
-        path = WaterButlerPath('/Foo/Bar/my-image.jpg')
+        path = AquaValetPath('/Foo/Bar/my-image.jpg')
         url = provider.bucket.new_key(path.path).generate_url(100, 'HEAD')
         aiohttpretty.register_uri('HEAD', url, headers=file_header_metadata)
 
@@ -678,7 +678,7 @@ class TestMetadata:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_metadata_file_missing(self, provider, mock_time):
-        path = WaterButlerPath('/notfound.txt')
+        path = AquaValetPath('/notfound.txt')
         url = provider.bucket.new_key(path.path).generate_url(100, 'HEAD')
         aiohttpretty.register_uri('HEAD', url, status=404)
 
@@ -694,7 +694,7 @@ class TestMetadata:
                           file_header_metadata,
                           mock_time):
 
-        path = WaterButlerPath('/foobah')
+        path = AquaValetPath('/foobah')
         content_md5 = hashlib.md5(file_content).hexdigest()
         url = provider.bucket.new_key(path.path).generate_url(100, 'PUT')
         metadata_url = provider.bucket.new_key(path.path).generate_url(100, 'HEAD')
@@ -723,7 +723,7 @@ class TestMetadata:
                                             file_stream,
                                             file_header_metadata,
                                             mock_time):
-        path = WaterButlerPath('/foobah')
+        path = AquaValetPath('/foobah')
         url = provider.bucket.new_key(path.path).generate_url(100, 'PUT')
         metadata_url = provider.bucket.new_key(path.path).generate_url(100, 'HEAD')
         aiohttpretty.register_uri(
@@ -748,7 +748,7 @@ class TestCreateFolder:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_raise_409(self, provider, folder_metadata, mock_time):
-        path = WaterButlerPath('/alreadyexists/')
+        path = AquaValetPath('/alreadyexists/')
         url = provider.bucket.generate_url(100, 'GET')
         params = build_folder_params(path)
         aiohttpretty.register_uri('GET', url, params=params, body=folder_metadata,
@@ -764,7 +764,7 @@ class TestCreateFolder:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_must_start_with_slash(self, provider, mock_time):
-        path = WaterButlerPath('/alreadyexists')
+        path = AquaValetPath('/alreadyexists')
 
         with pytest.raises(exceptions.CreateFolderError) as e:
             await provider.create_folder(path)
@@ -775,7 +775,7 @@ class TestCreateFolder:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_errors_out(self, provider, mock_time):
-        path = WaterButlerPath('/alreadyexists/')
+        path = AquaValetPath('/alreadyexists/')
         url = provider.bucket.generate_url(100, 'GET')
         params = build_folder_params(path)
         create_url = provider.bucket.new_key(path.path).generate_url(100, 'PUT')
@@ -791,7 +791,7 @@ class TestCreateFolder:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_errors_out_metadata(self, provider, mock_time):
-        path = WaterButlerPath('/alreadyexists/')
+        path = AquaValetPath('/alreadyexists/')
         url = provider.bucket.generate_url(100, 'GET')
         params = build_folder_params(path)
 
@@ -805,7 +805,7 @@ class TestCreateFolder:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_creates(self, provider, mock_time):
-        path = WaterButlerPath('/doesntalreadyexists/')
+        path = AquaValetPath('/doesntalreadyexists/')
         url = provider.bucket.generate_url(100, 'GET')
         params = build_folder_params(path)
         create_url = provider.bucket.new_key(path.path).generate_url(100, 'PUT')
@@ -826,8 +826,8 @@ class TestOperations:
     @pytest.mark.aiohttpretty
     async def test_intra_copy(self, provider, file_header_metadata, mock_time):
 
-        source_path = WaterButlerPath('/source')
-        dest_path = WaterButlerPath('/dest')
+        source_path = AquaValetPath('/source')
+        dest_path = AquaValetPath('/dest')
         metadata_url = provider.bucket.new_key(dest_path.path).generate_url(100, 'HEAD')
         aiohttpretty.register_uri('HEAD', metadata_url, headers=file_header_metadata)
 
@@ -850,7 +850,7 @@ class TestOperations:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_version_metadata(self, provider, version_metadata, mock_time):
-        path = WaterButlerPath('/my-image.jpg')
+        path = AquaValetPath('/my-image.jpg')
         url = provider.bucket.generate_url(100, 'GET', query_parameters={'versions': ''})
         params = build_folder_params(path)
         aiohttpretty.register_uri('GET', url, params=params, status=200, body=version_metadata)
@@ -870,7 +870,7 @@ class TestOperations:
     @pytest.mark.asyncio
     @pytest.mark.aiohttpretty
     async def test_single_version_metadata(self, provider, single_version_metadata, mock_time):
-        path = WaterButlerPath('/single-version.file')
+        path = AquaValetPath('/single-version.file')
         url = provider.bucket.generate_url(100, 'GET', query_parameters={'versions': ''})
         params = build_folder_params(path)
 
@@ -894,8 +894,8 @@ class TestOperations:
 
     def test_can_intra_move(self, provider):
 
-        file_path = WaterButlerPath('/my-image.jpg')
-        folder_path = WaterButlerPath('/folder/', folder=True)
+        file_path = AquaValetPath('/my-image.jpg')
+        folder_path = AquaValetPath('/folder/', folder=True)
 
         assert provider.can_intra_move(provider)
         assert provider.can_intra_move(provider, file_path)
@@ -903,8 +903,8 @@ class TestOperations:
 
     def test_can_intra_copy(self, provider):
 
-        file_path = WaterButlerPath('/my-image.jpg')
-        folder_path = WaterButlerPath('/folder/', folder=True)
+        file_path = AquaValetPath('/my-image.jpg')
+        folder_path = AquaValetPath('/folder/', folder=True)
 
         assert provider.can_intra_copy(provider)
         assert provider.can_intra_copy(provider, file_path)

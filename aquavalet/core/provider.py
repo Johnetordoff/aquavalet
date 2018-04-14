@@ -184,8 +184,8 @@ class BaseProvider(metaclass=abc.ABCMeta):
 
     async def move(self,
                    dest_provider: 'BaseProvider',
-                   src_path: wb_path.WaterButlerPath,
-                   dest_path: wb_path.WaterButlerPath,
+                   src_path: wb_path.AquaValetPath,
+                   dest_path: wb_path.AquaValetPath,
                    rename: str=None,
                    conflict: str='replace',
                    handle_naming: bool=True) -> typing.Tuple[wb_metadata.BaseMetadata, bool]:
@@ -194,8 +194,8 @@ class BaseProvider(metaclass=abc.ABCMeta):
         Calls :func:`BaseProvider.intra_move` if possible.
 
         :param dest_provider: ( :class:`.BaseProvider` ) The provider to move to
-        :param src_path: ( :class:`.WaterButlerPath` ) Path to where the resource can be found
-        :param dest_path: ( :class:`.WaterButlerPath` ) Path to where the resource will be moved
+        :param src_path: ( :class:`.AquaValetPath` ) Path to where the resource can be found
+        :param dest_path: ( :class:`.AquaValetPath` ) Path to where the resource will be moved
         :param rename: ( :class:`str` ) The desired name of the resulting path, may be incremented
         :param conflict: ( :class:`str` ) What to do in the event of a name conflict, ``replace`` or ``keep``
         :param handle_naming: ( :class:`bool` ) If a naming conflict is detected, should it be automatically handled?
@@ -234,8 +234,8 @@ class BaseProvider(metaclass=abc.ABCMeta):
 
     async def copy(self,
                    dest_provider: 'BaseProvider',
-                   src_path: wb_path.WaterButlerPath,
-                   dest_path: wb_path.WaterButlerPath,
+                   src_path: wb_path.AquaValetPath,
+                   dest_path: wb_path.AquaValetPath,
                    rename: str=None, conflict: str='replace',
                    handle_naming: bool=True) \
             -> typing.Tuple[wb_metadata.BaseMetadata, bool]:
@@ -275,8 +275,8 @@ class BaseProvider(metaclass=abc.ABCMeta):
     async def _folder_file_op(self,
                               func: typing.Callable,
                               dest_provider: 'BaseProvider',
-                              src_path: wb_path.WaterButlerPath,
-                              dest_path: wb_path.WaterButlerPath,
+                              src_path: wb_path.AquaValetPath,
+                              dest_path: wb_path.AquaValetPath,
                               **kwargs) -> typing.Tuple[wb_metadata.BaseFolderMetadata, bool]:
         """Recursively apply func to src/dest path.
 
@@ -338,11 +338,11 @@ class BaseProvider(metaclass=abc.ABCMeta):
         return folder, created
 
     async def handle_naming(self,
-                            src_path: wb_path.WaterButlerPath,
-                            dest_path: wb_path.WaterButlerPath,
+                            src_path: wb_path.AquaValetPath,
+                            dest_path: wb_path.AquaValetPath,
                             rename: str=None,
-                            conflict: str='replace') -> wb_path.WaterButlerPath:
-        """Given a :class:`.WaterButlerPath` and the desired name, handle any potential naming issues.
+                            conflict: str='replace') -> wb_path.AquaValetPath:
+        """Given a :class:`.AquaValetPath` and the desired name, handle any potential naming issues.
 
         i.e.:
 
@@ -355,12 +355,12 @@ class BaseProvider(metaclass=abc.ABCMeta):
             cp /file.txt /folder/doc.txt    ->    /folder/doc.txt
 
 
-        :param src_path: ( :class:`.WaterButlerPath` ) The object that is being copied
-        :param dest_path: ( :class:`.WaterButlerPath` ) The path that is being copied to or into
+        :param src_path: ( :class:`.AquaValetPath` ) The object that is being copied
+        :param dest_path: ( :class:`.AquaValetPath` ) The path that is being copied to or into
         :param rename: ( :class:`str` ) The desired name of the resulting path, may be incremented
         :param conflict: ( :class:`str` ) The conflict resolution strategy, ``replace`` or ``keep``
 
-        :rtype: :class:`.WaterButlerPath`
+        :rtype: :class:`.AquaValetPath`
         """
         if src_path.is_dir and dest_path.is_file:
             # Cant copy a directory to a file
@@ -381,36 +381,36 @@ class BaseProvider(metaclass=abc.ABCMeta):
 
     def can_intra_copy(self,
                        other: 'BaseProvider',
-                       path: wb_path.WaterButlerPath=None) -> bool:
+                       path: wb_path.AquaValetPath=None) -> bool:
         """Indicates if a quick copy can be performed between the current provider and `other`.
 
         .. note::
             Defaults to False
 
         :param other: ( :class:`.BaseProvider` ) The provider to check against
-        :param  path: ( :class:`.WaterButlerPath` ) The path of the desired resource
+        :param  path: ( :class:`.AquaValetPath` ) The path of the desired resource
         :rtype: :class:`bool`
         """
         return False
 
     def can_intra_move(self,
                        other: 'BaseProvider',
-                       path: wb_path.WaterButlerPath=None) -> bool:
+                       path: wb_path.AquaValetPath=None) -> bool:
         """Indicates if a quick move can be performed between the current provider and `other`.
 
         .. note::
             Defaults to False
 
         :param other: ( :class:`.BaseProvider` ) The provider to check against
-        :param path: ( :class:`.WaterButlerPath` ) The path of the desired resource
+        :param path: ( :class:`.AquaValetPath` ) The path of the desired resource
         :rtype: :class:`bool`
         """
         return False
 
     async def intra_copy(self,
                          dest_provider: 'BaseProvider',
-                         source_path: wb_path.WaterButlerPath,
-                         dest_path: wb_path.WaterButlerPath) -> typing.Tuple[wb_metadata.BaseMetadata, bool]:
+                         source_path: wb_path.AquaValetPath,
+                         dest_path: wb_path.AquaValetPath) -> typing.Tuple[wb_metadata.BaseMetadata, bool]:
         """If the provider supports copying files and/or folders within itself by some means other
         than download/upload, then ``can_intra_copy`` should return ``True``.  This method will
         implement the copy.  It accepts the destination provider, a source path, and the
@@ -419,16 +419,16 @@ class BaseProvider(metaclass=abc.ABCMeta):
         file (``False``).
 
         :param  dest_provider: ( :class:`.BaseProvider` )  a provider instance for the destination
-        :param  src_path: ( :class:`.WaterButlerPath` )  the Path of the entity being copied
-        :param  dest_path: ( :class:`.WaterButlerPath` ) the Path of the destination being copied to
+        :param  src_path: ( :class:`.AquaValetPath` )  the Path of the entity being copied
+        :param  dest_path: ( :class:`.AquaValetPath` ) the Path of the destination being copied to
         :rtype: (:class:`.BaseFileMetadata`, :class:`bool`)
         """
         raise NotImplementedError
 
     async def intra_move(self,
                          dest_provider: 'BaseProvider',
-                         src_path: wb_path.WaterButlerPath,
-                         dest_path: wb_path.WaterButlerPath) -> typing.Tuple[wb_metadata.BaseMetadata, bool]:
+                         src_path: wb_path.AquaValetPath,
+                         dest_path: wb_path.AquaValetPath) -> typing.Tuple[wb_metadata.BaseMetadata, bool]:
         """If the provider supports moving files and/or folders within itself by some means other
         than download/upload/delete, then ``can_intra_move`` should return ``True``.  This method
         will implement the move.  It accepts the destination provider, a source path, and the
@@ -437,23 +437,23 @@ class BaseProvider(metaclass=abc.ABCMeta):
         file (``False``).
 
         :param  dest_provider: ( :class:`.BaseProvider` ) a provider instance for the destination
-        :param  src_path: ( :class:`.WaterButlerPath` ) the Path of the entity being moved
-        :param  dest_path: ( :class:`.WaterButlerPath` ) the Path of the destination being moved to
+        :param  src_path: ( :class:`.AquaValetPath` ) the Path of the entity being moved
+        :param  dest_path: ( :class:`.AquaValetPath` ) the Path of the destination being moved to
         :rtype: (:class:`.BaseFileMetadata`, :class:`bool`)
         """
         data, created = await self.intra_copy(dest_provider, src_path, dest_path)
         await self.delete(src_path)
         return data, created
 
-    async def exists(self, path: wb_path.WaterButlerPath, **kwargs) \
+    async def exists(self, path: wb_path.AquaValetPath, **kwargs) \
             -> typing.Union[bool, wb_metadata.BaseMetadata, typing.List[wb_metadata.BaseMetadata]]:
-        """Check for existence of WaterButlerPath
+        """Check for existence of AquaValetPath
 
-        Attempt to retrieve provider metadata to determine existence of a WaterButlerPath.  If
+        Attempt to retrieve provider metadata to determine existence of a AquaValetPath.  If
         successful, will return the result of `self.metadata()` which may be `[]` for empty
         folders.
 
-        :param  path: ( :class:`.WaterButlerPath` ) path to check for
+        :param  path: ( :class:`.AquaValetPath` ) path to check for
         :rtype: (`self.metadata()` or False)
         """
         try:
@@ -466,17 +466,17 @@ class BaseProvider(metaclass=abc.ABCMeta):
         return False
 
     async def handle_name_conflict(self,
-                                   path: wb_path.WaterButlerPath,
+                                   path: wb_path.AquaValetPath,
                                    conflict: str='replace',
-                                   **kwargs) -> typing.Tuple[wb_path.WaterButlerPath, bool]:
-        """Check WaterButlerPath and resolve conflicts
+                                   **kwargs) -> typing.Tuple[wb_path.AquaValetPath, bool]:
+        """Check AquaValetPath and resolve conflicts
 
-        Given a WaterButlerPath and a conflict resolution pattern determine
+        Given a AquaValetPath and a conflict resolution pattern determine
         the correct file path to upload to and indicate if that file exists or not
 
-        :param  path: ( :class:`.WaterButlerPath` ) Desired path to check for conflict
+        :param  path: ( :class:`.AquaValetPath` ) Desired path to check for conflict
         :param conflict: ( :class:`str` ) replace, keep, warn
-        :rtype: (:class:`.WaterButlerPath` or False)
+        :rtype: (:class:`.AquaValetPath` or False)
         :raises: :class:`.NamingConflict`
         """
         exists = await self.exists(path, **kwargs)
@@ -500,23 +500,23 @@ class BaseProvider(metaclass=abc.ABCMeta):
         return path, False
 
     async def revalidate_path(self,
-                              base: wb_path.WaterButlerPath,
+                              base: wb_path.AquaValetPath,
                               path: str,
-                              folder: bool=False) -> wb_path.WaterButlerPath:
-        """Take a path and a base path and build a WaterButlerPath representing `/base/path`.  For
+                              folder: bool=False) -> wb_path.AquaValetPath:
+        """Take a path and a base path and build a AquaValetPath representing `/base/path`.  For
         id-based providers, this will need to lookup the id of the new child object.
 
-        :param  base: ( :class:`.WaterButlerPath` ) The base folder to look under
+        :param  base: ( :class:`.AquaValetPath` ) The base folder to look under
         :param path: ( :class:`str`) the path of a child of `base`, relative to `base`
-        :param folder: ( :class:`bool` )whether the returned WaterButlerPath should represent a folder
-        :rtype: :class:`.WaterButlerPath`
+        :param folder: ( :class:`bool` )whether the returned AquaValetPath should represent a folder
+        :rtype: :class:`.AquaValetPath`
         """
         return base.child(path, folder=folder)
 
-    async def zip(self, path: wb_path.WaterButlerPath, **kwargs) -> asyncio.StreamReader:
+    async def zip(self, path: wb_path.AquaValetPath, **kwargs) -> asyncio.StreamReader:
         """Streams a Zip archive of the given folder
 
-        :param  path: ( :class:`.WaterButlerPath` ) The folder to compress
+        :param  path: ( :class:`.AquaValetPath` ) The folder to compress
         """
 
         meta_data = await self.metadata(path)  # type: ignore
@@ -538,10 +538,10 @@ class BaseProvider(metaclass=abc.ABCMeta):
         return self.NAME == other.NAME and self.settings == other.settings
 
     @abc.abstractmethod
-    async def download(self, src_path: wb_path.WaterButlerPath, **kwargs) -> streams.ResponseStreamReader:
+    async def download(self, src_path: wb_path.AquaValetPath, **kwargs) -> streams.ResponseStreamReader:
         """Download a file from this provider.
 
-        :param src_path: ( :class:`.WaterButlerPath` ) Path to the file to be downloaded
+        :param src_path: ( :class:`.AquaValetPath` ) Path to the file to be downloaded
         :param \*\*kwargs: ( :class:`dict` ) Arguments to be parsed by child classes
         :rtype: :class:`.ResponseStreamReader`
         :raises: :class:`.DownloadError`
@@ -549,13 +549,13 @@ class BaseProvider(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    async def upload(self, stream: streams.BaseStream, path: wb_path.WaterButlerPath, *args, **kwargs) \
+    async def upload(self, stream: streams.BaseStream, path: wb_path.AquaValetPath, *args, **kwargs) \
             -> typing.Tuple[wb_metadata.BaseMetadata, bool]:
         """Uploads the given stream to the provider.  Returns the metadata for the newly created
         file and a boolean indicating whether the file is completely new (``True``) or overwrote
         a previously-existing file (``False``)
 
-        :param path: ( :class:`.WaterButlerPath` ) Where to upload the file to
+        :param path: ( :class:`.AquaValetPath` ) Where to upload the file to
         :param  stream: ( :class:`.BaseStream` ) The content to be uploaded
         :param \*\*kwargs: ( :class:`dict` ) Arguments to be parsed by child classes
         :rtype: (:class:`.BaseFileMetadata`, :class:`bool`)
@@ -564,9 +564,9 @@ class BaseProvider(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    async def delete(self, src_path: wb_path.WaterButlerPath, **kwargs) -> None:
+    async def delete(self, src_path: wb_path.AquaValetPath, **kwargs) -> None:
         """
-        :param src_path: ( :class:`.WaterButlerPath` ) Path to be deleted
+        :param src_path: ( :class:`.AquaValetPath` ) Path to be deleted
         :param \*\*kwargs: ( :class:`dict` ) Arguments to be parsed by child classes
         :rtype: :class:`None`
         :raises: :class:`.DeleteError`
@@ -574,7 +574,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    async def metadata(self, path: wb_path.WaterButlerPath, **kwargs) \
+    async def metadata(self, path: wb_path.AquaValetPath, **kwargs) \
             -> typing.Union[wb_metadata.BaseMetadata, typing.List[wb_metadata.BaseMetadata]]:
         """Get metadata about the specified resource from this provider. Will be a :class:`list`
         if the resource is a directory otherwise an instance of
@@ -584,7 +584,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
             Mypy doesn't seem to do very well with functions that can return more than one type of thing.
             See: https://github.com/python/mypy/issues/1693
 
-        :param path: ( :class:`.WaterButlerPath` ) The path to a file or folder
+        :param path: ( :class:`.AquaValetPath` ) The path to a file or folder
         :param \*\*kwargs: ( :class:`dict` ) Arguments to be parsed by child classes
         :rtype: :class:`.BaseMetadata`
         :rtype: :class:`list` of :class:`.BaseMetadata`
@@ -593,14 +593,14 @@ class BaseProvider(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    async def validate_path(self, path: str, **kwargs) -> wb_path.WaterButlerPath:
+    async def validate_path(self, path: str, **kwargs) -> wb_path.AquaValetPath:
         """Validates paths passed in via the v0 API.  v0 paths are much less strict than v1 paths.
         They may represent things that exist or something that should be created.  As such, the goal
         of ``validate_path`` is to split the path into its component parts and attempt to determine
         the ID of each part on the external provider.  For instance, if the ``googledrive`` provider
         receives a path of ``/foo/bar/baz.txt``, it will split those into ``/``, ``foo/``, ``bar/``,
         and ``baz.txt``, and query Google Drive for the ID of each.  ``validate_path`` then builds a
-        WaterButlerPath object with an ID, name tuple for each path part.  The last part is
+        AquaValetPath object with an ID, name tuple for each path part.  The last part is
         permitted to not have an ID, since it may represent a file that has not yet been created.
         All other parts should have an ID.
 
@@ -608,29 +608,29 @@ class BaseProvider(metaclass=abc.ABCMeta):
         this method will be obsolete and will be removed from all providers.
 
         :param path: ( :class:`str` ) user-supplied path to validate
-        :rtype: :class:`.WaterButlerPath`
+        :rtype: :class:`.AquaValetPath`
         :raises: :class:`.NotFoundError`
         """
         raise NotImplementedError
 
     def path_from_metadata(self,
-                           parent_path: wb_path.WaterButlerPath,
-                           meta_data: wb_metadata.BaseMetadata) -> wb_path.WaterButlerPath:
+                           parent_path: wb_path.AquaValetPath,
+                           meta_data: wb_metadata.BaseMetadata) -> wb_path.AquaValetPath:
         return parent_path.child(meta_data.name, _id=meta_data.path.strip('/'),
                                  folder=meta_data.is_folder)
 
-    async def revisions(self, path: wb_path.WaterButlerPath, **kwargs):
+    async def revisions(self, path: wb_path.AquaValetPath, **kwargs):
         """Return a list of :class:`.BaseFileRevisionMetadata` objects representing the revisions
         available for the file at ``path``.
         """
         return []  # TODO Raise 405 by default h/t @rliebz
 
-    async def create_folder(self, path: wb_path.WaterButlerPath,
+    async def create_folder(self, path: wb_path.AquaValetPath,
                             **kwargs) -> wb_metadata.BaseFolderMetadata:
         """Create a folder in the current provider at `path`. Returns a `BaseFolderMetadata` object
         if successful.  May throw a 409 Conflict if a directory with the same name already exists.
 
-        :param path: ( :class:`.WaterButlerPath` ) User-supplied path to create. Must be a directory.
+        :param path: ( :class:`.AquaValetPath` ) User-supplied path to create. Must be a directory.
         :rtype: :class:`.BaseFileMetadata`
         :raises: :class:`.CreateFolderError`
         """

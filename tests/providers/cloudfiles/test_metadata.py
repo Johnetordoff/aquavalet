@@ -1,7 +1,7 @@
 import pytest
 import aiohttp
 
-from aquavalet.core.path import WaterButlerPath
+from aquavalet.core.path import AquaValetPath
 from aquavalet.providers.cloudfiles.metadata import (CloudFilesFileMetadata,
                                                      CloudFilesHeaderMetadata,
                                                      CloudFilesFolderMetadata)
@@ -37,7 +37,7 @@ class TestCloudfilesMetadata:
 
     def test_header_metadata(self, file_header_metadata_txt):
 
-        path = WaterButlerPath('/file.txt')
+        path = AquaValetPath('/file.txt')
         data = CloudFilesHeaderMetadata(file_header_metadata_txt, path.path)
         assert data.name == 'file.txt'
         assert data.path == '/file.txt'
