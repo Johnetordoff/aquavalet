@@ -19,3 +19,5 @@ dist/
 build/
 .cache
 .mypy_cache
+.docker-sync/
+platter/
