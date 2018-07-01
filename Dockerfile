@@ -1,5 +1,4 @@
-FROM python:3.7.0b3-stretch
-
+FROM python:3.6.5
 RUN mkdir -p /code
 WORKDIR /code
 
