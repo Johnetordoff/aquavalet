@@ -4,24 +4,33 @@ from aquavalet.core import metadata
 
 class BaseFileSystemMetadata(metadata.BaseMetadata):
 
-    def __init__(self, raw, folder, path):
+    def __init__(self, raw, path):
         super().__init__(raw, path)
-        self._folder = folder
 
     @property
     def provider(self):
         return 'filesystem'
 
-    def build_path(self, path):
-        if path.lower().startswith(self._folder.lower()):
-            path = path[len(self._folder):]
-        return super().build_path(path)
 
 class FileSystemItemMetadata(BaseFileSystemMetadata, metadata.BaseMetadata):
 
+    @classmethod
+    def path(cls, path):
+
+        raw = {
+            'name' : path.split('/')[-1],
+            'path': path
+        }
+
+        return cls(raw, path)
+
+    @property
+    def id(self):
+        return self.raw['path']
+
     @property
     def name(self):
-        return self.raw.get('name') or os.path.split(self.raw['path'])[1]
+        return os.path.split(self.raw['path'])[-1]
 
     @property
     def size(self):
@@ -30,10 +39,6 @@ class FileSystemItemMetadata(BaseFileSystemMetadata, metadata.BaseMetadata):
     @property
     def modified(self):
         return self.raw['modified']
-
-    @property
-    def created_utc(self):
-        return None
 
     @property
     def content_type(self):

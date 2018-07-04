@@ -1,10 +1,12 @@
-import pytz
-import dateutil.parser
+import os
+import hashlib
+import mimetypes
 
 from aquavalet.core import metadata
 
 
-class BaseOsfStorageMetadata:
+class BaseOsfStorageMetadata(metadata.BaseMetadata):
+
     @property
     def provider(self):
         return 'osfstorage'
@@ -12,110 +14,51 @@ class BaseOsfStorageMetadata:
 
 class BaseOsfStorageItemMetadata(BaseOsfStorageMetadata):
 
-    def __init__(self, raw, materialized):
-        super().__init__(raw)
-        self._materialized = materialized
+    def __init__(self, raw, path, internal_provider, resource):
+        super().__init__(raw, path)
+        self.default_segments = [self.provider, internal_provider, resource]
+
+    @classmethod
+    def root(cls, internal_provider, resource):
+        raw = {
+            'name': f'{internal_provider} root',
+            'kind': 'folder',
+            'modified': '',
+            'etag': '',
+            'path': '/',
+        }
+        return cls(raw, '/', internal_provider, resource)
 
     @property
     def name(self):
         return self.raw['name']
 
     @property
-    def path(self):
-        return self.raw['path']
-
-    @property
-    def materialized_path(self):
-        return self._materialized
-
-
-class OsfStorageFileMetadata(BaseOsfStorageItemMetadata, metadata.BaseFileMetadata):
+    def kind(self):
+        return self.raw['kind']
 
     @property
     def modified(self):
-        return self.raw['modified']
+        return self.raw.get('modified')
 
-    @property
-    def modified_utc(self):
-        try:
-            return self.raw['modified_utc']
-        except KeyError:
-            if self.raw['modified'] is None:
-                return None
-
-            # Kludge for OSF, whose modified attribute does not include
-            # tzinfo but is assumed to be UTC.
-            parsed_datetime = dateutil.parser.parse(self.raw['modified'])
-            if not parsed_datetime.tzinfo:
-                parsed_datetime = parsed_datetime.replace(tzinfo=pytz.UTC)
-            return parsed_datetime.isoformat()
-
-    @property
-    def created_utc(self):
-        try:
-            return self.raw['created_utc']
-        except KeyError:
-            if self.raw['created'] is None:
-                return None
-
-            # Kludge for OSF, whose created attribute does not include
-            # tzinfo but is assumed to be UTC.
-            parsed_datetime = dateutil.parser.parse(self.raw['created'])
-            if not parsed_datetime.tzinfo:
-                parsed_datetime = parsed_datetime.replace(tzinfo=pytz.UTC)
-            return parsed_datetime.isoformat()
-
-    @property
-    def size(self):
-        return self.raw['size']
-
-    @property
-    def content_type(self):
-        return self.raw.get('contentType')
 
     @property
     def etag(self):
-        return '{}::{}'.format(self.raw['version'], self.path)
+        return self.raw.get('etag')
 
     @property
-    def extra(self):
+    def id(self):
+        return self.raw['path']
+
+    def serialized(self) -> dict:
+        _, ext = os.path.splitext(self.name)
         return {
-            'guid': self.raw.get('guid', None),
-            'version': self.raw['version'],
-            'downloads': self.raw['downloads'],
-            'checkout': self.raw['checkout'],
-            'hashes': {
-                'md5': self.raw['md5'],
-                'sha256': self.raw['sha256']
-            },
+            'kind': self.kind,
+            'name': self.name,
+            'path': self.id,
+            'modified': self.modified,
+            'mimetype': mimetypes.types_map.get(ext),
+            'provider': self.provider,
+            'etag': hashlib.sha256('{}::{}'.format(self.provider, self.etag).encode('utf-8')).hexdigest(),
         }
 
-
-class OsfStorageFolderMetadata(BaseOsfStorageItemMetadata, metadata.BaseFolderMetadata):
-    pass
-
-
-class OsfStorageRevisionMetadata(BaseOsfStorageMetadata, metadata.BaseFileRevisionMetadata):
-
-    @property
-    def modified(self):
-        return self.raw['date']
-
-    @property
-    def version_identifier(self):
-        return 'version'
-
-    @property
-    def version(self):
-        return str(self.raw['index'])
-
-    @property
-    def extra(self):
-        return {
-            'user': self.raw['user'],
-            'downloads': self.raw['downloads'],
-            'hashes': {
-                'md5': self.raw['md5'],
-                'sha256': self.raw['sha256']
-            },
-        }

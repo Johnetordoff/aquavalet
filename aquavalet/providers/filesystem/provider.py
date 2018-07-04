@@ -1,3 +1,4 @@
+import re
 import os
 import shutil
 import typing
@@ -30,7 +31,7 @@ class FileSystemProvider(provider.BaseProvider):
         os.makedirs(self.folder, exist_ok=True)
 
     async def validate_path(self, path, **kwargs):
-        return AquaValetPath(path, prepend=self.folder)
+        return FileSystemItemMetadata.path(path)
 
     def can_intra_copy(self, dest_provider, path=None):
         return type(self) == type(dest_provider)
@@ -45,11 +46,10 @@ class FileSystemProvider(provider.BaseProvider):
         try:
             os.rename(path.full_path, path.rename(new_name).full_path)
         except FileNotFoundError as exc:
-            raise exceptions.InvalidPathError(message=exc)
+            raise exceptions.InvalidPathError('Invalid path \'{}\' specified'.format(exc.filename))
 
-    async def download(self, path, revision=None, range: typing.Tuple[int, int]=None, **kwargs):
-
-        file_pointer = open(path.full_path, 'rb')
+    async def download(self, path, revision=None, range=None, **kwargs):
+        file_pointer = open(path.path, 'rb')
         if range is not None and range[1] is not None:
             return streams.PartialFileStreamReader(file_pointer, range)
 
@@ -76,20 +76,19 @@ class FileSystemProvider(provider.BaseProvider):
             shutil.rmtree(path.full_path)
 
     async def metadata(self, path, version=None):
-        if not os.path.exists(path.full_path):
-            raise exceptions.NotFoundError(path.full_path)
-
+        if not os.path.exists(path.path):
+            raise exceptions.NotFoundError(path.path)
 
         return self._format_metadata(path)
 
     async def children(self, path):
         try:
-            children = os.listdir(path.full_path)
+            children = os.listdir(path.path)
         except FileNotFoundError:
-            raise exceptions.NotFoundError(path.full_path)
+            raise exceptions.NotFoundError(path.path)
 
-        relative_path = path.full_path.replace(self.folder, '')
-        paths = [AquaValetPath(os.path.join('/', relative_path, child), prepend=self.folder) for child in children]
+        relative_path = path.path.replace(self.folder, '')
+        paths = [FileSystemItemMetadata.path(os.path.join('/', relative_path, child)) for child in children]
         return [self._format_metadata(path) for path in paths]
 
     async def create_folder(self, path, new_name):
@@ -97,12 +96,12 @@ class FileSystemProvider(provider.BaseProvider):
         return os.makedirs(created_folder_path.full_path, exist_ok=True)
 
     def _format_metadata(self, path):
-        modified = datetime.datetime.utcfromtimestamp(os.path.getmtime(path.full_path)).replace(tzinfo=datetime.timezone.utc)
+        modified = datetime.datetime.utcfromtimestamp(os.path.getmtime(path.path)).replace(tzinfo=datetime.timezone.utc)
         metadata = {
-            'path': path.full_path,
-            'size': os.path.getsize(path.full_path),
+            'path': path.path,
+            'size': os.path.getsize(path.path),
             'modified': modified.isoformat(),
-            'mime_type': mimetypes.guess_type(path.full_path)[0],
-            'kind':  'folder' if os.path.isdir(path.full_path) else 'file'
+            'mime_type': mimetypes.guess_type(path.path)[0],
+            'kind':  'folder' if os.path.isdir(path.path) else 'file'
         }
-        return FileSystemItemMetadata(metadata, self.folder, path)
+        return FileSystemItemMetadata(metadata, self.folder)

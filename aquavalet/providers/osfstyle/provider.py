@@ -1,53 +1,51 @@
+import re
+import aiohttp
+
 from aquavalet.core import provider
 from aquavalet.core import exceptions, streams
 from aquavalet.core.path import AquaValetPath
-from aquavalet.providers.filesystem.metadata import FileSystemItemMetadata
+from aquavalet.providers.osfstorage.metadata import BaseOsfStorageItemMetadata
 
 class OsfProvider(provider.BaseProvider):
     NAME = 'OSF'
+    PATH_PATTERN = r'\/(?P<internal_provider>(?:\w|\d)+)?\/(?P<resource>[a-zA-Z0-9]{5,})?(?P<path>\/.*)?'
 
     def __init__(self, auth, credentials, settings):
         super().__init__(auth, credentials, settings)
         self.token = credentials["token"]
-        self.BASE_URL = settings['base_url']
 
     @property
     def default_headers(self):
         return {'Authorization': f'Bearer {self.token}'}
 
     async def validate_path(self, path):
-        segment_list = [segment for segment in path.split('/') if segment != '']
-        if not segment_list:
-            raise exceptions.InvalidPathError('malfoarmed path no provider')
+        match = re.match(self.PATH_PATTERN, path)
+        if match:
+            groupdict = match.groupdict()
+        else:
+            raise exceptions.InvalidPathError('malfoarmed path no internal provider')
 
-        try:
-            self.provider = segment_list[0]
-        except IndexError:
-            raise exceptions.InvalidPathError('malfoarmed path no provider')
+        if not groupdict.get('internal_provider'):
+            raise exceptions.InvalidPathError('malfoarmed path no internal provider')
+        self.internal_provider = groupdict.get('internal_provider')
 
-        try:
-            self.resource = segment_list[1]
-        except IndexError:
+        if not groupdict.get('resource'):
             raise exceptions.InvalidPathError('malfoarmed path no resource')
+        self.resource = groupdict.get('resource')
 
-        ids = ['']
-        metadata = {'path': '/', 'kind': 'folder'}
+        if not groupdict.get('path'):
+            raise exceptions.InvalidPathError('malfoarmed path no path')
+        elif groupdict.get('path') == '/':
+            return BaseOsfStorageItemMetadata.root(self.internal_provider, self.resource)
+        self.path = groupdict.get('path')
 
-        for segment in segment_list[2:]:
-
-            resp = await self.make_request(
-                method='GET',
-                url=self.BASE_URL + f'{self.resource}/providers/{self.provider}{metadata["path"]}'
-            )
-
-            resp_metadata = (await resp.json())['data']
-            parts = [part_metadata['attributes'] for part_metadata in resp_metadata if part_metadata['attributes']['name'].lstrip('/').rstrip('/') == segment]
-            if parts:
-                metadata = parts[0]
-                ids.append(metadata['path'])
-
-        file_path = '/' + '/'.join(segment_list[2:]) if len(segment_list) > 2 else '/'
-        return AquaValetPath(file_path, _ids=ids, folder=metadata['kind'] == 'folder')
+        resp = await self.make_request(
+            json=True,
+            method='GET',
+            url=f'https://api.osf.io/v2/files{self.path}/?meta=',
+            headers=self.default_headers
+        )
+        return BaseOsfStorageItemMetadata(resp['data']['attributes'], path, self.internal_provider, self.resource)
 
     def can_duplicate_names(self):
         return True
@@ -65,11 +63,13 @@ class OsfProvider(provider.BaseProvider):
         pass
 
     async def download(self, path, version=None, range=None):
-        resp = await self.make_request(
-            method='GET',
-            url=self.BASE_URL + f'{self.resource}/providers/{self.provider}/{path.identifier}'
-        )
-        return streams.ResponseStreamReader(resp)
+        async with aiohttp.ClientSession() as session:
+            resp = await session.get(
+                url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}/{path.id}',
+                headers=self.default_headers
+            )
+            return streams.ResponseStreamReader(resp)
+
 
     async def upload(self, stream, path):
         resp = await self.make_request(
@@ -79,18 +79,13 @@ class OsfProvider(provider.BaseProvider):
             data=stream
         )
         metadata = await resp.json()
-        return FileSystemItemMetadata(metadata['data'], self.resource, path)
+        return BaseOsfStorageItemMetadata(metadata['data'], self.resource, path)
 
     async def delete(self, path, confirm_delete=0, **kwargs):
         pass
 
     async def metadata(self, path, **kwargs):
-        resp = await self.make_request(
-            method='GET',
-            url=self.BASE_URL + f'{self.resource}/providers/{self.provider}/{path.parent.identifier}'
-        )
-        metadata = [metadata['attributes'] for metadata in (await resp.json())['data'] if metadata['attributes']['materialized'].lstrip('/').rstrip('/') == path.path.lstrip('/').rstrip('/')][0]
-        return FileSystemItemMetadata(metadata, self.resource, path)
+        return path
 
     async def create_folder(self, path, **kwargs):
         pass
@@ -100,12 +95,11 @@ class OsfProvider(provider.BaseProvider):
 
     async def children(self, path):
         resp = await self.make_request(
+            json=True,
             method='GET',
-            url=self.BASE_URL + f'{self.resource}/providers/{self.provider}/{path.identifier}',
+            url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{path.id}?meta=',
             throws=exceptions.ProviderError,
             expects=(200,)
         )
-        if resp.headers['CONTENT-TYPE'] == 'application/json; charset=UTF-8':
-            return [FileSystemItemMetadata(metadata['attributes'], self.resource, path) for metadata in (await resp.json())['data']]
-        else:
-            raise exceptions.MetadataError(code=400, message='File is has no children')
+
+        return [BaseOsfStorageItemMetadata(metadata['attributes'], path.path, internal_provider=self.internal_provider, resource=self.resource) for metadata in resp['data']]
