@@ -33,7 +33,6 @@ def make_provider(name: str, auth: dict, credentials: dict, settings: dict, **kw
 
     :rtype: :class:`waterbutler.core.provider.BaseProvider`
     """
-    print(auth, credentials, settings)
     try:
         manager = driver.DriverManager(
             namespace='aquavalet.providers',

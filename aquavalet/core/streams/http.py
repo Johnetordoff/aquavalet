@@ -164,7 +164,7 @@ class ResponseStreamReader(BaseStream):
         return self._size
 
     async def _read(self, size):
-        chunk = (await self.response.content.read(size))
+        chunk = await self.response.content.read(size)
 
         if not chunk:
             self.feed_eof()

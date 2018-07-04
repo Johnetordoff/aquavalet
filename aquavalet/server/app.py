@@ -28,7 +28,7 @@ def sig_handler(sig, frame):
 
 def api_to_handlers(api):
     return [
-        (os.path.join('/', api.PREFIX, pattern.lstrip('/')), handler)
+        (os.path.join('/', pattern.lstrip('/')), handler)
         for (pattern, handler) in api.HANDLERS
     ]
 
@@ -36,6 +36,7 @@ def api_to_handlers(api):
 def make_app(debug):
     app = tornado.web.Application(
         api_to_handlers(v1) +
+        [(r'/', handlers.RootHandler)],
         [(r'/status', handlers.StatusHandler)],
         debug=debug,
     )

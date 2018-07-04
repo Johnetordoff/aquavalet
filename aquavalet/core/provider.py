@@ -160,6 +160,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
         kwargs['headers'] = self.build_headers(**kwargs.get('headers', {}))
         retry = _retry = kwargs.pop('retry', 2)
         range = kwargs.pop('range', None)
+        json = kwargs.pop('json', None)
         expects = kwargs.pop('expects', None)
         throws = kwargs.pop('throws', exceptions.UnhandledProviderError)
         if range:
@@ -169,10 +170,12 @@ class BaseProvider(metaclass=abc.ABCMeta):
             url = url()
         while retry >= 0:
             try:
-                response = aiohttp.request(method, url, *args, **kwargs)
-                if expects and response.status not in expects:
-                    raise (await exceptions.exception_from_response(response, error=throws, **kwargs))
-                return response
+                async with aiohttp.request(method, url, *args, **kwargs) as response:
+                    if expects and response.status not in expects:
+                        raise (await exceptions.exception_from_response(response, error=throws, **kwargs))
+                    if json:
+                        return await response.json()
+                    return response
             except throws as e:
                 if retry <= 0 or e.code not in self._retry_on:
                     raise
@@ -272,28 +275,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
 
         return await dest_provider.upload(download_stream, dest_path)
 
-    async def _folder_file_op(self,
-                              func: typing.Callable,
-                              dest_provider: 'BaseProvider',
-                              src_path: wb_path.AquaValetPath,
-                              dest_path: wb_path.AquaValetPath,
-                              **kwargs) -> typing.Tuple[wb_metadata.BaseFolderMetadata, bool]:
-        """Recursively apply func to src/dest path.
-
-        Called from: func: copy and move if src_path.is_dir.
-
-        Calls: func: dest_provider.delete and notes result for bool: created
-               func: dest_provider.create_folder
-               func: dest_provider.revalidate_path
-               func: self.metadata
-
-        :param coroutine func: to be applied to src/dest path
-        :param *Provider dest_provider: Destination provider
-        :param *ProviderPath src_path: Source path
-        :param *ProviderPath dest_path: Destination path
-        """
-        assert src_path.is_dir, 'src_path must be a directory'
-        assert asyncio.iscoroutinefunction(func), 'func must be a coroutine'
+    async def _folder_file_op(self, func, dest_provider, src_path, dest_path, **kwargs):
 
         try:
             await dest_provider.delete(dest_path)
@@ -549,18 +531,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    async def upload(self, stream: streams.BaseStream, path: wb_path.AquaValetPath, *args, **kwargs) \
-            -> typing.Tuple[wb_metadata.BaseMetadata, bool]:
-        """Uploads the given stream to the provider.  Returns the metadata for the newly created
-        file and a boolean indicating whether the file is completely new (``True``) or overwrote
-        a previously-existing file (``False``)
-
-        :param path: ( :class:`.AquaValetPath` ) Where to upload the file to
-        :param  stream: ( :class:`.BaseStream` ) The content to be uploaded
-        :param \*\*kwargs: ( :class:`dict` ) Arguments to be parsed by child classes
-        :rtype: (:class:`.BaseFileMetadata`, :class:`bool`)
-        :raises: :class:`.DeleteError`
-        """
+    async def upload(self, stream, path, new_name):
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -625,15 +596,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
         """
         return []  # TODO Raise 405 by default h/t @rliebz
 
-    async def create_folder(self, path: wb_path.AquaValetPath,
-                            **kwargs) -> wb_metadata.BaseFolderMetadata:
-        """Create a folder in the current provider at `path`. Returns a `BaseFolderMetadata` object
-        if successful.  May throw a 409 Conflict if a directory with the same name already exists.
-
-        :param path: ( :class:`.AquaValetPath` ) User-supplied path to create. Must be a directory.
-        :rtype: :class:`.BaseFileMetadata`
-        :raises: :class:`.CreateFolderError`
-        """
+    async def create_folder(self, path, **kwargs):
         raise exceptions.ProviderError({'message': 'Folder creation not supported.'}, code=405)
 
     def _build_range_header(self, slice_tup: typing.Tuple[int, int]) -> str:

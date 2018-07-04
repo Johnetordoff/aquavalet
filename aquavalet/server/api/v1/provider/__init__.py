@@ -7,6 +7,8 @@ from http import HTTPStatus
 
 import tornado.gen
 import mimetypes
+from aquavalet import settings
+
 from aquavalet.core import utils
 from aquavalet.core import exceptions
 from aquavalet.core import remote_logging
@@ -35,7 +37,7 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
                                                               'MOVE',
                                                               'COPY')
 
-    PATTERN = r'/providers/(?P<provider>(?:\w|\d)+)(?P<path>/.*/?)'
+    PATTERN = settings.ROOT_PATTERN
 
     async def prepare(self, *args, **kwargs):
         self.stream = None
@@ -57,11 +59,8 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
         })
 
     async def children(self, provider,  path):
-        if self.path.is_file:
-            raise exceptions.InvalidPathError(message='Files have no children')
 
         metadata = await self.provider.children(self.path)
-
         return self.write({
             'data': [metadata.json_api_serialized() for metadata in metadata]
         })
@@ -118,17 +117,23 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
         self.write({'data': metadata.json_api_serialized()})
 
     async def create_folder(self, provider,  path):
-        if self.path.is_file:
+        if not self.path.is_dir:
             raise exceptions.InvalidPathError(message=f'{self.path.full_path} is not a directory, perhaps try using a trailing slash.')
 
         new_name = self.get_query_argument('new_name', default=None)
         return await self.provider.create_folder(self.path, new_name)
 
-    async def post(self, provider,  path):
-        return await self.move_or_copy()
-
     async def copy(self, provider,  path):
-        return await self.move_or_copy()
+        dest_path = self.get_query_argument('to', default=None)
+        dest_provider = self.get_query_argument('destination_provider', default=None)
+
+        self.dest_auth = await auth_handler.get(None)
+        self.dest_provider = utils.make_provider(dest_provider,
+                                                 self.auth['auth'],
+                                                 self.auth['credentials'],
+                                                 self.auth['settings'])
+
+        return await self.provider.copy(path, dest_provider, dest_path)
 
     async def delete(self, provider,  path):
         await self.provider.delete(self.path)
@@ -182,8 +187,8 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
         _, ext = os.path.splitext(name)
         # If the file extention is in mime_types
         # override the content type to fix issues with safari shoving in new file extensions
-        if ext in mimetypes:
-            self.set_header('Content-Type', mimetypes(name))
+        if ext in mimetypes.types_map:
+            self.set_header('Content-Type', mimetypes.types_map[ext])
 
         await self.write_stream(stream)
 

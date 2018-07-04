@@ -3,10 +3,8 @@ import os
 from pkg_resources import iter_entry_points
 from kombu import Queue, Exchange
 
-BROKER_URL = 'amqp://{}:{}//'.format(
-    os.environ.get('RABBITMQ_PORT_5672_TCP_ADDR', ''),
-    os.environ.get('RABBITMQ_PORT_5672_TCP_PORT', ''),
-)
+
+BROKER_URL = os.environ.get('TASKS_CONFIG_BROKER_URL', ''),
 
 WAIT_TIMEOUT = 20
 WAIT_INTERVAL = 0.5
