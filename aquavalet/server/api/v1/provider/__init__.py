@@ -112,9 +112,6 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
         self.wsock.close()
         new_name = self.get_query_argument('new_name', default=None)
         await self.provider.upload(self.stream, self.path, new_name=new_name)
-        metadata = await self.provider.metadata(self.path)
-
-        self.write({'data': metadata.json_api_serialized()})
 
     async def create_folder(self, provider,  path):
         if not self.path.is_dir:

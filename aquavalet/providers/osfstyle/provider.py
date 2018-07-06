@@ -71,10 +71,10 @@ class OsfProvider(provider.BaseProvider):
             return streams.ResponseStreamReader(resp)
 
 
-    async def upload(self, stream, path):
+    async def upload(self, stream, path, new_name):
         resp = await self.make_request(
             method='PUT',
-            url=self.BASE_URL + f'{self.resource}/providers/{self.provider}/{path.path}',
+            url=self.BASE_URL + f'{self.resource}/providers/{self.provider}{path.id}',
             params={'name': path.identifier, 'kind': 'file'},
             data=stream
         )

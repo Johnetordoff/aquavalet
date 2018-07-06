@@ -19,8 +19,7 @@ class RootHandler(tornado.web.RequestHandler):
         """List information about aquavalet status"""
         self.write({
             'patterns': {'root': settings.ROOT_PATTERN},
-            'providers': [{'name': 'filesystem',
-                           'pattern': FileSystemProvider.PATH_PATTERN},
+            'providers': [{'name': 'filesystem'},
                           {'name': 'waterbutler',
                            'pattern': ''},
                           ],
