@@ -39,7 +39,8 @@ class BaseOsfStorageItemMetadata(BaseOsfStorageMetadata):
 
     @property
     def size(self):
-        return self.raw['size']
+        if self.is_file:
+            return self.raw['size']
 
     @property
     def is_file(self):
