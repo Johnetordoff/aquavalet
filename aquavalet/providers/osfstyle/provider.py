@@ -72,14 +72,12 @@ class OsfProvider(provider.BaseProvider):
 
 
     async def upload(self, stream, path, new_name):
-        resp = await self.make_request(
+        await self.make_request(
             method='PUT',
-            url=self.BASE_URL + f'{self.resource}/providers/{self.provider}{path.id}',
-            params={'name': path.identifier, 'kind': 'file'},
+            url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}/{path.id}',
+            params={'name': new_name, 'kind': 'file'},
             data=stream
         )
-        metadata = await resp.json()
-        return BaseOsfStorageItemMetadata(metadata['data'], self.resource, path)
 
     async def delete(self, path, confirm_delete=0, **kwargs):
         pass

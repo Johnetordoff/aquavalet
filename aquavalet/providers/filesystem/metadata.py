@@ -2,35 +2,47 @@ import os
 from aquavalet.core import metadata
 
 
-class BaseFileSystemMetadata(metadata.BaseMetadata):
 
-    def __init__(self, raw, path):
-        super().__init__(raw, path)
+class FileSystemItemMetadata(metadata.BaseMetadata):
+
+    def __init__(self, raw):
+        self.raw = raw
+        self.default_segments = [self.provider]
+
 
     @property
     def provider(self):
         return 'filesystem'
 
-
-class FileSystemItemMetadata(BaseFileSystemMetadata, metadata.BaseMetadata):
-
     @classmethod
-    def path(cls, path):
-
+    def build(cls, path):
         raw = {
             'name' : path.split('/')[-1],
             'path': path
         }
 
-        return cls(raw, path)
+        return cls(raw)
 
     @property
     def id(self):
         return self.raw['path']
 
     @property
+    def parent(self):
+        path = self.raw['path'].rstrip('/')
+        return '/'.join(os.path.split(path)[:-1]) + '/'
+
+    @property
     def name(self):
         return os.path.split(self.raw['path'])[-1]
+
+    def rename(self, new_name):
+        self.raw['path'] = self.parent + new_name
+        return self.path
+
+    @property
+    def path(self):
+        return self.raw['path']
 
     @property
     def size(self):
@@ -50,4 +62,18 @@ class FileSystemItemMetadata(BaseFileSystemMetadata, metadata.BaseMetadata):
 
     @property
     def kind(self):
-        return self.raw['kind']
+        if self.path.endswith('/'):
+            return 'folder'
+        return 'file'
+
+    @property
+    def is_file(self):
+        return self.kind == 'file'
+
+    @property
+    def is_folder(self):
+        return self.kind == 'folder'
+
+    @property
+    def is_root(self):
+        return self.id == '/'

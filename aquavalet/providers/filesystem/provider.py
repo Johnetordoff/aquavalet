@@ -31,7 +31,7 @@ class FileSystemProvider(provider.BaseProvider):
         os.makedirs(self.folder, exist_ok=True)
 
     async def validate_path(self, path, **kwargs):
-        return FileSystemItemMetadata.path(path)
+        return FileSystemItemMetadata.build(path)
 
     def can_intra_copy(self, dest_provider, path=None):
         return type(self) == type(dest_provider)
@@ -44,7 +44,7 @@ class FileSystemProvider(provider.BaseProvider):
 
     async def rename(self, path, new_name):
         try:
-            os.rename(path.full_path, path.rename(new_name).full_path)
+            os.rename(path.path, path.rename(new_name))
         except FileNotFoundError as exc:
             raise exceptions.InvalidPathError('Invalid path \'{}\' specified'.format(exc.filename))
 
@@ -56,24 +56,24 @@ class FileSystemProvider(provider.BaseProvider):
         return streams.FileStreamReader(file_pointer)
 
     async def upload(self, stream, path, new_name):
-        uploaded_path = path.child(new_name)
+        uploaded_path = path.id + new_name
 
-        with open(uploaded_path.full_path, 'wb') as file_pointer:
+        with open(uploaded_path, 'wb') as file_pointer:
             chunk = await stream.read(settings.CHUNK_SIZE)
             while chunk:
                 file_pointer.write(chunk)
                 chunk = await stream.read(settings.CHUNK_SIZE)
 
     async def delete(self, path, **kwargs):
-        if path.is_file:
+        if path.kind == 'file':
             try:
-                os.remove(path.full_path)
+                os.remove(path.id)
             except FileNotFoundError:
-                raise exceptions.NotFoundError(path.full_path)
+                raise exceptions.NotFoundError(path.id)
         else:
             if path.is_root:
                 raise Exception('That\'s the root!')
-            shutil.rmtree(path.full_path)
+            shutil.rmtree(path.id)
 
     async def metadata(self, path, version=None):
         if not os.path.exists(path.path):
@@ -87,8 +87,8 @@ class FileSystemProvider(provider.BaseProvider):
         except FileNotFoundError:
             raise exceptions.NotFoundError(path.path)
 
-        relative_path = path.path.replace(self.folder, '')
-        paths = [FileSystemItemMetadata.path(os.path.join('/', relative_path, child)) for child in children]
+        relative_path = path.path.replace(path.name, '')
+        paths = [FileSystemItemMetadata.build(os.path.join(relative_path, child)) for child in children]
         return [self._format_metadata(path) for path in paths]
 
     async def create_folder(self, path, new_name):
@@ -104,4 +104,4 @@ class FileSystemProvider(provider.BaseProvider):
             'mime_type': mimetypes.guess_type(path.path)[0],
             'kind':  'folder' if os.path.isdir(path.path) else 'file'
         }
-        return FileSystemItemMetadata(metadata, self.folder)
+        return FileSystemItemMetadata(metadata)

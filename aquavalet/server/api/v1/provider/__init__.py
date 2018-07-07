@@ -43,6 +43,11 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
         self.stream = None
         self.body = b''
 
+        self.rsock, self.wsock = socket.socketpair()
+        print(self.request.files)
+        self.reader, _ = await asyncio.open_unix_connection(sock=self.rsock)
+        _, self.writer = await asyncio.open_unix_connection(sock=self.wsock)
+
         self.path = self.path_kwargs['path'] or '/'
         provider = self.path_kwargs['provider']
 
@@ -59,6 +64,9 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
         })
 
     async def children(self, provider,  path):
+        if self.path.is_file:
+            raise exceptions.InvalidPathError('Files can\'t have children')
+
 
         metadata = await self.provider.children(self.path)
         return self.write({
@@ -100,10 +108,6 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
             return await self.children(provider,  path)
 
     async def upload(self, provider,  path):
-        self.rsock, self.wsock = socket.socketpair()
-
-        self.reader, _ = await asyncio.open_unix_connection(sock=self.rsock)
-        _, self.writer = await asyncio.open_unix_connection(sock=self.wsock)
 
         self.stream = RequestStreamReader(self.request, self.reader)
         self.writer.write_eof()
@@ -139,11 +143,8 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
     async def data_received(self, chunk):
         """Note: Only called during uploads."""
         self.bytes_uploaded += len(chunk)
-        if self.stream:
-            self.writer.write(chunk)
-            await self.writer.drain()
-        else:
-            self.body += chunk
+        self.writer.write(chunk)
+        await self.writer.drain()
 
     async def revisions(self):
         if self.path.is_folder:
