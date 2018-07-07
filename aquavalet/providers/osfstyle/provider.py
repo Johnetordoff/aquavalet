@@ -43,7 +43,8 @@ class OsfProvider(provider.BaseProvider):
             json=True,
             method='GET',
             url=f'https://api.osf.io/v2/files{self.path}/?meta=',
-            headers=self.default_headers
+            throws=exceptions.ProviderError,
+            expects=(200,)
         )
         return BaseOsfStorageItemMetadata(resp['data']['attributes'], path, self.internal_provider, self.resource)
 
@@ -62,25 +63,37 @@ class OsfProvider(provider.BaseProvider):
     async def intra_copy(self, dest_provider, src_path, dest_path):
         pass
 
-    async def download(self, path, version=None, range=None):
-        async with aiohttp.ClientSession() as session:
-            resp = await session.get(
-                url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}/{path.id}',
-                headers=self.default_headers
-            )
-            return streams.ResponseStreamReader(resp)
+    async def download(self, session, path, version=None, range=None):
+        resp = await session.get(
+            url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{path.id}',
+            headers=self.default_headers
+        )
+        return streams.ResponseStreamReader(resp)
 
 
     async def upload(self, stream, path, new_name):
-        await self.make_request(
-            method='PUT',
-            url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}/{path.id}',
-            params={'name': new_name, 'kind': 'file'},
-            data=stream
-        )
+        async def stream_sender(stream=None):
+            chunk = await stream.read(64 * 1024)
+            while chunk:
+                yield chunk
+                chunk = await stream.read(64 * 1024)
+
+        async with aiohttp.ClientSession() as session:
+            async with await session.put(
+                data=stream_sender(stream),
+                url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{path.id}',
+                headers=self.default_headers,
+                params={'kind': 'file', 'name': new_name}
+            ) as resp:
+                print(resp)
 
     async def delete(self, path, confirm_delete=0, **kwargs):
-        pass
+        await self.make_request(
+            method='DELETE',
+            url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{path.id}?meta=',
+            throws=exceptions.ProviderError,
+            expects=(204,)
+        )
 
     async def metadata(self, path, **kwargs):
         return path

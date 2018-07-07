@@ -62,21 +62,12 @@ class BaseHandler(tornado.web.RequestHandler):
         return super().set_status(code, reason)
 
     async def write_stream(self, stream):
-        try:
-            while True:
-                chunk = await stream.read(settings.CHUNK_SIZE)
-                if not chunk:
-                    break
-                if isinstance(chunk, bytearray):
-                    chunk = bytes(chunk)
-                self.write(chunk)
-                self.bytes_downloaded += len(chunk)
-                del chunk
-                await self.flush()
-        except tornado.iostream.StreamClosedError:
-            # Client has disconnected early.
-            # No need for any exception to be raised
-            return
+        async for chunk in stream.response.content.iter_any():
+            self.write(chunk)
+            self.bytes_downloaded += len(chunk)
+            await self.flush()
+
+
 
     def _cross_origin_is_allowed(self):
         if self.request.method == 'OPTIONS':
@@ -110,12 +101,6 @@ class BaseHandler(tornado.web.RequestHandler):
         self.set_header('Access-Control-Allow-Headers', ', '.join(CORS_ACCEPT_HEADERS))
         self.set_header('Access-Control-Expose-Headers', ', '.join(CORS_EXPOSE_HEADERS))
         self.set_header('Cache-control', 'no-store, no-cache, must-revalidate, max-age=0')
-
-    def options(self, *args, **kwargs):
-        self.set_status(204)
-        if self.request.headers.get('Origin'):
-            self.set_header('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE'),
-
 
 
 def parse_request_range(range_header):

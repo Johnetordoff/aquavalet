@@ -2,6 +2,7 @@ import os
 
 import socket
 import asyncio
+import aiohttp
 import logging
 from http import HTTPStatus
 
@@ -40,13 +41,6 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
     PATTERN = settings.ROOT_PATTERN
 
     async def prepare(self, *args, **kwargs):
-        self.stream = None
-        self.body = b''
-
-        self.rsock, self.wsock = socket.socketpair()
-        print(self.request.files)
-        self.reader, _ = await asyncio.open_unix_connection(sock=self.rsock)
-        _, self.writer = await asyncio.open_unix_connection(sock=self.wsock)
 
         self.path = self.path_kwargs['path'] or '/'
         provider = self.path_kwargs['provider']
@@ -54,6 +48,19 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
         self.auth = await auth_handler.get(None, provider, self.request)
         self.provider = utils.make_provider(provider, self.auth['auth'], self.auth['credentials'], self.auth['settings'])
         self.path = await self.provider.validate_path(self.path)
+
+        if self.request.method == 'UPLOAD':
+            self.rsock, self.wsock = socket.socketpair()
+
+            self.reader, _ = await asyncio.open_unix_connection(sock=self.rsock)
+            _, self.writer = await asyncio.open_unix_connection(sock=self.wsock)
+
+            self.stream = RequestStreamReader(self.request, self.reader)
+            new_name = self.get_query_argument('new_name', default=None)
+            self.uploader = asyncio.ensure_future(self.provider.upload(self.stream, self.path, new_name))
+        else:
+            self.stream = None
+        self.body = b''
 
     async def metadata(self, provider,  path):
         version = self.get_query_argument('version', default=None)
@@ -64,9 +71,6 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
         })
 
     async def children(self, provider,  path):
-        if self.path.is_file:
-            raise exceptions.InvalidPathError('Files can\'t have children')
-
 
         metadata = await self.provider.children(self.path)
         return self.write({
@@ -109,13 +113,12 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
 
     async def upload(self, provider,  path):
 
-        self.stream = RequestStreamReader(self.request, self.reader)
         self.writer.write_eof()
+        await self.uploader
 
         self.writer.close()
         self.wsock.close()
-        new_name = self.get_query_argument('new_name', default=None)
-        await self.provider.upload(self.stream, self.path, new_name=new_name)
+
 
     async def create_folder(self, provider,  path):
         if not self.path.is_dir:
@@ -143,8 +146,11 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
     async def data_received(self, chunk):
         """Note: Only called during uploads."""
         self.bytes_uploaded += len(chunk)
-        self.writer.write(chunk)
-        await self.writer.drain()
+        if self.stream:
+            self.writer.write(chunk)
+            await self.writer.drain()
+        else:
+            self.body += chunk
 
     async def revisions(self):
         if self.path.is_folder:
@@ -159,39 +165,41 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
             request_range = utils.parse_request_range(self.request.headers['Range'])
 
         version = self.get_query_argument('version', default=None) or self.get_query_argument('revision', default=None)
-        stream = await self.provider.download(
-            self.path,
-            version=version,
-            range=request_range,
-        )
+        async with aiohttp.ClientSession() as session:
+            stream = await self.provider.download(
+                session,
+                self.path,
+                version=version,
+                range=request_range,
+            )
 
-        if getattr(stream, 'partial', None):
-            # Use getattr here as not all stream may have a partial attribute
-            # Plus it fixes tests
-            self.set_status(206)
-            self.set_header('Content-Range', stream.content_range)
+            if getattr(stream, 'partial', None):
+                # Use getattr here as not all stream may have a partial attribute
+                # Plus it fixes tests
+                self.set_status(206)
+                self.set_header('Content-Range', stream.content_range)
 
-        if stream.content_type is not None:
-            self.set_header('Content-Type', stream.content_type)
+            if stream.content_type is not None:
+                self.set_header('Content-Type', stream.content_type)
 
-        if stream.content_range is not None:
-            self.set_header('Content-Length', stream.content_range)
+            if stream.content_range is not None:
+                self.set_header('Content-Length', stream.content_range)
 
-        # Build `Content-Disposition` header from `displayName` override,
-        # headers of provider response, or file path, whichever is truthy first
-        name = getattr(stream, 'name', None) or self.path.name
-        self.set_header('Content-Disposition', 'attachment;filename="{}"'.format(name.replace('"', '\\"')))
+            # Build `Content-Disposition` header from `displayName` override,
+            # headers of provider response, or file path, whichever is truthy first
+            name = getattr(stream, 'name', None) or self.path.name
+            self.set_header('Content-Disposition', 'attachment;filename="{}"'.format(name.replace('"', '\\"')))
 
-        _, ext = os.path.splitext(name)
-        # If the file extention is in mime_types
-        # override the content type to fix issues with safari shoving in new file extensions
-        if ext in mimetypes.types_map:
-            self.set_header('Content-Type', mimetypes.types_map[ext])
+            _, ext = os.path.splitext(name)
+            # If the file extention is in mime_types
+            # override the content type to fix issues with safari shoving in new file extensions
+            if ext in mimetypes.types_map:
+                self.set_header('Content-Type', mimetypes.types_map[ext])
 
-        await self.write_stream(stream)
+            await self.write_stream(stream)
 
-        if getattr(stream, 'partial', False):
-            await stream.response.release()
+            if getattr(stream, 'partial', False):
+                await stream.response.release()
 
     async def download_folder_as_zip(self):
         zipfile_name = self.path.name or '{}-archive'.format(self.provider.NAME)

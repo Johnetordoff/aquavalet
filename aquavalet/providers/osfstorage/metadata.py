@@ -38,6 +38,14 @@ class BaseOsfStorageItemMetadata(BaseOsfStorageMetadata):
         return self.raw['kind']
 
     @property
+    def size(self):
+        return self.raw['size']
+
+    @property
+    def is_file(self):
+        return self.raw['kind'] == 'file'
+
+    @property
     def modified(self):
         return self.raw.get('modified')
 
@@ -56,6 +64,7 @@ class BaseOsfStorageItemMetadata(BaseOsfStorageMetadata):
             'kind': self.kind,
             'name': self.name,
             'path': self.id,
+            'size': self.size,
             'modified': self.modified,
             'mimetype': mimetypes.types_map.get(ext),
             'provider': self.provider,
