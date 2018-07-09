@@ -11,7 +11,7 @@ class AuthHandler:
 
     async def get(self, resource, provider, request, action=None, auth_type=AuthType.SOURCE):
         return {'auth': 'fake_auth',
-                'credentials': {'token': '5vyt8qDVUiCDbOhuO5LDwA0iOlqPwaQXpzoAslaBzIOnXlCbDeT1A8E85V4QyDx5rQvBsg'},
+                'credentials': {'token': ''},
                 'settings': {'folder': 'platter/',
                              'base_url': 'https://files.artifacts.ai/v1/resources/'}
                 }
