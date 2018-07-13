@@ -1,4 +1,5 @@
 import re
+import json
 import aiohttp
 
 from aquavalet.core import provider
@@ -39,13 +40,14 @@ class OsfProvider(provider.BaseProvider):
         self.path = groupdict.get('path')
 
         resp = await self.make_request(
-            json=True,
             method='GET',
             url=f'https://api.osf.io/v2/files{self.path}/?meta=',
             throws=exceptions.ProviderError,
             expects=(200,)
         )
-        return BaseOsfStorageItemMetadata(resp['data']['attributes'], path, self.internal_provider, self.resource)
+
+        data = (await resp.json())['data']
+        return BaseOsfStorageItemMetadata(data['attributes'], path, self.internal_provider, self.resource)
 
     def can_duplicate_names(self):
         return True
@@ -100,16 +102,25 @@ class OsfProvider(provider.BaseProvider):
     async def create_folder(self, path, **kwargs):
         pass
 
-    async def _item_metadata(self, path, revision=None):
-        pass
+    async def rename(self, path, new_name):
+        resp = await self.make_request(
+            method='POST',
+            url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{path.id}',
+            throws=exceptions.ProviderError,
+            data=json.dumps({'action': 'rename', 'rename': new_name}),
+            expects=(200,)
+        )
+        print(resp)
+        print(await resp.json())
+        return resp
 
     async def children(self, path):
         resp = await self.make_request(
-            json=True,
             method='GET',
             url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{path.id}?meta=',
             throws=exceptions.ProviderError,
             expects=(200,)
         )
+        data = (await resp.json())['data']
 
-        return [BaseOsfStorageItemMetadata(metadata['attributes'], path.path, internal_provider=self.internal_provider, resource=self.resource) for metadata in resp['data']]
+        return [BaseOsfStorageItemMetadata(metadata['attributes'], path.path, internal_provider=self.internal_provider, resource=self.resource) for metadata in data]

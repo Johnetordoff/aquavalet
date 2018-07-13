@@ -172,8 +172,6 @@ class BaseProvider(metaclass=abc.ABCMeta):
                 async with aiohttp.request(method, url, *args, **kwargs) as response:
                     if expects and response.status not in expects:
                         raise (await exceptions.exception_from_response(response, error=throws, **kwargs))
-                    if json:
-                        return await response.json()
                     return response
             except throws as e:
                 if retry <= 0 or e.code not in self._retry_on:

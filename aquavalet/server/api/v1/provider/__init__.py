@@ -47,7 +47,8 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
 
         self.auth = await auth_handler.get(None, provider, self.request)
         self.provider = utils.make_provider(provider, self.auth['auth'], self.auth['credentials'], self.auth['settings'])
-        self.path = await self.provider.validate_path(self.path)
+        async with aiohttp.ClientSession():
+            self.path = await self.provider.validate_path(self.path)
 
         if self.request.method == 'UPLOAD':
             self.rsock, self.wsock = socket.socketpair()
@@ -64,7 +65,8 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
 
     async def metadata(self, provider,  path):
         version = self.get_query_argument('version', default=None)
-        metadata = await self.provider.metadata(self.path, version=version)
+        async with aiohttp.ClientSession():
+            metadata = await self.provider.metadata(self.path, version=version)
 
         return self.write({
             'data': metadata.json_api_serialized()
@@ -72,24 +74,20 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
 
     async def children(self, provider,  path):
 
-        metadata = await self.provider.children(self.path)
+        async with aiohttp.ClientSession() as session:
+            metadata = await self.provider.children(self.path)
+
         return self.write({
             'data': [metadata.json_api_serialized() for metadata in metadata]
         })
 
     async def rename(self, provider,  path):
         new_name = self.get_query_argument('new_name', default=None)
-
         if new_name is None:
             raise exceptions.InvalidPathError('new_name is a required parameter for renaming.')
 
         await self.provider.rename(self.path, new_name)
 
-        metadata = await self.provider.metadata(self.path)
-
-        return self.write({
-            'data': metadata.json_api_serialized()
-        })
 
     async def get(self, provider,  path):
         action = self.get_query_argument('serve', default=None)
@@ -196,7 +194,10 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
             if ext in mimetypes.types_map:
                 self.set_header('Content-Type', mimetypes.types_map[ext])
 
-            await self.write_stream(stream)
+            async for chunk in stream.response.content.iter_any():
+                self.write(chunk)
+                self.bytes_downloaded += len(chunk)
+                await self.flush()
 
             if getattr(stream, 'partial', False):
                 await stream.response.release()

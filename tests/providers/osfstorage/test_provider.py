@@ -20,12 +20,6 @@ class TestCreateFolder:
     async def test_create_folder(self, folder_path, provider, folder_metadata, mock_time):
 
         data = json.dumps(folder_metadata)
-        url, params = build_signed_url_without_auth(provider, 'POST',
-                                                    folder_path.parent.identifier,
-                                                    'children', data=data)
-
-        aiohttpretty.register_json_uri('POST', url, body=folder_metadata, status=201, params=params)
-
         resp = await provider.create_folder(folder_path)
 
         assert isinstance(resp, OsfStorageFolderMetadata)

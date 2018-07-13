@@ -62,11 +62,7 @@ class BaseHandler(tornado.web.RequestHandler):
         return super().set_status(code, reason)
 
     async def write_stream(self, stream):
-        async for chunk in stream.response.content.iter_any():
-            self.write(chunk)
-            self.bytes_downloaded += len(chunk)
-            await self.flush()
-
+        pass
 
 
     def _cross_origin_is_allowed(self):

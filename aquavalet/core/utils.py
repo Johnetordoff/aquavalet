@@ -11,13 +11,11 @@ from stevedore import driver
 
 from aquavalet.core import exceptions
 from aquavalet.server import settings as server_settings
-from aquavalet.core.signing import Signer
 from aquavalet.core.streams import EmptyStream
 
 
 logger = logging.getLogger(__name__)
 
-signer = Signer(server_settings.HMAC_SECRET, server_settings.HMAC_ALGORITHM)
 
 sentry_dsn = None
 
