@@ -10,7 +10,6 @@ from boto.glacier.exceptions import UnexpectedHTTPResponseError
 from tests import utils as test_utils
 
 from aquavalet.core import signing
-from aquavalet.core.path import AquaValetPath
 from aquavalet.providers.osfstorage.tasks import utils
 from aquavalet.providers.osfstorage.tasks import backup
 from aquavalet.providers.osfstorage.tasks import parity

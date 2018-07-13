@@ -4,7 +4,6 @@ from http import client
 from unittest import mock
 
 from aquavalet.core import exceptions
-from aquavalet.core.path import AquaValetPath
 from aquavalet.server.api.v1.provider.create import CreateMixin
 
 from tests.utils import MockCoroutine

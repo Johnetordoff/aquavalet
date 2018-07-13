@@ -7,7 +7,6 @@ from unittest import mock
 import pytest
 
 from aquavalet.core import streams
-from aquavalet.core.path import AquaValetPath
 from aquavalet.providers.osfstorage.provider import OSFStorageProvider
 from aquavalet.providers.osfstorage.metadata import (OsfStorageFileMetadata,
                                                      OsfStorageFolderMetadata,

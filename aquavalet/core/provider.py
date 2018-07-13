@@ -12,7 +12,6 @@ import aiohttp
 
 from aquavalet.core import streams
 from aquavalet.core import exceptions
-from aquavalet.core import path as wb_path
 from aquavalet import settings as wb_settings
 from aquavalet.core import metadata as wb_metadata
 from aquavalet.core.utils import ZipStreamGenerator
@@ -187,8 +186,8 @@ class BaseProvider(metaclass=abc.ABCMeta):
 
     async def move(self,
                    dest_provider: 'BaseProvider',
-                   src_path: wb_path.AquaValetPath,
-                   dest_path: wb_path.AquaValetPath,
+                   src_path,
+                   dest_path,
                    rename: str=None,
                    conflict: str='replace',
                    handle_naming: bool=True) -> typing.Tuple[wb_metadata.BaseMetadata, bool]:
@@ -237,8 +236,8 @@ class BaseProvider(metaclass=abc.ABCMeta):
 
     async def copy(self,
                    dest_provider: 'BaseProvider',
-                   src_path: wb_path.AquaValetPath,
-                   dest_path: wb_path.AquaValetPath,
+                   src_path,
+                   dest_path,
                    rename: str=None, conflict: str='replace',
                    handle_naming: bool=True) \
             -> typing.Tuple[wb_metadata.BaseMetadata, bool]:
@@ -319,11 +318,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
 
         return folder, created
 
-    async def handle_naming(self,
-                            src_path: wb_path.AquaValetPath,
-                            dest_path: wb_path.AquaValetPath,
-                            rename: str=None,
-                            conflict: str='replace') -> wb_path.AquaValetPath:
+    async def handle_naming(self, src_path, dest_path, rename: str=None, conflict: str='replace'):
         """Given a :class:`.AquaValetPath` and the desired name, handle any potential naming issues.
 
         i.e.:
@@ -361,9 +356,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
 
         return dest_path
 
-    def can_intra_copy(self,
-                       other: 'BaseProvider',
-                       path: wb_path.AquaValetPath=None) -> bool:
+    def can_intra_copy(self, other: 'BaseProvider', path) -> bool:
         """Indicates if a quick copy can be performed between the current provider and `other`.
 
         .. note::
@@ -375,9 +368,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
         """
         return False
 
-    def can_intra_move(self,
-                       other: 'BaseProvider',
-                       path: wb_path.AquaValetPath=None) -> bool:
+    def can_intra_move(self, other: 'BaseProvider', path) -> bool:
         """Indicates if a quick move can be performed between the current provider and `other`.
 
         .. note::
@@ -389,10 +380,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
         """
         return False
 
-    async def intra_copy(self,
-                         dest_provider: 'BaseProvider',
-                         source_path: wb_path.AquaValetPath,
-                         dest_path: wb_path.AquaValetPath) -> typing.Tuple[wb_metadata.BaseMetadata, bool]:
+    async def intra_copy(self, dest_provider: 'BaseProvider', source_path, dest_path) -> typing.Tuple[wb_metadata.BaseMetadata, bool]:
         """If the provider supports copying files and/or folders within itself by some means other
         than download/upload, then ``can_intra_copy`` should return ``True``.  This method will
         implement the copy.  It accepts the destination provider, a source path, and the
@@ -407,10 +395,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
         """
         raise NotImplementedError
 
-    async def intra_move(self,
-                         dest_provider: 'BaseProvider',
-                         src_path: wb_path.AquaValetPath,
-                         dest_path: wb_path.AquaValetPath) -> typing.Tuple[wb_metadata.BaseMetadata, bool]:
+    async def intra_move(self, dest_provider: 'BaseProvider', src_path, dest_path) -> typing.Tuple[wb_metadata.BaseMetadata, bool]:
         """If the provider supports moving files and/or folders within itself by some means other
         than download/upload/delete, then ``can_intra_move`` should return ``True``.  This method
         will implement the move.  It accepts the destination provider, a source path, and the
@@ -427,7 +412,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
         await self.delete(src_path)
         return data, created
 
-    async def exists(self, path: wb_path.AquaValetPath, **kwargs) \
+    async def exists(self, path, **kwargs) \
             -> typing.Union[bool, wb_metadata.BaseMetadata, typing.List[wb_metadata.BaseMetadata]]:
         """Check for existence of AquaValetPath
 
@@ -447,10 +432,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
                 raise
         return False
 
-    async def handle_name_conflict(self,
-                                   path: wb_path.AquaValetPath,
-                                   conflict: str='replace',
-                                   **kwargs) -> typing.Tuple[wb_path.AquaValetPath, bool]:
+    async def handle_name_conflict(self, path, conflict: str='replace', **kwargs):
         """Check AquaValetPath and resolve conflicts
 
         Given a AquaValetPath and a conflict resolution pattern determine
@@ -481,10 +463,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
 
         return path, False
 
-    async def revalidate_path(self,
-                              base: wb_path.AquaValetPath,
-                              path: str,
-                              folder: bool=False) -> wb_path.AquaValetPath:
+    async def revalidate_path(self, base, path: str, folder: bool=False):
         """Take a path and a base path and build a AquaValetPath representing `/base/path`.  For
         id-based providers, this will need to lookup the id of the new child object.
 
@@ -495,7 +474,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
         """
         return base.child(path, folder=folder)
 
-    async def zip(self, path: wb_path.AquaValetPath, **kwargs) -> asyncio.StreamReader:
+    async def zip(self, path, **kwargs) -> asyncio.StreamReader:
         """Streams a Zip archive of the given folder
 
         :param  path: ( :class:`.AquaValetPath` ) The folder to compress
@@ -520,7 +499,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
         return self.NAME == other.NAME and self.settings == other.settings
 
     @abc.abstractmethod
-    async def download(self, src_path: wb_path.AquaValetPath, **kwargs) -> streams.ResponseStreamReader:
+    async def download(self, src_path, **kwargs) -> streams.ResponseStreamReader:
         """Download a file from this provider.
 
         :param src_path: ( :class:`.AquaValetPath` ) Path to the file to be downloaded
@@ -535,7 +514,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    async def delete(self, src_path: wb_path.AquaValetPath, **kwargs) -> None:
+    async def delete(self, src_path, **kwargs) -> None:
         """
         :param src_path: ( :class:`.AquaValetPath` ) Path to be deleted
         :param \*\*kwargs: ( :class:`dict` ) Arguments to be parsed by child classes
@@ -545,7 +524,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    async def metadata(self, path: wb_path.AquaValetPath, **kwargs) \
+    async def metadata(self, path, **kwargs) \
             -> typing.Union[wb_metadata.BaseMetadata, typing.List[wb_metadata.BaseMetadata]]:
         """Get metadata about the specified resource from this provider. Will be a :class:`list`
         if the resource is a directory otherwise an instance of
@@ -564,7 +543,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    async def validate_path(self, path: str, **kwargs) -> wb_path.AquaValetPath:
+    async def validate_path(self, path: str, **kwargs):
         """Validates paths passed in via the v0 API.  v0 paths are much less strict than v1 paths.
         They may represent things that exist or something that should be created.  As such, the goal
         of ``validate_path`` is to split the path into its component parts and attempt to determine
@@ -584,13 +563,11 @@ class BaseProvider(metaclass=abc.ABCMeta):
         """
         raise NotImplementedError
 
-    def path_from_metadata(self,
-                           parent_path: wb_path.AquaValetPath,
-                           meta_data: wb_metadata.BaseMetadata) -> wb_path.AquaValetPath:
-        return parent_path.child(meta_data.name, _id=meta_data.path.strip('/'),
-                                 folder=meta_data.is_folder)
+    def path_from_metadata(self, parent_path, metadata: wb_metadata.BaseMetadata):
+        return parent_path.child(metadata.name, _id=metadata.path.strip('/'),
+                                 folder=metadata.is_folder)
 
-    async def revisions(self, path: wb_path.AquaValetPath, **kwargs):
+    async def revisions(self, path, **kwargs):
         """Return a list of :class:`.BaseFileRevisionMetadata` objects representing the revisions
         available for the file at ``path``.
         """

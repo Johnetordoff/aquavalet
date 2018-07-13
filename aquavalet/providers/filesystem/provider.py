@@ -1,7 +1,5 @@
-import re
 import os
 import shutil
-import typing
 import logging
 import datetime
 import mimetypes
@@ -9,7 +7,6 @@ import mimetypes
 from aquavalet.core import streams
 from aquavalet.core import provider
 from aquavalet.core import exceptions
-from aquavalet.core.path import AquaValetPath
 
 from aquavalet.providers.filesystem import settings
 from aquavalet.providers.filesystem.metadata import FileSystemItemMetadata

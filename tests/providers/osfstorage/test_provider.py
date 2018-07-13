@@ -8,42 +8,10 @@ import aiohttpretty
 
 from aquavalet.core import metadata
 from aquavalet.core import exceptions
-from aquavalet.core.path import AquaValetPath
 from aquavalet.providers.osfstorage.settings import FILE_PATH_COMPLETE, FILE_PATH_PENDING
 from aquavalet.providers.osfstorage.metadata import (OsfStorageFileMetadata,
                                                      OsfStorageFolderMetadata,
                                                      OsfStorageRevisionMetadata)
-
-from tests import utils
-from tests.providers.osfstorage.fixtures import (auth, credentials, settings, provider,
-                                                 provider_and_mock, provider_and_mock2,
-                                                 file_stream, file_like, file_content,
-                                                 file_lineage, file_metadata,
-                                                 file_metadata_object, file_path,
-                                                 folder_lineage, folder_metadata,
-                                                 folder_children_metadata, folder_path,
-                                                 revisions_metadata, revision_metadata_object,
-                                                 download_response, download_path,
-                                                 upload_response, upload_path, root_path,
-                                                 mock_time)
-
-
-def build_signed_url_without_auth(provider, method, *segments, **params):
-    data = params.pop('data', None)
-    base_url = provider.build_url(*segments, **params)
-    url, _, params = provider.build_signed_url(method, base_url, data=data)
-    return url, params
-
-
-def build_signed_url_with_auth(provider, method, *segments, **params):
-    data = params.pop('data', None)
-    base_url = provider.build_url(*segments, **params)
-    url, _, params = provider.build_signed_url(method,
-                                               base_url,
-                                               data=data,
-                                               params={'user': provider.auth['id']})
-    return url, params
-
 
 class TestCreateFolder:
 

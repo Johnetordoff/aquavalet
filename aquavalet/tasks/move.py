@@ -4,7 +4,6 @@ import logging
 from aquavalet.core import utils
 from aquavalet.tasks import core
 from aquavalet.core import remote_logging
-from aquavalet.core.path import AquaValetPath
 
 
 logger = logging.getLogger(__name__)

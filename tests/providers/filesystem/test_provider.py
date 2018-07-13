@@ -8,7 +8,6 @@ from http import client
 from aquavalet.core import streams
 from aquavalet.core import metadata
 from aquavalet.core import exceptions
-from aquavalet.core.path import AquaValetPath
 
 from aquavalet.providers.filesystem import FileSystemProvider
 from aquavalet.providers.filesystem.metadata import FileSystemFileMetadata

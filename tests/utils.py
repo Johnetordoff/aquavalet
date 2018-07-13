@@ -13,7 +13,6 @@ from tornado.platform.asyncio import AsyncIOMainLoop
 from aquavalet.core import metadata
 from aquavalet.core import provider
 from aquavalet.server.app import make_app
-from aquavalet.core.path import AquaValetPath
 
 
 class MockCoroutine(mock.Mock):

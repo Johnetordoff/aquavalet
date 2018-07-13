@@ -3,7 +3,6 @@ import aiohttp
 
 from aquavalet.core import provider
 from aquavalet.core import exceptions, streams
-from aquavalet.core.path import AquaValetPath
 from aquavalet.providers.osfstorage.metadata import BaseOsfStorageItemMetadata
 
 class OsfProvider(provider.BaseProvider):
