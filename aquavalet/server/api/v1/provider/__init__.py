@@ -207,7 +207,6 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
     def on_finish(self):
         status, method = self.get_status(), self.request.method.upper()
 
-        print(self.provider.resp._body)
         #self._send_hook(action)
 
     def _send_hook(self, action):
