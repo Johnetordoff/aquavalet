@@ -111,9 +111,6 @@ class MoveCopyMixin:
 
         self.write({'data': metadata.json_api_serialized(self.dest_resource)})
 
-
-
-
     async def move_or_copy(self):
         """Copy, move, and rename files and folders.
 

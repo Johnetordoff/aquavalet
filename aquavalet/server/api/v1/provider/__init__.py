@@ -47,35 +47,29 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
 
         self.auth = await auth_handler.get(None, provider, self.request)
         self.provider = utils.make_provider(provider, self.auth['auth'], self.auth['credentials'], self.auth['settings'])
-        async with aiohttp.ClientSession():
-            self.path = await self.provider.validate_path(self.path)
+        self.path = await self.provider.validate_path(self.path)
 
         if self.request.method == 'UPLOAD':
+            # This is necessary
             self.rsock, self.wsock = socket.socketpair()
-
             self.reader, _ = await asyncio.open_unix_connection(sock=self.rsock)
             _, self.writer = await asyncio.open_unix_connection(sock=self.wsock)
 
             self.stream = RequestStreamReader(self.request, self.reader)
-            new_name = self.get_query_argument('new_name', default=None)
-            self.uploader = asyncio.ensure_future(self.provider.upload(self.stream, self.path, new_name))
         else:
             self.stream = None
-        self.body = b''
 
     async def metadata(self, provider,  path):
 
         version = self.get_query_argument('version', default=None)
-        async with aiohttp.ClientSession():
-            metadata = await self.provider.metadata(self.path, version=version)
+        metadata = await self.provider.metadata(self.path, version=version)
 
         return self.write({
             'data': metadata.json_api_serialized()
         })
 
     async def children(self, provider,  path):
-        async with aiohttp.ClientSession() as session:
-            metadata = await self.provider.children(self.path)
+        metadata = await self.provider.children(self.path)
 
         return self.write({
             'data': [metadata.json_api_serialized() for metadata in metadata]
@@ -110,25 +104,21 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
             return await self.children(provider,  path)
 
     async def upload(self, provider,  path):
+        new_name = self.get_query_argument('new_name', default=None)
 
         self.writer.write_eof()
-        await self.uploader
-
         self.writer.close()
         self.wsock.close()
 
+        await self.provider.upload(self.stream, self.path, new_name)
 
     async def create_folder(self, provider,  path):
         if not self.path.is_folder:
-            raise exceptions.InvalidPathError(message=f'{self.path.full_path} is not a directory, perhaps try using a trailing slash.')
+            raise exceptions.InvalidPathError(message=f'{self.path.path} is not a directory, perhaps try using a trailing slash.')
 
         new_name = self.get_query_argument('new_name', default=None)
-        async with aiohttp.ClientSession() as session:
-            resp = await self.provider.create_folder(session, self.path, new_name)
-            self.set_status(resp.status)
-            data = await resp.json()
+        await self.provider.create_folder(self.path, new_name)
 
-        return data['message']
 
 
     async def copy(self, provider,  path):
@@ -190,7 +180,7 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
 
             self.set_header('Content-Disposition', 'attachment;filename="{}"'.format(self.path.name))
 
-            _, ext = os.path.splitext(name)
+            _, ext = os.path.splitext(self.path.name)
             if ext in mimetypes.types_map:
                 self.set_header('Content-Type', mimetypes.types_map[ext])
 
@@ -217,9 +207,7 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
     def on_finish(self):
         status, method = self.get_status(), self.request.method.upper()
 
-
-
-
+        print(self.provider.resp._body)
         #self._send_hook(action)
 
     def _send_hook(self, action):

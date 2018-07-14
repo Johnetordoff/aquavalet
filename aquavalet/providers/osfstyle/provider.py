@@ -39,14 +39,13 @@ class OsfProvider(provider.BaseProvider):
             return BaseOsfStorageItemMetadata.root(self.internal_provider, self.resource)
         self.path = groupdict.get('path')
 
-        resp = await self.make_request(
-            method='GET',
-            url=f'https://api.osf.io/v2/files{self.path}/?meta=',
-            throws=exceptions.ProviderError,
-            expects=(200,)
-        )
-
-        data = (await resp.json())['data']
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                url=f'https://api.osf.io/v2/files{self.path}/?meta=',
+                headers=self.default_headers
+            ) as resp:
+                data = (await resp.json())['data']
+                self.resp = resp
         return BaseOsfStorageItemMetadata(data['attributes'], path, self.internal_provider, self.resource)
 
     def can_duplicate_names(self):
@@ -80,7 +79,7 @@ class OsfProvider(provider.BaseProvider):
                 chunk = await stream.read(64 * 1024)
 
         async with aiohttp.ClientSession() as session:
-            async with await session.put(
+            async with session.put(
                 data=stream_sender(stream),
                 url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{path.id}',
                 headers=self.default_headers,
@@ -89,43 +88,45 @@ class OsfProvider(provider.BaseProvider):
                 print(resp)
 
     async def delete(self, path, confirm_delete=0, **kwargs):
-        resp = await self.make_request(
-            method='DELETE',
-            url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{path.id}',
-            params={'confirm_delete': confirm_delete}
-        )
+        async with aiohttp.ClientSession() as session:
+            async with await session.delete(
+                url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{path.id}',
+                params={'confirm_delete': 0},
+                headers=self.default_headers
+            ) as resp:
+                print(resp)
+                return resp
 
     async def metadata(self, path, **kwargs):
         return path
 
-    async def create_folder(self, session, path, new_name):
-        async with await session.put(
-            url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{path.id}',
-            headers=self.default_headers,
-            params={'kind': 'folder', 'name': new_name}
-        ) as resp:
-            return resp
+    async def create_folder(self, path, new_name):
+        async with aiohttp.ClientSession() as session:
+            async with session.put(
+                url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{path.id}',
+                headers=self.default_headers,
+                params={'kind': 'folder', 'name': new_name}
+            ) as resp:
+                return resp
 
 
     async def rename(self, path, new_name):
-        resp = await self.make_request(
-            method='POST',
-            url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{path.id}',
-            throws=exceptions.ProviderError,
-            data=json.dumps({'action': 'rename', 'rename': new_name}),
-            expects=(200,)
-        )
-        print(resp)
-        print(await resp.json())
-        return resp
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{path.id}',
+                data=json.dumps({'action': 'rename', 'rename': new_name}),
+                headers=self.default_headers
+            ) as resp:
+                print(resp)
+                await resp.json()
+                return resp
 
     async def children(self, path):
-        resp = await self.make_request(
-            method='GET',
-            url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{path.id}?meta=',
-            throws=exceptions.ProviderError,
-            expects=(200,)
-        )
-        data = (await resp.json())['data']
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{path.id}',
+                headers=self.default_headers
+            ) as resp:
+                data = (await resp.json())['data']
 
         return [BaseOsfStorageItemMetadata(metadata['attributes'], path.path, internal_provider=self.internal_provider, resource=self.resource) for metadata in data]

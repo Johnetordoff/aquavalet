@@ -1,5 +1,5 @@
 from aquavalet.core.auth import AuthType
-
+import os
 
 class AuthHandler:
 
@@ -11,7 +11,7 @@ class AuthHandler:
 
     async def get(self, resource, provider, request, action=None, auth_type=AuthType.SOURCE):
         return {'auth': 'fake_auth',
-                'credentials': {'token': 'H8iS7N4oE8FGQVdbzYTEJT2f9LSfRzHGbagrFwvsFbXwSbldj2gpmf2JQaLqtyStyJC32x'},
+                'credentials': {'token': os.environ.get('token')},
                 'settings': {'folder': 'platter/',
                              'base_url': 'https://files.artifacts.ai/v1/resources/'}
                 }
