@@ -159,14 +159,11 @@ class BaseProvider(metaclass=abc.ABCMeta):
         kwargs['headers'] = self.build_headers(**kwargs.get('headers', {}))
         retry = _retry = kwargs.pop('retry', 2)
         range = kwargs.pop('range', None)
-        json = kwargs.pop('json', None)
         expects = kwargs.pop('expects', None)
         throws = kwargs.pop('throws', exceptions.UnhandledProviderError)
         if range:
             kwargs['headers']['Range'] = self._build_range_header(range)
 
-        if callable(url):
-            url = url()
         while retry >= 0:
             try:
                 async with aiohttp.request(method, url, *args, **kwargs) as response:

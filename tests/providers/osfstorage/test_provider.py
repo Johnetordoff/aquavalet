@@ -1,7 +1,5 @@
 import os
 import json
-from http import client
-from unittest import mock
 
 import pytest
 import aiohttpretty

@@ -1,7 +1,6 @@
 import os
 import asyncio
 
-import agent
 
 from aquavalet.core.streams.base import BaseStream
 
@@ -27,7 +26,6 @@ class FileStreamReader(BaseStream):
         self.file_pointer.close()
         self.feed_eof()
 
-    @agent.async_generator
     def chunk_reader(self):
         self.file_pointer.seek(0)
         while True:
@@ -85,7 +83,6 @@ class PartialFileStreamReader(FileStreamReader):
     def content_range(self):
         return 'bytes {}-{}/{}'.format(self.start, self.end, self.total_size)
 
-    @agent.async_generator
     def chunk_reader(self):
         self.file_pointer.seek(self.start)
         while True:

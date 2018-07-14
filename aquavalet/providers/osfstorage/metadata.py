@@ -47,6 +47,10 @@ class BaseOsfStorageItemMetadata(BaseOsfStorageMetadata):
         return self.raw['kind'] == 'file'
 
     @property
+    def is_folder(self):
+        return self.raw['kind'] == 'folder'
+
+    @property
     def modified(self):
         return self.raw.get('modified')
 

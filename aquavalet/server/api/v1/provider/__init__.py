@@ -64,6 +64,7 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
         self.body = b''
 
     async def metadata(self, provider,  path):
+
         version = self.get_query_argument('version', default=None)
         async with aiohttp.ClientSession():
             metadata = await self.provider.metadata(self.path, version=version)
@@ -73,7 +74,6 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
         })
 
     async def children(self, provider,  path):
-
         async with aiohttp.ClientSession() as session:
             metadata = await self.provider.children(self.path)
 
@@ -119,11 +119,17 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
 
 
     async def create_folder(self, provider,  path):
-        if not self.path.is_dir:
+        if not self.path.is_folder:
             raise exceptions.InvalidPathError(message=f'{self.path.full_path} is not a directory, perhaps try using a trailing slash.')
 
         new_name = self.get_query_argument('new_name', default=None)
-        return await self.provider.create_folder(self.path, new_name)
+        async with aiohttp.ClientSession() as session:
+            resp = await self.provider.create_folder(session, self.path, new_name)
+            self.set_status(resp.status)
+            data = await resp.json()
+
+        return data['message']
+
 
     async def copy(self, provider,  path):
         dest_path = self.get_query_argument('to', default=None)
@@ -138,7 +144,8 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
         return await self.provider.copy(path, dest_provider, dest_path)
 
     async def delete(self, provider,  path):
-        await self.provider.delete(self.path)
+        comfirm_delete = self.get_query_argument('comfirm_delete', default=None)
+        await self.provider.delete(self.path, comfirm_delete)
         self.set_status(int(HTTPStatus.NO_CONTENT))
 
     async def data_received(self, chunk):
@@ -172,8 +179,6 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
             )
 
             if getattr(stream, 'partial', None):
-                # Use getattr here as not all stream may have a partial attribute
-                # Plus it fixes tests
                 self.set_status(206)
                 self.set_header('Content-Range', stream.content_range)
 
@@ -183,14 +188,9 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
             if stream.content_range is not None:
                 self.set_header('Content-Length', stream.content_range)
 
-            # Build `Content-Disposition` header from `displayName` override,
-            # headers of provider response, or file path, whichever is truthy first
-            name = getattr(stream, 'name', None) or self.path.name
-            self.set_header('Content-Disposition', 'attachment;filename="{}"'.format(name.replace('"', '\\"')))
+            self.set_header('Content-Disposition', 'attachment;filename="{}"'.format(self.path.name))
 
             _, ext = os.path.splitext(name)
-            # If the file extention is in mime_types
-            # override the content type to fix issues with safari shoving in new file extensions
             if ext in mimetypes.types_map:
                 self.set_header('Content-Type', mimetypes.types_map[ext])
 
@@ -216,14 +216,10 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
 
     def on_finish(self):
         status, method = self.get_status(), self.request.method.upper()
-        # If the response code is not within the 200-302 range, the request was a HEAD or OPTIONS,
-        # or the response code is 202 no callbacks should be sent and no metrics collected.
-        # For 202s, celery will send its own callback.  Osfstorage and s3 can return 302s for file
-        # downloads, which should be tallied.
-        if any((method in ('HEAD', 'OPTIONS'), status == 202, status > 302, status < 200)):
-            return
 
-        # Done here just because method is defined
+
+
+
         #self._send_hook(action)
 
     def _send_hook(self, action):

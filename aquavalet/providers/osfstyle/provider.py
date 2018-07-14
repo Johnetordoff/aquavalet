@@ -89,18 +89,23 @@ class OsfProvider(provider.BaseProvider):
                 print(resp)
 
     async def delete(self, path, confirm_delete=0, **kwargs):
-        await self.make_request(
+        resp = await self.make_request(
             method='DELETE',
-            url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{path.id}?meta=',
-            throws=exceptions.ProviderError,
-            expects=(204,)
+            url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{path.id}',
+            params={'confirm_delete': confirm_delete}
         )
 
     async def metadata(self, path, **kwargs):
         return path
 
-    async def create_folder(self, path, **kwargs):
-        pass
+    async def create_folder(self, session, path, new_name):
+        async with await session.put(
+            url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{path.id}',
+            headers=self.default_headers,
+            params={'kind': 'folder', 'name': new_name}
+        ) as resp:
+            return resp
+
 
     async def rename(self, path, new_name):
         resp = await self.make_request(

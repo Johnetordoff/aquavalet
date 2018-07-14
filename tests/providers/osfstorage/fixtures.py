@@ -88,19 +88,6 @@ def folder_metadata():
 
 
 @pytest.fixture
-def folder_lineage():
-    with open(os.path.join(os.path.dirname(__file__), 'fixtures/root_provider.json'), 'r') as fp:
-        return json.load(fp)['folder_lineage']
-
-
-@pytest.fixture
-def folder_path(folder_lineage):
-    return AquaValetPath(folder_lineage['data'][0]['path'],
-                         _ids=(folder_lineage['data'][-1]['id'], folder_lineage['data'][0]['id']),
-                         folder=True)
-
-
-@pytest.fixture
 def file_metadata():
     with open(os.path.join(os.path.dirname(__file__), 'fixtures/root_provider.json'), 'r') as fp:
         return json.load(fp)['file_metadata']
