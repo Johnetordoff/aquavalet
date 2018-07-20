@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 setup(
     name='aquavalet',
     version='0.0.0',
-    namespace_packages=['aquavalet', 'aquavalet.auth', 'aquavalet.providers'],
+    namespace_packages=['aquavalet', 'aquavalet.providers'],
     description='AquaValet Storage Server',
     #author='Center for Open Science',
     #author_email='contact@cos.io',

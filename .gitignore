@@ -8,7 +8,7 @@
 **/*.ipynb*
 **/*.pyc
 **/__pycache__
-local.py
+settings/local.py
 .coverage
 *.egg-info/
 docs/_build

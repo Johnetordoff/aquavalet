@@ -4,12 +4,8 @@ from http import HTTPStatus
 from aquavalet import tasks
 from aquavalet.core import exceptions
 from aquavalet.core.auth import AuthType
-from aquavalet.server.auth import AuthHandler
 from aquavalet.core.utils import make_provider
 from aquavalet.settings import DEFAULT_CONFLICT
-
-auth_handler = AuthHandler(None)
-
 
 class MoveCopyMixin:
 

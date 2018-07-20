@@ -21,94 +21,13 @@ logger = get_task_logger(__name__)
 logger.setLevel(logging.INFO)
 
 
-def ensure_path(path):
-    try:
-        os.makedirs(path)
-    except OSError as exception:
-        if exception.errno != errno.EEXIST:
-            raise
-
-
-def ensure_paths():
-    paths = [
-        settings.FILE_PATH_PENDING,
-        settings.FILE_PATH_COMPLETE,
-    ]
-    for path in paths:
-        ensure_path(path)
-
-
-def create_parity_files(file_path, redundancy=5):
-    """
-    :raise: `ParchiveError` if creation of parity files fails
-    """
-    try:
-        stat = os.stat(file_path)
-        if not stat.st_size:
-            return []
-    except OSError as error:
-        raise exceptions.ParchiveError('Could not read file: {0}'.format(error.strerror))
-    path, name = os.path.split(file_path)
-    with open(os.devnull, 'wb') as DEVNULL:
-        args = [
-            'par2',
-            'c',
-            '-r{0}'.format(redundancy),
-            os.path.join(path, '{0}.par2'.format(name)),
-            file_path,
-        ]
-
-        ret_code = subprocess.call(args, stdout=DEVNULL, stderr=DEVNULL)
-
-        if ret_code != 0:
-            raise exceptions.ParchiveError('{0} failed with code {1}'.format(' '.join(args), ret_code))
-
-        return [
-            os.path.abspath(fpath)
-            for fpath in
-            glob.glob(os.path.join(path, '{0}*.par2'.format(name)))
-        ]
-
-
-async def push_metadata(version_id, callback_url, metadata):
-    signer = signing.Signer(settings.HMAC_SECRET, settings.HMAC_ALGORITHM)
-    data = signing.sign_data(
-        signer,
-        {
-            'version': version_id,
-            'metadata': metadata,
-        },
-    )
-    response = await aiohttp.request(
-        'PUT',
-        callback_url,
-        data=json.dumps(data),
-        headers={'Content-Type': 'application/json'},
-    )
-
-    if response.status != HTTPStatus.OK:
-        raise Exception('Failed to report archive completion, got status '
-                        'code {}'.format(response.status))
-
-
-def sanitize_request(request):
-    """Return dictionary of request attributes, excluding args and kwargs. Used
-    to ensure that potentially sensitive values aren't logged or sent to Sentry.
-    """
-    return {
-        key: value
-        for key, value in vars(request).items()
-        if key not in ['args', 'kwargs']
-    }
-
-
 def _log_task(func):
     """Decorator to add standardized logging to Celery tasks. Decorated tasks
     must also be decorated with `bind=True` so that `self` is available.
     """
     @functools.wraps(func)
     def wrapped(self, *args, **kwargs):
-        logger.info(sanitize_request(self.request))
+        logger.info(self.request)
         return func(self, *args, **kwargs)
     return wrapped
 
@@ -139,20 +58,12 @@ def get_countdown(attempt, init_delay, max_delay, backoff):
     return min(init_delay * multiplier, max_delay)
 
 
-def capture_retry_message(task):
-    if not client:
-        return
-    client.captureException(extra=sanitize_request(task.request))
-
-
 @contextlib.contextmanager
 def RetryTask(task, attempts, init_delay, max_delay, backoff, warn_idx, error_types):
     try:
         yield
     except error_types as exc_value:
         try_count = task.request.retries
-        if warn_idx is not None and try_count >= warn_idx:
-            capture_retry_message(task)
         countdown = get_countdown(try_count, init_delay, max_delay, backoff)
         task.max_retries = attempts
         raise task.retry(exc=exc_value, countdown=countdown)

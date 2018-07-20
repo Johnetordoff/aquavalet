@@ -3,7 +3,6 @@ import pytz
 import asyncio
 import logging
 import functools
-import dateutil.parser
 # from concurrent.futures import ProcessPoolExecutor  TODO Get this working
 
 import aiohttp
@@ -20,7 +19,7 @@ logger = logging.getLogger(__name__)
 sentry_dsn = None
 
 
-def make_provider(name: str, auth: dict, credentials: dict, settings: dict, **kwargs):
+def make_provider(name: str, auth: dict):
     """Returns an instance of :class:`aquavalet.core.provider.BaseProvider`
 
     :param str name: The name of the provider to instantiate. (s3, box, etc)
@@ -36,7 +35,7 @@ def make_provider(name: str, auth: dict, credentials: dict, settings: dict, **kw
             namespace='aquavalet.providers',
             name=name,
             invoke_on_load=True,
-            invoke_args=(auth, credentials, settings),
+            invoke_args=(auth, ),
         )
     except RuntimeError:
         raise exceptions.ProviderNotFound(name)
@@ -94,17 +93,6 @@ async def send_signed_request(method, url, payload):
         }),
         headers={'Content-Type': 'application/json'},
     ))
-
-
-def normalize_datetime(date_string):
-    if date_string is None:
-        return None
-    parsed_datetime = dateutil.parser.parse(date_string)
-    if not parsed_datetime.tzinfo:
-        parsed_datetime = parsed_datetime.replace(tzinfo=pytz.UTC)
-    parsed_datetime = parsed_datetime.astimezone(tz=pytz.UTC)
-    parsed_datetime = parsed_datetime.replace(microsecond=0)
-    return parsed_datetime.isoformat()
 
 
 class ZipStreamGenerator:

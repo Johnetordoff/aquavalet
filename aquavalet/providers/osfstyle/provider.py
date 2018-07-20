@@ -5,14 +5,14 @@ import aiohttp
 from aquavalet.core import provider
 from aquavalet.core import exceptions, streams
 from aquavalet.providers.osfstorage.metadata import BaseOsfStorageItemMetadata
+from aquavalet.settings import OSF_TOKEN
 
 class OsfProvider(provider.BaseProvider):
     NAME = 'OSF'
     PATH_PATTERN = r'\/(?P<internal_provider>(?:\w|\d)+)?\/(?P<resource>[a-zA-Z0-9]{5,})?(?P<path>\/.*)?'
 
-    def __init__(self, auth, credentials, settings):
-        super().__init__(auth, credentials, settings)
-        self.token = credentials["token"]
+    def __init__(self, auth):
+       self.token = OSF_TOKEN
 
     @property
     def default_headers(self):
@@ -44,8 +44,11 @@ class OsfProvider(provider.BaseProvider):
                 url=f'https://api.osf.io/v2/files{self.path}/?meta=',
                 headers=self.default_headers
             ) as resp:
-                data = (await resp.json())['data']
-                self.resp = resp
+                if resp.status == 200:
+                    data = (await resp.json())['data']
+                else:
+                    raise self.handle_response(resp)
+
         return BaseOsfStorageItemMetadata(data['attributes'], path, self.internal_provider, self.resource)
 
     def can_duplicate_names(self):
@@ -127,6 +130,9 @@ class OsfProvider(provider.BaseProvider):
                 url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{path.id}',
                 headers=self.default_headers
             ) as resp:
-                data = (await resp.json())['data']
+                if resp.status == 200:
+                    data = (await resp.json())['data']
+                else:
+                    raise self.handle_response(resp)
 
         return [BaseOsfStorageItemMetadata(metadata['attributes'], path.path, internal_provider=self.internal_provider, resource=self.resource) for metadata in data]

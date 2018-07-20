@@ -140,41 +140,13 @@ class BaseProvider(metaclass=abc.ABCMeta):
             if value is not None
         }
 
-    @throttle()
-    async def make_request(self, method: str, url: str, *args, **kwargs) -> aiohttp.client.ClientResponse:
-        """A wrapper around :func:`aiohttp.request`. Inserts default headers.
-
-        :param method: ( :class:`str` ) The HTTP method
-        :param url: ( :class:`str` ) The url to send the request to
-        :keyword range: An optional tuple (start, end) that is transformed into a Range header
-        :keyword expects: An optional tuple of HTTP status codes as integers raises an exception
-            if the returned status code is not in it.
-        :type expects: tuple of ints
-        :param throws: ( :class:`Exception` ) The exception to be raised from expects
-        :param \*args: ( :class:`tuple` )args passed to :func:`aiohttp.request`
-        :param \*\*kwargs:  ( :class:`dict` ) kwargs passed to :func:`aiohttp.request`
-        :rtype: :class:`aiohttp.ClientResponse`
-        :raises: :class:`.UnhandledProviderError` Raised if expects is defined
-        """
-        kwargs['headers'] = self.build_headers(**kwargs.get('headers', {}))
-        retry = _retry = kwargs.pop('retry', 2)
-        range = kwargs.pop('range', None)
-        expects = kwargs.pop('expects', None)
-        throws = kwargs.pop('throws', exceptions.UnhandledProviderError)
-        if range:
-            kwargs['headers']['Range'] = self._build_range_header(range)
-
-        while retry >= 0:
-            try:
-                async with aiohttp.request(method, url, *args, **kwargs) as response:
-                    if expects and response.status not in expects:
-                        raise (await exceptions.exception_from_response(response, error=throws, **kwargs))
-                    return response
-            except throws as e:
-                if retry <= 0 or e.code not in self._retry_on:
-                    raise
-                await asyncio.sleep((1 + _retry - retry) * 2)
-                retry -= 1
+    def handle_response(self, resp):
+        return {
+            400: exceptions.InvalidParameters,
+            401: exceptions.AuthError(f'Bad credentials provided {self.default_headers}.'),
+            404: exceptions.NotFoundError(f'Item at path \'{self.path}\' cannot be found.'),
+            410: exceptions.Gone(f'Item at path \'{self.path}\' has been removed.')
+        }[resp.status]
 
     def request(self, *args, **kwargs):
         return RequestHandlerContext(self.make_request(*args, **kwargs))

@@ -33,10 +33,8 @@ class WaterButlerError(Exception):
 
     """
 
-    def __init__(self, message, code=HTTPStatus.INTERNAL_SERVER_ERROR, log_message=None,
+    def __init__(self, message,log_message=None,
                  is_user_error=False):
-        super().__init__(code)
-        self.code = code
         self.log_message = log_message
         self.is_user_error = is_user_error
         if isinstance(message, dict):
@@ -99,11 +97,13 @@ class PluginError(WaterButlerError):
 
 
 class AuthError(PluginError):
-    """WaterButler-related errors raised from :class:`aquavalet.core.auth.BaseAuthHandler`
-    should inherit from AuthError.
-    """
-    pass
+    code = 401
 
+class NotFoundError(PluginError):
+    code = 404
+
+class Gone(PluginError):
+    code = 410
 
 class ProviderError(PluginError):
     """WaterButler-related errors raised from :class:`aquavalet.core.provider.BaseProvider`
@@ -193,15 +193,6 @@ class UploadFailedError(ProviderError):
         if message is None:
             message = 'Upload Failed'
         super().__init__(message, code=code)
-
-
-class NotFoundError(ProviderError):
-    def __init__(self, path, code=HTTPStatus.NOT_FOUND, is_user_error=True):
-        super().__init__(
-            'Could not retrieve file or directory {}'.format(path),
-            code=code,
-            is_user_error=is_user_error,
-        )
 
 
 class InvalidPathError(ProviderError):

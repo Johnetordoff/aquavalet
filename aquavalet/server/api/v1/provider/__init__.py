@@ -14,12 +14,10 @@ from aquavalet.core import utils
 from aquavalet.core import exceptions
 from aquavalet.core import remote_logging
 from aquavalet.core.streams import RequestStreamReader
-from aquavalet.server.auth import AuthHandler
 from aquavalet.server.api.v1 import core
 from aquavalet.server.api.v1.provider.movecopy import MoveCopyMixin
 
 logger = logging.getLogger(__name__)
-auth_handler = AuthHandler(None)
 
 
 @tornado.web.stream_request_body
@@ -44,9 +42,8 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
 
         self.path = self.path_kwargs['path'] or '/'
         provider = self.path_kwargs['provider']
-
-        self.auth = await auth_handler.get(None, provider, self.request)
-        self.provider = utils.make_provider(provider, self.auth['auth'], self.auth['credentials'], self.auth['settings'])
+        self.auth = {'token': self.request.headers.get('Auth')}
+        self.provider = utils.make_provider(provider, self.auth)
         self.path = await self.provider.validate_path(self.path)
 
         if self.request.method == 'UPLOAD':

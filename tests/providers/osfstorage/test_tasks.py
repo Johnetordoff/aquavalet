@@ -218,27 +218,6 @@ class TestBackupTask:
             },
         )
 
-    def test_upload_error_empty_file(self, monkeypatch):
-        mock_vault = mock.Mock()
-        mock_vault.name = 'ThreePoint'
-        mock_response = mock.Mock()
-        mock_response.status = 400
-        mock_response.read.return_value = json.dumps({
-            'status': 400,
-            'message': 'Invalid Content-Length: 0',
-        }).encode('utf-8')
-        error = UnexpectedHTTPResponseError(200, mock_response)
-        mock_vault.upload_archive.side_effect = error
-        mock_get_vault = mock.Mock()
-        mock_get_vault.return_value = mock_vault
-        mock_complete = mock.Mock()
-        monkeypatch.setattr(backup, 'get_vault', mock_get_vault)
-        monkeypatch.setattr(backup, '_push_archive_complete', mock_complete)
-
-        backup._push_file_archive('Triangles', None, None, {}, {})
-
-        mock_vault.upload_archive.assert_called_once_with('Triangles', description='Triangles')
-        assert not mock_complete.called
 
     def test_upload_error(self, monkeypatch):
         mock_vault = mock.Mock()
