@@ -48,7 +48,7 @@ class FileStreamReader(BaseStream):
         # asyncio.sleep(0) yields None by default, which displeases tornado
         await asyncio.sleep(0.001)
         async for chunk in self.file_gen:
-            return chunk
+            await chunk
 
 
 class PartialFileStreamReader(FileStreamReader):

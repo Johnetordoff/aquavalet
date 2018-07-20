@@ -66,15 +66,15 @@ class OsfProvider(provider.BaseProvider):
     async def intra_copy(self, dest_provider, src_path, dest_path):
         pass
 
-    async def download(self, session, path, version=None, range=None):
+    async def download(self, session, version=None, range=None):
         resp = await session.get(
-            url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{path.id}',
+            url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{self.path.id}',
             headers=self.default_headers
         )
         return streams.ResponseStreamReader(resp)
 
 
-    async def upload(self, stream, path, new_name):
+    async def upload(self, stream, new_name):
         async def stream_sender(stream=None):
             chunk = await stream.read(64 * 1024)
             while chunk:
@@ -84,39 +84,39 @@ class OsfProvider(provider.BaseProvider):
         async with aiohttp.ClientSession() as session:
             async with session.put(
                 data=stream_sender(stream),
-                url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{path.id}',
+                url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{self.path.id}',
                 headers=self.default_headers,
                 params={'kind': 'file', 'name': new_name}
             ) as resp:
                 print(resp)
 
-    async def delete(self, path, confirm_delete=0, **kwargs):
+    async def delete(self, confirm_delete=0, **kwargs):
         async with aiohttp.ClientSession() as session:
             async with await session.delete(
-                url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{path.id}',
+                url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{self.path.id}',
                 params={'confirm_delete': 0},
                 headers=self.default_headers
             ) as resp:
-                print(resp)
                 return resp
 
-    async def metadata(self, path, **kwargs):
-        return path
 
-    async def create_folder(self, path, new_name):
+    async def metadata(self, version=None):
+        return self.path
+
+    async def create_folder(self, new_name):
         async with aiohttp.ClientSession() as session:
             async with session.put(
-                url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{path.id}',
+                url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{self.path.id}',
                 headers=self.default_headers,
                 params={'kind': 'folder', 'name': new_name}
             ) as resp:
                 return resp
 
 
-    async def rename(self, path, new_name):
+    async def rename(self, new_name):
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{path.id}',
+                url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{self,path.id}',
                 data=json.dumps({'action': 'rename', 'rename': new_name}),
                 headers=self.default_headers
             ) as resp:
@@ -124,10 +124,10 @@ class OsfProvider(provider.BaseProvider):
                 await resp.json()
                 return resp
 
-    async def children(self, path):
+    async def children(self):
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{path.id}',
+                url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{self.path.id}',
                 headers=self.default_headers
             ) as resp:
                 if resp.status == 200:
@@ -135,4 +135,4 @@ class OsfProvider(provider.BaseProvider):
                 else:
                     raise self.handle_response(resp)
 
-        return [BaseOsfStorageItemMetadata(metadata['attributes'], path.path, internal_provider=self.internal_provider, resource=self.resource) for metadata in data]
+        return [BaseOsfStorageItemMetadata(metadata['attributes'], self.path, internal_provider=self.internal_provider, resource=self.resource) for metadata in data]

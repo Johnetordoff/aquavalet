@@ -61,9 +61,9 @@ class BaseHandler(tornado.web.RequestHandler):
     def set_status(self, code, reason=None):
         return super().set_status(code, reason)
 
-    async def write_stream(self, stream):
-        pass
-
+    async def write_non_aiohttp_stream(self, stream):
+        # Needs work
+        self.write(stream.file_pointer.read())
 
     def _cross_origin_is_allowed(self):
         if self.request.method == 'OPTIONS':

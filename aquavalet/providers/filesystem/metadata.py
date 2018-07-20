@@ -17,7 +17,6 @@ class FileSystemItemMetadata(metadata.BaseMetadata):
     @classmethod
     def build(cls, path):
         raw = {
-            'name' : path.split('/')[-1],
             'path': path
         }
 
@@ -29,12 +28,17 @@ class FileSystemItemMetadata(metadata.BaseMetadata):
 
     @property
     def parent(self):
-        path = self.raw['path'].rstrip('/')
-        return '/'.join(os.path.split(path)[:-1]) + '/'
+        if os.path.dirname(self.raw['path'].rstrip('/')) == '/':
+            return '/'
+
+        if not self.is_root:
+            return os.path.dirname(self.raw['path'].rstrip('/')) + '/'
+        else:
+            return '/'
 
     @property
     def name(self):
-        return os.path.split(self.raw['path'])[-1]
+        return os.path.basename(self.raw['path'].rstrip('/'))
 
     def rename(self, new_name):
         self.raw['path'] = self.parent + new_name

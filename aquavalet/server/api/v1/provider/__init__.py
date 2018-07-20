@@ -42,9 +42,10 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
 
         self.path = self.path_kwargs['path'] or '/'
         provider = self.path_kwargs['provider']
-        self.auth = {'token': self.request.headers.get('Auth')}
+
+        self.auth = None  # Figure out best approach
         self.provider = utils.make_provider(provider, self.auth)
-        self.path = await self.provider.validate_path(self.path)
+        self.provider.item = await self.provider.validate_item(self.path)
 
         if self.request.method == 'UPLOAD':
             # This is necessary
@@ -59,14 +60,17 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
     async def metadata(self, provider,  path):
 
         version = self.get_query_argument('version', default=None)
-        metadata = await self.provider.metadata(self.path, version=version)
+        metadata = await self.provider.metadata(version=version)
 
         return self.write({
             'data': metadata.json_api_serialized()
         })
 
     async def children(self, provider,  path):
-        metadata = await self.provider.children(self.path)
+        if not self.provider.item.is_folder:
+            raise exceptions.InvalidPathError('Only folders can be queried for children.')
+
+        metadata = await self.provider.children()
 
         return self.write({
             'data': [metadata.json_api_serialized() for metadata in metadata]
@@ -77,7 +81,7 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
         if new_name is None:
             raise exceptions.InvalidPathError('new_name is a required parameter for renaming.')
 
-        await self.provider.rename(self.path, new_name)
+        await self.provider.rename(new_name)
 
 
     async def get(self, provider,  path):
@@ -107,14 +111,14 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
         self.writer.close()
         self.wsock.close()
 
-        await self.provider.upload(self.stream, self.path, new_name)
+        await self.provider.upload(self.stream, new_name)
 
     async def create_folder(self, provider,  path):
-        if not self.path.is_folder:
-            raise exceptions.InvalidPathError(message=f'{self.path.path} is not a directory, perhaps try using a trailing slash.')
+        if not self.provider.path.is_folder:
+            raise exceptions.InvalidPathError(f'{self.path.path} is not a directory, perhaps try using a trailing slash.')
 
         new_name = self.get_query_argument('new_name', default=None)
-        await self.provider.create_folder(self.path, new_name)
+        await self.provider.create_folder(new_name)
 
 
 
@@ -122,7 +126,6 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
         dest_path = self.get_query_argument('to', default=None)
         dest_provider = self.get_query_argument('destination_provider', default=None)
 
-        self.dest_auth = await auth_handler.get(None)
         self.dest_provider = utils.make_provider(dest_provider,
                                                  self.auth['auth'],
                                                  self.auth['credentials'],
@@ -132,8 +135,7 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
 
     async def delete(self, provider,  path):
         comfirm_delete = self.get_query_argument('comfirm_delete', default=None)
-        await self.provider.delete(self.path, comfirm_delete)
-        self.set_status(int(HTTPStatus.NO_CONTENT))
+        await self.provider.delete(comfirm_delete)
 
     async def data_received(self, chunk):
         """Note: Only called during uploads."""
@@ -160,7 +162,6 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
         async with aiohttp.ClientSession() as session:
             stream = await self.provider.download(
                 session,
-                self.path,
                 version=version,
                 range=request_range,
             )
@@ -175,16 +176,19 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
             if stream.content_range is not None:
                 self.set_header('Content-Length', stream.content_range)
 
-            self.set_header('Content-Disposition', 'attachment;filename="{}"'.format(self.path.name))
+            self.set_header('Content-Disposition', 'attachment;filename="{}"'.format(self.provider.item.name))
 
-            _, ext = os.path.splitext(self.path.name)
+            _, ext = os.path.splitext(self.provider.item.name)
             if ext in mimetypes.types_map:
                 self.set_header('Content-Type', mimetypes.types_map[ext])
 
-            async for chunk in stream.response.content.iter_any():
-                self.write(chunk)
-                self.bytes_downloaded += len(chunk)
-                await self.flush()
+            if self.provider.NAME == 'filesystem':
+                await self.write_non_aiohttp_stream(stream)
+            else:
+                async for chunk in stream.response.content.iter_any():
+                    self.write(chunk)
+                    self.bytes_downloaded += len(chunk)
+                    await self.flush()
 
             if getattr(stream, 'partial', False):
                 await stream.response.release()
@@ -199,7 +203,7 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
 
         result = await self.provider.zip(self.path)
 
-        await self.write_stream(result)
+        #await self.write_stream(result)
 
     def on_finish(self):
         status, method = self.get_status(), self.request.method.upper()

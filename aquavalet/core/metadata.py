@@ -40,9 +40,10 @@ class BaseMetadata(metaclass=abc.ABCMeta):
     def _json_api_links(self) -> dict:
         actions = {}
         path_segments = [quote(seg) for seg in self.raw['path'].split('/') if seg]
+
         actions['info'] = self.construct_path(path_segments, 'meta')
         actions['delete'] = self.construct_path(path_segments, 'delete')
-        actions['parent'] = self.construct_path(path_segments[:-1], 'meta')
+        actions['parent'] = self.construct_parent()
 
         if self.kind == 'folder':
             actions['children'] = self.construct_path(path_segments, 'children')
@@ -51,6 +52,11 @@ class BaseMetadata(metaclass=abc.ABCMeta):
             actions['download'] = self.construct_path(path_segments, 'download')
 
         return actions
+
+    def construct_parent(self) -> str:
+        print('path')
+        print( self.parent)
+        return urlparse(settings.DOMAIN + '/' + '/'.join(self.default_segments) + self.parent + '?serve=meta').geturl()
 
     def construct_path(self, path, action) -> str:
         segments = self.default_segments + path

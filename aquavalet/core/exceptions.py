@@ -95,9 +95,14 @@ class PluginError(WaterButlerError):
     """
     pass
 
+class InvalidPathError(PluginError):
+    code = 400
 
 class AuthError(PluginError):
     code = 401
+
+class Forbidden(PluginError):
+    code = 403
 
 class NotFoundError(PluginError):
     code = 404
@@ -193,11 +198,6 @@ class UploadFailedError(ProviderError):
         if message is None:
             message = 'Upload Failed'
         super().__init__(message, code=code)
-
-
-class InvalidPathError(ProviderError):
-    def __init__(self, message, code=HTTPStatus.BAD_REQUEST, is_user_error=True):
-        super().__init__(message, code=code, is_user_error=is_user_error)
 
 
 class OverwriteSelfError(InvalidParameters):

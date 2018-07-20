@@ -79,8 +79,6 @@ class BaseProvider(metaclass=abc.ABCMeta):
     BASE_URL = None
 
     def __init__(self, auth: dict,
-                 credentials: dict,
-                 settings: dict,
                  retry_on: typing.Set[int]={408, 502, 503, 504}) -> None:
         """
         :param auth: ( :class:`dict` ) Information about the user this provider will act on the behalf of
@@ -91,8 +89,6 @@ class BaseProvider(metaclass=abc.ABCMeta):
         """
         self._retry_on = retry_on
         self.auth = auth
-        self.credentials = credentials
-        self.settings = settings
 
     @property
     @abc.abstractmethod
@@ -143,7 +139,8 @@ class BaseProvider(metaclass=abc.ABCMeta):
     def handle_response(self, resp):
         return {
             400: exceptions.InvalidParameters,
-            401: exceptions.AuthError(f'Bad credentials provided {self.default_headers}.'),
+            401: exceptions.AuthError(f'Bad credentials provided'),
+            403: exceptions.Forbidden(f'Forbidden'),
             404: exceptions.NotFoundError(f'Item at path \'{self.path}\' cannot be found.'),
             410: exceptions.Gone(f'Item at path \'{self.path}\' has been removed.')
         }[resp.status]
@@ -510,24 +507,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    async def validate_path(self, path: str, **kwargs):
-        """Validates paths passed in via the v0 API.  v0 paths are much less strict than v1 paths.
-        They may represent things that exist or something that should be created.  As such, the goal
-        of ``validate_path`` is to split the path into its component parts and attempt to determine
-        the ID of each part on the external provider.  For instance, if the ``googledrive`` provider
-        receives a path of ``/foo/bar/baz.txt``, it will split those into ``/``, ``foo/``, ``bar/``,
-        and ``baz.txt``, and query Google Drive for the ID of each.  ``validate_path`` then builds a
-        AquaValetPath object with an ID, name tuple for each path part.  The last part is
-        permitted to not have an ID, since it may represent a file that has not yet been created.
-        All other parts should have an ID.
-
-        The WaterButler v0 API is deprecated and will be removed in a future release.  At that time
-        this method will be obsolete and will be removed from all providers.
-
-        :param path: ( :class:`str` ) user-supplied path to validate
-        :rtype: :class:`.AquaValetPath`
-        :raises: :class:`.NotFoundError`
-        """
+    async def validate_item(self, path: str, **kwargs):
         raise NotImplementedError
 
     def path_from_metadata(self, parent_path, metadata: wb_metadata.BaseMetadata):
