@@ -44,6 +44,12 @@ class FileSystemItemMetadata(metadata.BaseMetadata):
         self.raw['path'] = self.parent + new_name
         return self.path
 
+    def child(self, new_name):
+        if self.is_folder:
+            return self.path + new_name
+        else:
+            return None
+
     @property
     def path(self):
         return self.raw['path']

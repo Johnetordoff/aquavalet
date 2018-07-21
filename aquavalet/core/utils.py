@@ -24,8 +24,6 @@ def make_provider(name: str, auth: dict):
 
     :param str name: The name of the provider to instantiate. (s3, box, etc)
     :param dict auth:
-    :param dict credentials:
-    :param dict settings:
     :param dict \*\*kwargs: currently there to absorb ``callback_url``
 
     :rtype: :class:`waterbutler.core.provider.BaseProvider`

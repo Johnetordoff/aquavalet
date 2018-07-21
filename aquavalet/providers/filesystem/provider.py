@@ -61,15 +61,15 @@ class FileSystemProvider(provider.BaseProvider):
                 chunk = await stream.read(settings.CHUNK_SIZE)
 
     async def delete(self, path, **kwargs):
-        if path.kind == 'file':
+        if self.item.is_file:
             try:
                 os.remove(path.id)
             except FileNotFoundError:
-                raise exceptions.NotFoundError(path.id)
+                raise exceptions.NotFoundError(self.item.path)
         else:
-            if path.is_root:
+            if self.item.is_root:
                 raise Exception('That\'s the root!')
-            shutil.rmtree(path.id)
+            shutil.rmtree(self.item.path)
 
     async def metadata(self, version=None):
         return self._describe_metadata(self.item)
@@ -84,8 +84,8 @@ class FileSystemProvider(provider.BaseProvider):
         return [self._describe_metadata(path) for path in paths]
 
     async def create_folder(self, new_name):
-        created_folder_path = self.path.child(new_name)
-        return os.makedirs(created_folder_path.full_path, exist_ok=True)
+        created_folder_path = self.item.child(new_name)
+        return os.makedirs(created_folder_path, exist_ok=True)
 
     def _describe_metadata(self, path):
         modified = datetime.datetime.utcfromtimestamp(os.path.getmtime(path.path)).replace(tzinfo=datetime.timezone.utc)

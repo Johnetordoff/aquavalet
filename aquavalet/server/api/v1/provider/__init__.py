@@ -114,8 +114,8 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
         await self.provider.upload(self.stream, new_name)
 
     async def create_folder(self, provider,  path):
-        if not self.provider.path.is_folder:
-            raise exceptions.InvalidPathError(f'{self.path.path} is not a directory, perhaps try using a trailing slash.')
+        if not self.provider.item.is_folder:
+            raise exceptions.InvalidPathError(f'{self.item.path} is not a directory, perhaps try using a trailing slash.')
 
         new_name = self.get_query_argument('new_name', default=None)
         await self.provider.create_folder(new_name)
