@@ -41,7 +41,7 @@ class BaseStream(asyncio.StreamReader, metaclass=abc.ABCMeta):
                 reader.feed_data(data)
             for writer in self.writers.values():
                 writer.write(data)
-        await data
+        return data
 
     @abc.abstractmethod
     async def _read(self, size):

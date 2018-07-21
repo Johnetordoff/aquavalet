@@ -12,7 +12,6 @@ class BaseMetadata(metaclass=abc.ABCMeta):
     def __init__(self, raw: dict, path) -> None:
 
         self.raw = raw
-        self.path = path
         self.default_segments = [self.provider]
 
     def serialized(self) -> dict:
@@ -43,7 +42,7 @@ class BaseMetadata(metaclass=abc.ABCMeta):
 
         actions['info'] = self.construct_path(path_segments, 'meta')
         actions['delete'] = self.construct_path(path_segments, 'delete')
-        actions['parent'] = self.construct_parent()
+        #actions['parent'] = self.construct_parent()
 
         if self.kind == 'folder':
             actions['children'] = self.construct_path(path_segments, 'children')
@@ -89,7 +88,6 @@ class BaseMetadata(metaclass=abc.ABCMeta):
     @property
     def etag(self) -> str:
         raise NotImplementedError
-
 
     def __eq__(self, other: 'BaseMetadata') -> bool:  # type: ignore
         return isinstance(other, self.__class__) and self.serialized() == other.serialized()

@@ -141,12 +141,10 @@ class BaseProvider(metaclass=abc.ABCMeta):
             400: exceptions.InvalidParameters,
             401: exceptions.AuthError(f'Bad credentials provided'),
             403: exceptions.Forbidden(f'Forbidden'),
-            404: exceptions.NotFoundError(f'Item at path \'{self.path}\' cannot be found.'),
-            410: exceptions.Gone(f'Item at path \'{self.path}\' has been removed.')
+            404: exceptions.NotFoundError(f'Item at path \'{self.item.path}\' cannot be found.'),
+            410: exceptions.Gone(f'Item at path \'{self.item.path}\' has been removed.')
         }[resp.status]
 
-    def request(self, *args, **kwargs):
-        return RequestHandlerContext(self.make_request(*args, **kwargs))
 
     async def move(self,
                    dest_provider: 'BaseProvider',
@@ -438,18 +436,14 @@ class BaseProvider(metaclass=abc.ABCMeta):
         """
         return base.child(path, folder=folder)
 
-    async def zip(self, path, **kwargs) -> asyncio.StreamReader:
+    async def zip(self, session, **kwargs) -> asyncio.StreamReader:
         """Streams a Zip archive of the given folder
 
         :param  path: ( :class:`.AquaValetPath` ) The folder to compress
         """
 
-        meta_data = await self.metadata(path)  # type: ignore
-        if path.is_file:
-            meta_data = [meta_data]  # type: ignore
-            path = path.parent
-
-        return streams.ZipStreamReader(ZipStreamGenerator(self, path, *meta_data))  # type: ignore
+        metadata = await self.children()  # type: ignore
+        return streams.ZipStreamReader(ZipStreamGenerator(self, self.item, metadata, session))  # type: ignore
 
     def shares_storage_root(self, other: 'BaseProvider') -> bool:
         """Returns True if ``self`` and ``other`` both point to the same storage root.  Used to
@@ -509,10 +503,6 @@ class BaseProvider(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     async def validate_item(self, path: str, **kwargs):
         raise NotImplementedError
-
-    def path_from_metadata(self, parent_path, metadata: wb_metadata.BaseMetadata):
-        return parent_path.child(metadata.name, _id=metadata.path.strip('/'),
-                                 folder=metadata.is_folder)
 
     async def revisions(self, path, **kwargs):
         """Return a list of :class:`.BaseFileRevisionMetadata` objects representing the revisions

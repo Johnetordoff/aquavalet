@@ -21,6 +21,7 @@ class FileSystemProvider(provider.BaseProvider):
     case-sensitivity on case-insensitive host filesystems.
     """
     NAME = 'filesystem'
+    body = b''
 
     async def validate_item(self, path, **kwargs):
         if not os.path.exists(path) or os.path.isdir(path) and not path.endswith('/'):
@@ -51,14 +52,9 @@ class FileSystemProvider(provider.BaseProvider):
 
         return streams.FileStreamReader(file_pointer)
 
-    async def upload(self, stream, path, new_name):
-        uploaded_path = path.id + new_name
-
-        with open(uploaded_path, 'wb') as file_pointer:
-            chunk = await stream.read(settings.CHUNK_SIZE)
-            while chunk:
-                file_pointer.write(chunk)
-                chunk = await stream.read(settings.CHUNK_SIZE)
+    async def upload(self, stream, new_name):
+        with open(self.item.path + new_name, 'wb') as file_pointer:
+            file_pointer.write(self.body)
 
     async def delete(self, path, **kwargs):
         if self.item.is_file:
@@ -84,8 +80,7 @@ class FileSystemProvider(provider.BaseProvider):
         return [self._describe_metadata(path) for path in paths]
 
     async def create_folder(self, new_name):
-        created_folder_path = self.item.child(new_name)
-        return os.makedirs(created_folder_path, exist_ok=True)
+        return os.makedirs(self.item.child(new_name), exist_ok=True)
 
     def _describe_metadata(self, path):
         modified = datetime.datetime.utcfromtimestamp(os.path.getmtime(path.path)).replace(tzinfo=datetime.timezone.utc)

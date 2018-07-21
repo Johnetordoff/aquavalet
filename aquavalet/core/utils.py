@@ -94,13 +94,11 @@ async def send_signed_request(method, url, payload):
 
 
 class ZipStreamGenerator:
-    def __init__(self, provider, parent_path, *metadata_objs):
+    def __init__(self, provider, parent_path, metadata_objs, session):
+        self.session = session
         self.provider = provider
         self.parent_path = parent_path
-        self.remaining = [
-            (parent_path, metadata)
-            for metadata in metadata_objs
-        ]
+        self.remaining = metadata_objs
 
     async def __aiter__(self):
         return self
@@ -109,18 +107,16 @@ class ZipStreamGenerator:
         if not self.remaining:
             raise StopAsyncIteration
         current = self.remaining.pop(0)
-        path = self.provider.path_from_metadata(*current)
-        if path.is_dir:
-            items = await self.provider.metadata(path)
+        if current.is_folder:
+            items = await self.provider.children(current)
+            print([item.name for item in items])
             if items:
-                self.remaining.extend([
-                    (path, item) for item in items
-                ])
+                self.remaining.extend(items)
                 return await self.__anext__()
             else:
-                return path.path.replace(self.parent_path.path, '', 1), EmptyStream()
+                return current.name, EmptyStream()
 
-        return path.path.replace(self.parent_path.path, '', 1), await self.provider.download(path)
+        return current.unix_path, await self.provider.download(self.session, item=current)
 
 
 class RequestHandlerContext:

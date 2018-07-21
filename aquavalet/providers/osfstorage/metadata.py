@@ -38,6 +38,11 @@ class BaseOsfStorageItemMetadata(BaseOsfStorageMetadata):
         return self.raw['kind']
 
     @property
+    def parent(self):
+        if self.is_root:
+            return '/'
+
+    @property
     def size(self):
         if self.is_file:
             return self.raw['size']
@@ -51,9 +56,16 @@ class BaseOsfStorageItemMetadata(BaseOsfStorageMetadata):
         return self.raw['kind'] == 'folder'
 
     @property
+    def is_root(self):
+        return self.raw['path'] == '/'
+
+    @property
     def modified(self):
         return self.raw.get('modified')
 
+    @property
+    def unix_path(self):
+        return self.raw.get('materialized')
 
     @property
     def etag(self):
@@ -61,6 +73,10 @@ class BaseOsfStorageItemMetadata(BaseOsfStorageMetadata):
 
     @property
     def id(self):
+        return self.raw['path']
+
+    @property
+    def path(self):
         return self.raw['path']
 
     def serialized(self) -> dict:

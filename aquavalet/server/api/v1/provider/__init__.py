@@ -101,17 +101,18 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
             return await self.create_folder(provider,  path)
         elif action == 'download':
             return await self.download(provider,  path)
+        elif action == 'download_as_zip':
+            return await self.download_folder_as_zip(provider,  path)
         else:
             return await self.children(provider,  path)
 
     async def upload(self, provider,  path):
         new_name = self.get_query_argument('new_name', default=None)
-
         self.writer.write_eof()
+        await self.provider.upload(self.stream, new_name)
+
         self.writer.close()
         self.wsock.close()
-
-        await self.provider.upload(self.stream, new_name)
 
     async def create_folder(self, provider,  path):
         if not self.provider.item.is_folder:
@@ -120,16 +121,11 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
         new_name = self.get_query_argument('new_name', default=None)
         await self.provider.create_folder(new_name)
 
-
-
     async def copy(self, provider,  path):
         dest_path = self.get_query_argument('to', default=None)
         dest_provider = self.get_query_argument('destination_provider', default=None)
 
-        self.dest_provider = utils.make_provider(dest_provider,
-                                                 self.auth['auth'],
-                                                 self.auth['credentials'],
-                                                 self.auth['settings'])
+        self.dest_provider = utils.make_provider(dest_provider, self.auth['auth'])
 
         return await self.provider.copy(path, dest_provider, dest_path)
 
@@ -140,11 +136,11 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
     async def data_received(self, chunk):
         """Note: Only called during uploads."""
         self.bytes_uploaded += len(chunk)
-        if self.stream:
+        if self.stream and self.provider.NAME != 'filesystem':
             self.writer.write(chunk)
             await self.writer.drain()
         else:
-            self.body += chunk
+            self.provider.body += chunk
 
     async def revisions(self):
         if self.path.is_folder:
@@ -193,17 +189,17 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
             if getattr(stream, 'partial', False):
                 await stream.response.release()
 
-    async def download_folder_as_zip(self):
-        zipfile_name = self.path.name or '{}-archive'.format(self.provider.NAME)
+    async def download_folder_as_zip(self, provider,  path):
+        zipfile_name = self.provider.item.name or '{}-archive'.format(self.provider.NAME)
         self.set_header('Content-Type', 'application/zip')
-        self.set_header(
-            'Content-Disposition',
-            utils.make_disposition(zipfile_name + '.zip')
-        )
+        self.set_header('Content-Disposition', 'attachment;filename="{}.zip"'.format(zipfile_name))
 
-        result = await self.provider.zip(self.path)
+        async with aiohttp.ClientSession() as session:
 
-        #await self.write_stream(result)
+            stream = await self.provider.zip(session)
+
+            # Needs work
+            self.write(await stream.read())
 
     def on_finish(self):
         status, method = self.get_status(), self.request.method.upper()
