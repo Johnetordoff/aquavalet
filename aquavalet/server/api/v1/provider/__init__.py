@@ -103,6 +103,13 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
             return await self.download(provider,  path)
         elif action == 'download_as_zip':
             return await self.download_folder_as_zip(provider,  path)
+        elif action == 'parent':
+            metadata = await self.provider.parent()
+            self.write({
+                'data': metadata.json_api_serialized()
+            })
+        elif action == 'copy':
+            return await self.copy(provider,  path)
         else:
             return await self.children(provider,  path)
 
@@ -124,10 +131,10 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
     async def copy(self, provider,  path):
         dest_path = self.get_query_argument('to', default=None)
         dest_provider = self.get_query_argument('destination_provider', default=None)
+        self.dest_provider = utils.make_provider(dest_provider, None)
 
-        self.dest_provider = utils.make_provider(dest_provider, self.auth['auth'])
-
-        return await self.provider.copy(path, dest_provider, dest_path)
+        self.dest_provider.item = await self.dest_provider.validate_item(dest_path)
+        return await self.provider.copy(self.dest_provider)
 
     async def delete(self, provider,  path):
         comfirm_delete = self.get_query_argument('comfirm_delete', default=None)
@@ -188,6 +195,14 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
 
             if getattr(stream, 'partial', False):
                 await stream.response.release()
+
+    async def write_non_aiohttp_stream(self, stream):
+        # Needs work
+        stream.file_gen = stream.make_chunk_reader(stream)
+        async for chunk in stream.file_gen:
+            print(chunk)
+            self.write(chunk)
+
 
     async def download_folder_as_zip(self, provider,  path):
         zipfile_name = self.provider.item.name or '{}-archive'.format(self.provider.NAME)

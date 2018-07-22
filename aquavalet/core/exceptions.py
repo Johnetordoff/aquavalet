@@ -55,9 +55,7 @@ class InvalidParameters(WaterButlerError):
     """Errors regarding incorrect data being sent to a method should raise either this
     Exception or a subclass thereof.  Defaults status code to 400, Bad Request.
     """
-    def __init__(self, message, code=HTTPStatus.BAD_REQUEST):
-        super().__init__(message, code=code)
-
+    code = 400
 
 class UnsupportedHTTPMethodError(WaterButlerError):
     """An unsupported HTTP method was used.

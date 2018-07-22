@@ -16,7 +16,13 @@ class BaseOsfStorageItemMetadata(BaseOsfStorageMetadata):
 
     def __init__(self, raw, path, internal_provider, resource):
         super().__init__(raw, path)
+
+        self.internal_provider = internal_provider
+        self.resource = resource
+
         self.default_segments = [self.provider, internal_provider, resource]
+
+    BASE_URL = 'https://files.osf.io/v1/resources/'
 
     @classmethod
     def root(cls, internal_provider, resource):
@@ -61,11 +67,26 @@ class BaseOsfStorageItemMetadata(BaseOsfStorageMetadata):
 
     @property
     def modified(self):
-        return self.raw.get('modified')
+        return self.raw.get('modified_utc')
+
+    @property
+    def created(self):
+        return self.raw.get('created_utc')
 
     @property
     def unix_path(self):
-        return self.raw.get('materialized')
+        return self.raw.get('materialized') or self.raw.get('materialized_path')
+
+    @property
+    def unix_path_parent(self):
+        if os.path.dirname(self.unix_path.rstrip('/')) == '/':
+            return '/'
+
+        return os.path.dirname(self.unix_path.rstrip('/')) + '/'
+
+    @property
+    def child_link(self):
+        return self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{self.id}'
 
     @property
     def etag(self):
@@ -85,7 +106,9 @@ class BaseOsfStorageItemMetadata(BaseOsfStorageMetadata):
             'kind': self.kind,
             'name': self.name,
             'path': self.id,
+            'unix_path': self.unix_path,
             'size': self.size,
+            'created': self.created,
             'modified': self.modified,
             'mimetype': mimetypes.types_map.get(ext),
             'provider': self.provider,

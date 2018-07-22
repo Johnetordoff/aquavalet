@@ -10,6 +10,7 @@ from aquavalet.settings import OSF_TOKEN
 class OsfProvider(provider.BaseProvider):
     NAME = 'OSF'
     PATH_PATTERN = r'\/(?P<internal_provider>(?:\w|\d)+)?\/(?P<resource>[a-zA-Z0-9]{5,})?(?P<path>\/.*)?'
+    BASE_URL = 'https://files.osf.io/v1/resources/'
 
     def __init__(self, auth):
        self.token = OSF_TOKEN
@@ -23,31 +24,31 @@ class OsfProvider(provider.BaseProvider):
         if match:
             groupdict = match.groupdict()
         else:
-            raise exceptions.InvalidPathError('malfoarmed path no internal provider')
+            raise exceptions.InvalidPathError(f'No internal provider in url, path must follow pattern {self.PATH_PATTERN}')
 
         if not groupdict.get('internal_provider'):
-            raise exceptions.InvalidPathError('malfoarmed path no internal provider')
+            raise exceptions.InvalidPathError(f'No internal provider in url, path must follow pattern {self.PATH_PATTERN}')
         self.internal_provider = groupdict.get('internal_provider')
 
         if not groupdict.get('resource'):
-            raise exceptions.InvalidPathError('malfoarmed path no resource')
+            raise exceptions.InvalidPathError(f'No resource in url, path must follow pattern {self.PATH_PATTERN}')
         self.resource = groupdict.get('resource')
 
         if not groupdict.get('path'):
-            raise exceptions.InvalidPathError('malfoarmed path no path')
+            raise exceptions.InvalidPathError(f'No path in url, path must follow pattern {self.PATH_PATTERN}')
         elif groupdict.get('path') == '/':
             return BaseOsfStorageItemMetadata.root(self.internal_provider, self.resource)
         path = groupdict.get('path')
-
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                url=f'https://api.osf.io/v2/files{path}/?meta=',
-                headers=self.default_headers
-            ) as resp:
-                if resp.status == 200:
-                    data = (await resp.json())['data']
-                else:
-                    raise self.handle_response(resp)
+        if self.internal_provider == 'osfstorage':
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    url=f'https://api.osf.io/v2/files{path}/?meta=',
+                    headers=self.default_headers
+                ) as resp:
+                    if resp.status == 200:
+                        data = (await resp.json())['data']
+                    else:
+                        raise await self.handle_response(resp)
 
         return BaseOsfStorageItemMetadata(data['attributes'], path, self.internal_provider, self.resource)
 
@@ -128,7 +129,6 @@ class OsfProvider(provider.BaseProvider):
 
     async def children(self, item=None):
         item = item or self.item
-
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}',
@@ -137,24 +137,41 @@ class OsfProvider(provider.BaseProvider):
                 if resp.status == 200:
                     data = (await resp.json())['data']
                 else:
-                    raise self.handle_response(resp)
+                    raise await self.handle_response(resp)
 
         return [BaseOsfStorageItemMetadata(metadata['attributes'], item.path, internal_provider=self.internal_provider, resource=self.resource) for metadata in data]
 
     async def parent(self):
-        metadata = await self.root()
+        if self.item.is_root:
+            return self.item
 
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{self.item.id}',
-                headers=self.default_headers
-            ) as resp:
-                if resp.status == 200:
-                    data = (await resp.json())['data']
-                else:
-                    raise self.handle_response(resp)
+        if self.item.unix_path_parent == '/':
+            return await self.root()
 
-        return [BaseOsfStorageItemMetadata(metadata['attributes'], self.item.path, internal_provider=self.internal_provider, resource=self.resource) for metadata in data]
+        name = ''
+        child_link = self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}/'
+        while name != self.item.unix_path_parent:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    url=child_link + '?meta=',
+                    headers=self.default_headers
+                ) as resp:
+                    print(resp)
+                    if resp.status == 200:
+                        data = (await resp.json())['data']
+                        print(data)
+                        for child_item in data:
+                            unix_path = child_item['attributes']['materialized']
+                            if unix_path in self.item.unix_path_parent:
+                                child_link = child_item['links']['move']
+                                name = child_item['attributes']['materialized']
+                    else:
+                        raise await self.handle_response(resp)
+
+        return BaseOsfStorageItemMetadata(child_item['attributes'], self.item.path, internal_provider=self.internal_provider, resource=self.resource)
 
     async def root(self):
-        return await self.validate_item('/')
+        if self.item.is_root:
+            return self
+
+        return await self.validate_item(f'/{self.internal_provider}/{self.resource}/')

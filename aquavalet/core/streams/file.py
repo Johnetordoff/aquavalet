@@ -27,7 +27,6 @@ class FileStreamReader(BaseStream):
         self.feed_eof()
 
     def chunk_reader(self):
-        self.file_pointer.seek(0)
         while True:
             chunk = self.file_pointer.read(self.read_size)
             if not chunk:
@@ -40,15 +39,34 @@ class FileStreamReader(BaseStream):
     def content_range(self):
         return None
 
+    def make_chunk_reader(self, stream_reader):
+        self.file_pointer.seek(0)
+
+        return ChunkedFileReader(stream_reader)
 
     async def _read(self, size):
-        self.file_gen = self.file_gen or self.chunk_reader()
+        self.file_gen = self.file_gen or self.make_chunk_reader(self)
         self.read_size = size
         # add sleep of 0 so read will yield and continue in next io loop iteration
         # asyncio.sleep(0) yields None by default, which displeases tornado
         await asyncio.sleep(0.001)
         async for chunk in self.file_gen:
-            await chunk
+            return chunk
+
+class ChunkedFileReader():
+
+    def __init__(self, stream_read):
+        self.stream_read = stream_read
+
+    async def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        chunk = self.stream_read.file_pointer.read(self.stream_read.read_size)
+        if not chunk:
+            raise StopAsyncIteration()
+
+        return chunk
 
 
 class PartialFileStreamReader(FileStreamReader):

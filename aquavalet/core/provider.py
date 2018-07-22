@@ -136,9 +136,10 @@ class BaseProvider(metaclass=abc.ABCMeta):
             if value is not None
         }
 
-    def handle_response(self, resp):
+    async def handle_response(self, resp):
+        data = await resp.json()
         return {
-            400: exceptions.InvalidParameters,
+            400: exceptions.InvalidPathError(data),
             401: exceptions.AuthError(f'Bad credentials provided'),
             403: exceptions.Forbidden(f'Forbidden'),
             404: exceptions.NotFoundError(f'Item at path \'{self.item.path}\' cannot be found.'),
@@ -196,45 +197,21 @@ class BaseProvider(metaclass=abc.ABCMeta):
 
         return meta_data, created
 
-    async def copy(self,
-                   dest_provider: 'BaseProvider',
-                   src_path,
-                   dest_path,
-                   rename: str=None, conflict: str='replace',
-                   handle_naming: bool=True) \
+    async def copy(self, dest_provider: 'BaseProvider', rename: str=None, conflict: str='replace', handle_naming: bool=False) \
             -> typing.Tuple[wb_metadata.BaseMetadata, bool]:
-        args = (dest_provider, src_path, dest_path)
-        kwargs = {'rename': rename, 'conflict': conflict, 'handle_naming': handle_naming}
 
         if handle_naming:
             dest_path = await dest_provider.handle_naming(
-                src_path,
-                dest_path,
                 rename=rename,
                 conflict=conflict,
             )
-            args = (dest_provider, src_path, dest_path)
-            kwargs = {}
 
-        # files and folders shouldn't overwrite themselves
-        if (
-                self.shares_storage_root(dest_provider) and
-                src_path.materialized_path == dest_path.materialized_path
-        ):
-            raise exceptions.OverwriteSelfError(src_path)
+        if self.item.is_folder:
+            return await self._folder_file_op(self.copy)  # type: ignore
 
-        if self.can_intra_copy(dest_provider, src_path):
-            return await self.intra_copy(*args)
-
-        if src_path.is_dir:
-            return await self._folder_file_op(self.copy, *args, **kwargs)  # type: ignore
-
-        download_stream = await self.download(src_path)
-
-        if getattr(download_stream, 'name', None):
-            dest_path.rename(download_stream.name)
-
-        return await dest_provider.upload(download_stream, dest_path)
+        async with aiohttp.ClientSession() as session:
+            download_stream = await self.download(session)
+            return await dest_provider.upload(download_stream, new_name=self.item.name)
 
     async def _folder_file_op(self, func, dest_provider, src_path, dest_path, **kwargs):
 
@@ -301,7 +278,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
 
         :rtype: :class:`.AquaValetPath`
         """
-        if src_path.is_dir and dest_path.is_file:
+        if self.item.is_folder and dest_path.is_file:
             # Cant copy a directory to a file
             raise ValueError('Destination must be a directory if the source is')
 
