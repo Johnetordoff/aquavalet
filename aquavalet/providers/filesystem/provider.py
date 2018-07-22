@@ -53,20 +53,9 @@ class FileSystemProvider(provider.BaseProvider):
         return streams.FileStreamReader(file_pointer)
 
     async def upload(self, stream=None, new_name=None):
-
-        async def stream_sender(stream=None):
-            chunk = await stream.read(64 * 1024)
-            while chunk:
-                yield chunk
-                chunk = await stream.read(64 * 1024)
-
-        if not stream:
-            with open(self.item.path + new_name, 'wb') as file_pointer:
-                file_pointer.write(self.body)
-        else:
-            with open(self.item.path + new_name, 'wb') as file_pointer:
-                async for chunk in stream_sender(stream):
-                    file_pointer.write(chunk)
+        with open(self.item.path + new_name, 'wb') as file_pointer:
+            async for chunk in stream.generator:
+                file_pointer.write(chunk)
 
     async def delete(self, path, **kwargs):
         if self.item.is_file:

@@ -1,3 +1,3 @@
 from . import defaults
 
-OSF_TOKEN = 'iI0OtvXPAvvPQnMtZgflm1m3MG6xPrwBMK32ycqJEZ1SgIMlvKQd8OIVLJQtCbt6AkI5h2'
+OSF_TOKEN = 'L9iiTwWzEAL05bK8Jbc7w2xXO33rNQocdgo8UyaILe7iYqtjoSgqlnLBsBPfYFfcMmbwUD'

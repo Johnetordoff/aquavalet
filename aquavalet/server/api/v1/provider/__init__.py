@@ -143,11 +143,9 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
     async def data_received(self, chunk):
         """Note: Only called during uploads."""
         self.bytes_uploaded += len(chunk)
-        if self.stream and self.provider.NAME != 'filesystem':
+        if self.stream:
             self.writer.write(chunk)
             await self.writer.drain()
-        else:
-            self.provider.body += chunk
 
     async def revisions(self):
         if self.path.is_folder:

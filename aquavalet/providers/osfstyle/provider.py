@@ -78,15 +78,9 @@ class OsfProvider(provider.BaseProvider):
 
 
     async def upload(self, stream, new_name):
-        async def stream_sender(stream=None):
-            chunk = await stream.read(64 * 1024)
-            while chunk:
-                yield chunk
-                chunk = await stream.read(64 * 1024)
-
         async with aiohttp.ClientSession() as session:
             async with session.put(
-                data=stream_sender(stream),
+                data=stream.generator,
                 url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{self.item.id}',
                 headers=self.default_headers,
                 params={'kind': 'file', 'name': new_name}
