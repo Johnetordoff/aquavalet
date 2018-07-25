@@ -198,7 +198,6 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
         # Needs work
         stream.file_gen = stream.make_chunk_reader(stream)
         async for chunk in stream.file_gen:
-            print(chunk)
             self.write(chunk)
 
 

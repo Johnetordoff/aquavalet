@@ -53,8 +53,6 @@ class BaseMetadata(metaclass=abc.ABCMeta):
         return actions
 
     def construct_parent(self) -> str:
-        print('path')
-        print( self.parent)
         return urlparse(settings.DOMAIN + '/' + '/'.join(self.default_segments) + self.parent + '?serve=meta').geturl()
 
     def construct_path(self, path, action) -> str:

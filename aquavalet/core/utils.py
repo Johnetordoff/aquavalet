@@ -109,7 +109,6 @@ class ZipStreamGenerator:
         current = self.remaining.pop(0)
         if current.is_folder:
             items = await self.provider.children(current)
-            print([item.name for item in items])
             if items:
                 self.remaining.extend(items)
                 return await self.__anext__()

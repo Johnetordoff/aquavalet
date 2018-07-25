@@ -212,8 +212,6 @@ class BaseProvider(metaclass=abc.ABCMeta):
     async def _folder_file_op(self, func, dest_provider, src_path, dest_item, **kwargs):
 
         folder = await dest_provider.create_folder(item=dest_item, new_name=src_path.name)
-        print('folder.path')
-        print(folder.path)
 
         folder.children = []
 
