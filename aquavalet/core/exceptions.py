@@ -105,6 +105,9 @@ class Forbidden(PluginError):
 class NotFoundError(PluginError):
     code = 404
 
+class Conflict(PluginError):
+    code = 409
+
 class Gone(PluginError):
     code = 410
 

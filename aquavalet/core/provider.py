@@ -136,14 +136,15 @@ class BaseProvider(metaclass=abc.ABCMeta):
             if value is not None
         }
 
-    async def handle_response(self, resp):
+    async def handle_response(self, resp, item=None, path=None):
         data = await resp.json()
         return {
             400: exceptions.InvalidPathError(data),
             401: exceptions.AuthError(f'Bad credentials provided'),
             403: exceptions.Forbidden(f'Forbidden'),
-            404: exceptions.NotFoundError(f'Item at path \'{self.item.path}\' cannot be found.'),
-            410: exceptions.Gone(f'Item at path \'{self.item.path}\' has been removed.')
+            404: exceptions.NotFoundError(f'Item at path \'{path or item.path}\' cannot be found.'),
+            409: exceptions.Conflict(f'Conflict \'{path or item.path}\'.'),
+            410: exceptions.Gone(f'Item at path \'{path or item.path}\' has been removed.')
         }[resp.status]
 
 
@@ -193,56 +194,35 @@ class BaseProvider(metaclass=abc.ABCMeta):
         else:
             meta_data, created = await self.copy(*args, handle_naming=False, **kwargs)  # type: ignore
 
-        await self.delete(src_path)
+        #await self.delete(src_path)
 
         return meta_data, created
 
-    async def copy(self, dest_provider: 'BaseProvider', rename: str=None, conflict: str='replace', handle_naming: bool=False) \
-            -> typing.Tuple[wb_metadata.BaseMetadata, bool]:
+    async def copy(self, dest_provider, item=None, destination_item=None):
+        item = item or self.item
+        destination_item = destination_item or dest_provider.item
 
-        if handle_naming:
-            dest_path = await dest_provider.handle_naming(
-                rename=rename,
-                conflict=conflict,
-            )
-
-        if self.item.is_folder:
-            return await self._folder_file_op(self.copy)  # type: ignore
+        if item.is_folder:
+            return await self._folder_file_op(self.copy, dest_provider, item, destination_item)  # type: ignore
 
         async with aiohttp.ClientSession() as session:
-            download_stream = await self.download(session)
-            return await dest_provider.upload(download_stream, new_name=self.item.name)
+            download_stream = await self.download(session, item=item)
+            return await dest_provider.upload(download_stream, item=destination_item, new_name=item.name)
 
-    async def _folder_file_op(self, func, dest_provider, src_path, dest_path, **kwargs):
+    async def _folder_file_op(self, func, dest_provider, src_path, dest_item, **kwargs):
 
-        try:
-            await dest_provider.delete(dest_path)
-            created = False
-        except exceptions.ProviderError as e:
-            if e.code != 404:
-                raise
-            created = True
-
-        folder = await dest_provider.create_folder(dest_path, folder_precheck=False)
-
-        dest_path = await dest_provider.revalidate_path(dest_path.parent, dest_path.name, folder=dest_path.is_dir)
+        folder = await dest_provider.create_folder(item=dest_item, new_name=src_path.name)
+        print('folder.path')
+        print(folder.path)
 
         folder.children = []
-        items = await self.metadata(src_path)  # type: ignore
 
+        items = await self.children(item=src_path)
 
         for i in range(0, len(items), wb_settings.OP_CONCURRENCY):  # type: ignore
             futures = []
             for item in items[i:i + wb_settings.OP_CONCURRENCY]:  # type: ignore
-                futures.append(asyncio.ensure_future(
-                    func(
-                        dest_provider,
-                        # TODO figure out a way to cut down on all the requests made here
-                        (await self.revalidate_path(src_path, item.name, folder=item.is_folder)),
-                        (await dest_provider.revalidate_path(dest_path, item.name, folder=item.is_folder)),
-                        handle_naming=False,
-                    )
-                ))
+                futures.append(asyncio.ensure_future(func(dest_provider, item=item, destination_item=folder)))
 
                 if item.is_folder:
                     await futures[-1]
@@ -250,12 +230,12 @@ class BaseProvider(metaclass=abc.ABCMeta):
             if not futures:
                 continue
 
-            done, _ = await asyncio.wait(futures, return_when=asyncio.FIRST_EXCEPTION)
+            done, _ = await asyncio.wait(futures)
 
             for fut in done:
-                folder.children.append(fut.result()[0])
+                folder.children.append(fut.result())
 
-        return folder, created
+        return folder
 
     async def handle_naming(self, src_path, dest_path, rename: str=None, conflict: str='replace'):
         """Given a :class:`.AquaValetPath` and the desired name, handle any potential naming issues.
@@ -348,7 +328,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
         :rtype: (:class:`.BaseFileMetadata`, :class:`bool`)
         """
         data, created = await self.intra_copy(dest_provider, src_path, dest_path)
-        await self.delete(src_path)
+        #await self.delete(src_path)
         return data, created
 
     async def exists(self, path, **kwargs) \
@@ -487,7 +467,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
         """
         return []  # TODO Raise 405 by default h/t @rliebz
 
-    async def create_folder(self, path, **kwargs):
+    async def create_folder(self, path, item=None):
         raise exceptions.ProviderError({'message': 'Folder creation not supported.'}, code=405)
 
     def _build_range_header(self, slice_tup: typing.Tuple[int, int]) -> str:

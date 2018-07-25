@@ -48,7 +48,7 @@ class OsfProvider(provider.BaseProvider):
                     if resp.status == 200:
                         data = (await resp.json())['data']
                     else:
-                        raise await self.handle_response(resp)
+                        raise await self.handle_response(resp, path=path)
 
         return BaseOsfStorageItemMetadata(data['attributes'], path, self.internal_provider, self.resource)
 
@@ -76,12 +76,13 @@ class OsfProvider(provider.BaseProvider):
         )
         return streams.ResponseStreamReader(resp)
 
+    async def upload(self, stream, new_name, item=None):
+        item = item or self.item
 
-    async def upload(self, stream, new_name):
         async with aiohttp.ClientSession() as session:
             async with session.put(
-                data=stream.generator,
-                url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{self.item.id}',
+                data=stream.generator.stream_sender(),
+                url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}',
                 headers=self.default_headers,
                 params={'kind': 'file', 'name': new_name}
             ) as resp:
@@ -100,15 +101,21 @@ class OsfProvider(provider.BaseProvider):
     async def metadata(self, version=None):
         return self.item
 
-    async def create_folder(self, new_name):
+    async def create_folder(self, new_name, item=None):
+        item = item or self.item
+
         async with aiohttp.ClientSession() as session:
             async with session.put(
-                url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{self.item.id}',
+                url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}',
                 headers=self.default_headers,
                 params={'kind': 'folder', 'name': new_name}
             ) as resp:
-                return resp
+                if resp.status in (200, 201):
+                    data = (await resp.json())['data']
+                else:
+                    raise await self.handle_response(resp, item)
 
+                return BaseOsfStorageItemMetadata(data['attributes'], item, self.internal_provider, self.resource)
 
     async def rename(self, new_name):
         async with aiohttp.ClientSession() as session:
@@ -123,6 +130,7 @@ class OsfProvider(provider.BaseProvider):
 
     async def children(self, item=None):
         item = item or self.item
+
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}',
@@ -131,7 +139,7 @@ class OsfProvider(provider.BaseProvider):
                 if resp.status == 200:
                     data = (await resp.json())['data']
                 else:
-                    raise await self.handle_response(resp)
+                    raise await self.handle_response(resp, item)
 
         return [BaseOsfStorageItemMetadata(metadata['attributes'], item.path, internal_provider=self.internal_provider, resource=self.resource) for metadata in data]
 
@@ -160,7 +168,7 @@ class OsfProvider(provider.BaseProvider):
                                 child_link = child_item['links']['move']
                                 name = child_item['attributes']['materialized']
                     else:
-                        raise await self.handle_response(resp)
+                        raise await self.handle_response(resp, item)
 
         return BaseOsfStorageItemMetadata(child_item['attributes'], self.item.path, internal_provider=self.internal_provider, resource=self.resource)
 

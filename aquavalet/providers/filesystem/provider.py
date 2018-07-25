@@ -44,16 +44,20 @@ class FileSystemProvider(provider.BaseProvider):
         except FileNotFoundError as exc:
             raise exceptions.InvalidPathError('Invalid path \'{}\' specified'.format(exc.filename))
 
-    async def download(self, revision=None, range=None, **kwargs):
-        file_pointer = open(self.item.path, 'rb')
+    async def download(self, revision=None, range=None, item=None):
+        item = item or self.item
+
+        file_pointer = open(item.path, 'rb')
 
         if range is not None and range[1] is not None:
             return streams.PartialFileStreamReader(file_pointer, range)
 
         return streams.FileStreamReader(file_pointer)
 
-    async def upload(self, stream=None, new_name=None):
-        with open(self.item.path + new_name, 'wb') as file_pointer:
+    async def upload(self, stream=None, new_name=None, item=None):
+        item = item or self.item
+
+        with open(item.path + new_name, 'wb') as file_pointer:
             async for chunk in stream.generator:
                 file_pointer.write(chunk)
 
@@ -71,17 +75,22 @@ class FileSystemProvider(provider.BaseProvider):
     async def metadata(self, version=None):
         return self._describe_metadata(self.item)
 
-    async def children(self):
+    async def children(self, item=None):
+        item = item or self.item
 
-        children = os.listdir(self.item.path)
-        children = [os.path.join(self.item.path, child) for child in children]
+        children = os.listdir(item.path)
+        children = [os.path.join(item.path, child) for child in children]
         children = [child + '/' if os.path.isdir(child) else child for child in children]
 
         paths = [FileSystemItemMetadata.build(child) for child in children]
         return [self._describe_metadata(path) for path in paths]
 
-    async def create_folder(self, new_name):
-        return os.makedirs(self.item.child(new_name), exist_ok=True)
+    async def create_folder(self, new_name, item=None):
+        item = self.item or item
+
+        os.makedirs(item.child(new_name), exist_ok=True)
+        item.raw['path'] = item.child(new_name)  #TODO Do this better
+        return item
 
     def _describe_metadata(self, path):
         modified = datetime.datetime.utcfromtimestamp(os.path.getmtime(path.path)).replace(tzinfo=datetime.timezone.utc)

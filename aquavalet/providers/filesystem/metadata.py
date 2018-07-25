@@ -46,7 +46,7 @@ class FileSystemItemMetadata(metadata.BaseMetadata):
 
     def child(self, new_name):
         if self.is_folder:
-            return self.path + new_name
+            return self.path + new_name.rstrip('/') + '/'
         else:
             return None
 

@@ -59,6 +59,12 @@ class Generator():
     async def __aiter__(self):
         return self
 
+    async def stream_sender(self):
+        chunk = await self.stream.read(self.stream.CHUNK_SIZE)
+        while chunk:
+            yield chunk
+            chunk = await self.stream.read(self.stream.CHUNK_SIZE)
+
     async def __anext__(self):
         chunk = await self.stream.read(self.stream.CHUNK_SIZE)
         if not chunk:
