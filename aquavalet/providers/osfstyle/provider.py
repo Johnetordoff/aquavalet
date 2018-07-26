@@ -39,6 +39,7 @@ class OsfProvider(provider.BaseProvider):
         elif groupdict.get('path') == '/':
             return BaseOsfStorageItemMetadata.root(self.internal_provider, self.resource)
         path = groupdict.get('path')
+
         if self.internal_provider == 'osfstorage':
             async with aiohttp.ClientSession() as session:
                 async with session.get(
@@ -88,14 +89,16 @@ class OsfProvider(provider.BaseProvider):
             ) as resp:
                 print(resp)
 
-    async def delete(self, confirm_delete=0, **kwargs):
+    async def delete(self, confirm_delete=0, item=None):
+        item = item or self.item
+
         async with aiohttp.ClientSession() as session:
             async with await session.delete(
-                url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{self.item.id}',
+                url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}',
                 params={'confirm_delete': 0},
                 headers=self.default_headers
             ) as resp:
-                return resp
+                print(resp)
 
 
     async def metadata(self, version=None):
@@ -117,16 +120,16 @@ class OsfProvider(provider.BaseProvider):
 
                 return BaseOsfStorageItemMetadata(data['attributes'], item, self.internal_provider, self.resource)
 
-    async def rename(self, new_name):
+    async def rename(self, new_name, item=None):
+        item = item or self.item
+
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{self.item.id}',
+                url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}',
                 data=json.dumps({'action': 'rename', 'rename': new_name}),
                 headers=self.default_headers
             ) as resp:
                 print(resp)
-                await resp.json()
-                return resp
 
     async def children(self, item=None):
         item = item or self.item
@@ -143,37 +146,37 @@ class OsfProvider(provider.BaseProvider):
 
         return [BaseOsfStorageItemMetadata(metadata['attributes'], item.path, internal_provider=self.internal_provider, resource=self.resource) for metadata in data]
 
-    async def parent(self):
-        if self.item.is_root:
-            return self.item
+    async def parent(self, item=None):
+        item = item or self.item
 
-        if self.item.unix_path_parent == '/':
-            return await self.root()
+        if item.is_root:
+            return item
+
+        if item.unix_path_parent == '/':
+            return await self.root(item=item)
 
         name = ''
         child_link = self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}/'
-        while name != self.item.unix_path_parent:
+        while name != item.unix_path_parent:
             async with aiohttp.ClientSession() as session:
                 async with session.get(
                     url=child_link + '?meta=',
                     headers=self.default_headers
                 ) as resp:
-                    print(resp)
                     if resp.status == 200:
                         data = (await resp.json())['data']
-                        print(data)
                         for child_item in data:
                             unix_path = child_item['attributes']['materialized']
-                            if unix_path in self.item.unix_path_parent:
+                            if unix_path in item.unix_path_parent:
                                 child_link = child_item['links']['move']
                                 name = child_item['attributes']['materialized']
                     else:
                         raise await self.handle_response(resp, item)
 
-        return BaseOsfStorageItemMetadata(child_item['attributes'], self.item.path, internal_provider=self.internal_provider, resource=self.resource)
+        return BaseOsfStorageItemMetadata(child_item['attributes'], item.path, internal_provider=self.internal_provider, resource=self.resource)
 
-    async def root(self):
-        if self.item.is_root:
+    async def root(self, item=None):
+        if item.is_root:
             return self
 
         return await self.validate_item(f'/{self.internal_provider}/{self.resource}/')

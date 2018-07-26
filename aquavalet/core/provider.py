@@ -148,53 +148,18 @@ class BaseProvider(metaclass=abc.ABCMeta):
         }[resp.status]
 
 
-    async def move(self,
-                   dest_provider: 'BaseProvider',
-                   src_path,
-                   dest_path,
-                   rename: str=None,
-                   conflict: str='replace',
-                   handle_naming: bool=True) -> typing.Tuple[wb_metadata.BaseMetadata, bool]:
-        """Moves a file or folder from the current provider to the specified one
-        Performs a copy and then a delete.
-        Calls :func:`BaseProvider.intra_move` if possible.
+    async def move(self, dest_provider, item=None, destination_item=None):
+        item = item or self.item
+        destination_item = destination_item or dest_provider.item
 
-        :param dest_provider: ( :class:`.BaseProvider` ) The provider to move to
-        :param src_path: ( :class:`.AquaValetPath` ) Path to where the resource can be found
-        :param dest_path: ( :class:`.AquaValetPath` ) Path to where the resource will be moved
-        :param rename: ( :class:`str` ) The desired name of the resulting path, may be incremented
-        :param conflict: ( :class:`str` ) What to do in the event of a name conflict, ``replace`` or ``keep``
-        :param handle_naming: ( :class:`bool` ) If a naming conflict is detected, should it be automatically handled?
-        """
-        args = (dest_provider, src_path, dest_path)
-        kwargs = {'rename': rename, 'conflict': conflict}
+        if item.is_folder:
+            return await self._folder_file_op(self.move, dest_provider, item, destination_item)  # type: ignore
 
-        if handle_naming:
-            dest_path = await dest_provider.handle_naming(
-                src_path,
-                dest_path,
-                rename=rename,
-                conflict=conflict,
-            )
-            args = (dest_provider, src_path, dest_path)
-            kwargs = {}
+        async with aiohttp.ClientSession() as session:
+            download_stream = await self.download(session, item=item)
+            return await dest_provider.upload(download_stream, item=destination_item, new_name=item.name)
 
-        # files and folders shouldn't overwrite themselves
-        if (
-            self.shares_storage_root(dest_provider) and
-            src_path.materialized_path == dest_path.materialized_path
-        ):
-            raise exceptions.OverwriteSelfError(src_path)
-
-        if self.can_intra_move(dest_provider, src_path):
-            return await self.intra_move(*args)
-
-        if src_path.is_dir:
-            meta_data, created = await self._folder_file_op(self.move, *args, **kwargs)  # type: ignore
-        else:
-            meta_data, created = await self.copy(*args, handle_naming=False, **kwargs)  # type: ignore
-
-        #await self.delete(src_path)
+        await self.delete(item)
 
         return meta_data, created
 

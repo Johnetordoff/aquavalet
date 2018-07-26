@@ -38,9 +38,11 @@ class FileSystemProvider(provider.BaseProvider):
     async def intra_move(self, dest_provider, src_path, dest_path):
         shutil.move(src_path.full_path, dest_path.full_path)
 
-    async def rename(self, path, new_name):
+    async def rename(self, new_name, item=None):
+        item = item or self.item
+
         try:
-            os.rename(path.path, path.rename(new_name))
+            os.rename(item.path, item.rename(new_name))
         except FileNotFoundError as exc:
             raise exceptions.InvalidPathError('Invalid path \'{}\' specified'.format(exc.filename))
 
@@ -61,19 +63,23 @@ class FileSystemProvider(provider.BaseProvider):
             async for chunk in stream.generator:
                 file_pointer.write(chunk)
 
-    async def delete(self, path, **kwargs):
-        if self.item.is_file:
-            try:
-                os.remove(self.item.path)
-            except FileNotFoundError:
-                raise exceptions.NotFoundError(self.item.path)
-        else:
-            if self.item.is_root:
-                raise Exception('That\'s the root!')
-            shutil.rmtree(self.item.path)
+    async def delete(self, path, item=None):
+        item = item or self.item
 
-    async def metadata(self, version=None):
-        return self._describe_metadata(self.item)
+        if item.is_file:
+            try:
+                os.remove(item.path)
+            except FileNotFoundError:
+                raise exceptions.NotFoundError(item.path)
+        else:
+            if item.is_root:
+                raise Exception('That\'s the root!')
+            shutil.rmtree(item.path)
+
+    async def metadata(self, version=None, item=None):
+        item = item or self.item
+
+        return self._describe_metadata(item)
 
     async def children(self, item=None):
         item = item or self.item

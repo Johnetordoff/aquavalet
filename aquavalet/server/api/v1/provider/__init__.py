@@ -110,6 +110,8 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
             })
         elif action == 'copy':
             return await self.copy(provider,  path)
+        elif action == 'move':
+            return await self.move(provider,  path)
         else:
             return await self.children(provider,  path)
 
@@ -135,6 +137,16 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
 
         self.dest_provider.item = await self.dest_provider.validate_item(dest_path)
         return await self.provider.copy(self.dest_provider)
+
+    async def move(self, provider,  path):
+        dest_path = self.get_query_argument('to', default=None)
+        dest_provider = self.get_query_argument('destination_provider', default=None)
+        self.dest_provider = utils.make_provider(dest_provider, None)
+
+        self.dest_provider.item = await self.dest_provider.validate_item(dest_path)
+        await self.provider.move(self.dest_provider)
+
+        await self.provider.delete()
 
     async def delete(self, provider,  path):
         comfirm_delete = self.get_query_argument('comfirm_delete', default=None)
