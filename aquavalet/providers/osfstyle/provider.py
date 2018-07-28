@@ -4,16 +4,10 @@ import aiohttp
 
 from aquavalet.core import provider
 from aquavalet.core import exceptions, streams
-from aquavalet.providers.osfstorage.metadata import BaseOsfStorageItemMetadata
-from aquavalet.settings import OSF_TOKEN
 
 class OsfProvider(provider.BaseProvider):
     NAME = 'OSF'
     PATH_PATTERN = r'\/(?P<internal_provider>(?:\w|\d)+)?\/(?P<resource>[a-zA-Z0-9]{5,})?(?P<path>\/.*)?'
-    BASE_URL = 'https://files.osf.io/v1/resources/'
-
-    def __init__(self, auth):
-       self.token = OSF_TOKEN
 
     @property
     def default_headers(self):
@@ -37,13 +31,13 @@ class OsfProvider(provider.BaseProvider):
         if not groupdict.get('path'):
             raise exceptions.InvalidPathError(f'No path in url, path must follow pattern {self.PATH_PATTERN}')
         elif groupdict.get('path') == '/':
-            return BaseOsfStorageItemMetadata.root(self.internal_provider, self.resource)
+            return self.Item.root(self.internal_provider, self.resource)
         path = groupdict.get('path')
 
         if self.internal_provider == 'osfstorage':
             async with aiohttp.ClientSession() as session:
                 async with session.get(
-                    url=f'https://api.osf.io/v2/files{path}/?meta=',
+                    url=self.API_URL.format(path),
                     headers=self.default_headers
                 ) as resp:
                     if resp.status == 200:
@@ -51,7 +45,7 @@ class OsfProvider(provider.BaseProvider):
                     else:
                         raise await self.handle_response(resp, path=path)
 
-        return BaseOsfStorageItemMetadata(data['attributes'], path, self.internal_provider, self.resource)
+        return self.Item(data['attributes'], path, self.internal_provider, self.resource)
 
     def can_duplicate_names(self):
         return True
@@ -88,6 +82,7 @@ class OsfProvider(provider.BaseProvider):
                 params={'kind': 'file', 'name': new_name}
             ) as resp:
                 print(resp)
+                print(await resp.json())
 
     async def delete(self, confirm_delete=0, item=None):
         item = item or self.item
@@ -118,7 +113,7 @@ class OsfProvider(provider.BaseProvider):
                 else:
                     raise await self.handle_response(resp, item)
 
-                return BaseOsfStorageItemMetadata(data['attributes'], item, self.internal_provider, self.resource)
+                return self.Item(data['attributes'], item, self.internal_provider, self.resource)
 
     async def rename(self, new_name, item=None):
         item = item or self.item
@@ -144,7 +139,7 @@ class OsfProvider(provider.BaseProvider):
                 else:
                     raise await self.handle_response(resp, item)
 
-        return [BaseOsfStorageItemMetadata(metadata['attributes'], item.path, internal_provider=self.internal_provider, resource=self.resource) for metadata in data]
+        return [self.Item(metadata['attributes'], item.path, internal_provider=self.internal_provider, resource=self.resource) for metadata in data]
 
     async def parent(self, item=None):
         item = item or self.item
@@ -173,7 +168,7 @@ class OsfProvider(provider.BaseProvider):
                     else:
                         raise await self.handle_response(resp, item)
 
-        return BaseOsfStorageItemMetadata(child_item['attributes'], item.path, internal_provider=self.internal_provider, resource=self.resource)
+        return self.Item(child_item['attributes'], item.path, internal_provider=self.internal_provider, resource=self.resource)
 
     async def root(self, item=None):
         if item.is_root:

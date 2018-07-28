@@ -153,7 +153,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
         destination_item = destination_item or dest_provider.item
 
         if item.is_folder:
-            return await self._folder_file_op(self.move, dest_provider, item, destination_item)  # type: ignore
+            return await self._recursive_op(self.move, dest_provider, item, destination_item)  # type: ignore
 
         async with aiohttp.ClientSession() as session:
             download_stream = await self.download(session, item=item)
@@ -168,13 +168,13 @@ class BaseProvider(metaclass=abc.ABCMeta):
         destination_item = destination_item or dest_provider.item
 
         if item.is_folder:
-            return await self._folder_file_op(self.copy, dest_provider, item, destination_item)  # type: ignore
+            return await self._recursive_op(self.copy, dest_provider, item, destination_item)  # type: ignore
 
         async with aiohttp.ClientSession() as session:
             download_stream = await self.download(session, item=item)
             return await dest_provider.upload(download_stream, item=destination_item, new_name=item.name)
 
-    async def _folder_file_op(self, func, dest_provider, src_path, dest_item, **kwargs):
+    async def _recursive_op(self, func, dest_provider, src_path, dest_item, **kwargs):
 
         folder = await dest_provider.create_folder(item=dest_item, new_name=src_path.name)
 

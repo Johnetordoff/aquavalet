@@ -15,13 +15,12 @@ from aquavalet.core import exceptions
 from aquavalet.core import remote_logging
 from aquavalet.core.streams import RequestStreamReader
 from aquavalet.server.api.v1 import core
-from aquavalet.server.api.v1.provider.movecopy import MoveCopyMixin
 
 logger = logging.getLogger(__name__)
 
 
 @tornado.web.stream_request_body
-class ProviderHandler(core.BaseHandler, MoveCopyMixin):
+class ProviderHandler(core.BaseHandler):
 
     bytes_downloaded = 0
     bytes_uploaded = 0
