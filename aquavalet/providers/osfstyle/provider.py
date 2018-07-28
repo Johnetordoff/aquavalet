@@ -5,15 +5,13 @@ import aiohttp
 from aquavalet.core import provider
 from aquavalet.core import exceptions, streams
 from aquavalet.providers.osfstorage.metadata import BaseOsfStorageItemMetadata
-from aquavalet.settings import OSF_TOKEN
+
 
 class OsfProvider(provider.BaseProvider):
-    NAME = 'OSF'
+    NAME = 'IN SUBCLASS'
     PATH_PATTERN = r'\/(?P<internal_provider>(?:\w|\d)+)?\/(?P<resource>[a-zA-Z0-9]{5,})?(?P<path>\/.*)?'
-    BASE_URL = 'https://files.osf.io/v1/resources/'
-
-    def __init__(self, auth):
-       self.token = OSF_TOKEN
+    BASE_URL = 'IN SUBCLASS'
+    item_obj = BaseOsfStorageItemMetadata
 
     @property
     def default_headers(self):
@@ -51,7 +49,7 @@ class OsfProvider(provider.BaseProvider):
                     else:
                         raise await self.handle_response(resp, path=path)
 
-        return BaseOsfStorageItemMetadata(data['attributes'], path, self.internal_provider, self.resource)
+        return self.item_obj(data['attributes'], path, self.internal_provider, self.resource)
 
     def can_duplicate_names(self):
         return True
@@ -104,6 +102,25 @@ class OsfProvider(provider.BaseProvider):
     async def metadata(self, version=None):
         return self.item
 
+    async def versions(self, item=None):
+        item = item or self.item
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}?revisions=',
+                headers=self.default_headers,
+            ) as resp:
+                if resp.status == 200:
+                    data = (await resp.json())['data']
+                else:
+                    raise await self.handle_response(resp, item)
+
+        return [self.item_obj(metadata['attributes'],
+                              item.path,
+                              internal_provider=self.internal_provider,
+                              resource=self.resource) for metadata in data]
+
+
     async def create_folder(self, new_name, item=None):
         item = item or self.item
 
@@ -118,7 +135,7 @@ class OsfProvider(provider.BaseProvider):
                 else:
                     raise await self.handle_response(resp, item)
 
-                return BaseOsfStorageItemMetadata(data['attributes'], item, self.internal_provider, self.resource)
+                return self.metadataObj(data['attributes'], item, self.internal_provider, self.resource)
 
     async def rename(self, new_name, item=None):
         item = item or self.item
@@ -144,7 +161,10 @@ class OsfProvider(provider.BaseProvider):
                 else:
                     raise await self.handle_response(resp, item)
 
-        return [BaseOsfStorageItemMetadata(metadata['attributes'], item.path, internal_provider=self.internal_provider, resource=self.resource) for metadata in data]
+        return [self.item_obj(metadata['attributes'],
+                              item.path,
+                              internal_provider=self.internal_provider,
+                              resource=self.resource) for metadata in data]
 
     async def parent(self, item=None):
         item = item or self.item
@@ -173,7 +193,10 @@ class OsfProvider(provider.BaseProvider):
                     else:
                         raise await self.handle_response(resp, item)
 
-        return BaseOsfStorageItemMetadata(child_item['attributes'], item.path, internal_provider=self.internal_provider, resource=self.resource)
+        return self.item_obj(child_item['attributes'],
+                             item.path,
+                             internal_provider=self.internal_provider,
+                             resource=self.resource)
 
     async def root(self, item=None):
         if item.is_root:

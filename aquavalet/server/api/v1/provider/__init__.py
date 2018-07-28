@@ -112,6 +112,8 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
             return await self.copy(provider,  path)
         elif action == 'move':
             return await self.move(provider,  path)
+        elif action == 'versions':
+            return await self.versions(provider,  path)
         else:
             return await self.children(provider,  path)
 
@@ -159,11 +161,15 @@ class ProviderHandler(core.BaseHandler, MoveCopyMixin):
             self.writer.write(chunk)
             await self.writer.drain()
 
-    async def revisions(self):
-        if self.path.is_folder:
+    async def versions(self, provider,  path):
+        if self.provider.item.is_folder:
             raise exceptions.InvalidPathError(message='Directories have no revisions')
 
-        raise self.provider.revisions()
+        metadata = await self.provider.versions()
+
+        return self.write({
+            'data': [metadata.json_api_serialized() for metadata in metadata]
+        })
 
     async def download(self, provider,  path):
         if 'Range' not in self.request.headers:

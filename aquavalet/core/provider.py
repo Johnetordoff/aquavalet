@@ -147,7 +147,6 @@ class BaseProvider(metaclass=abc.ABCMeta):
             410: exceptions.Gone(f'Item at path \'{path or item.path}\' has been removed.')
         }[resp.status]
 
-
     async def move(self, dest_provider, item=None, destination_item=None):
         item = item or self.item
         destination_item = destination_item or dest_provider.item
@@ -160,8 +159,6 @@ class BaseProvider(metaclass=abc.ABCMeta):
             return await dest_provider.upload(download_stream, item=destination_item, new_name=item.name)
 
         await self.delete(item)
-
-        return meta_data, created
 
     async def copy(self, dest_provider, item=None, destination_item=None):
         item = item or self.item
@@ -177,14 +174,13 @@ class BaseProvider(metaclass=abc.ABCMeta):
     async def _folder_file_op(self, func, dest_provider, src_path, dest_item, **kwargs):
 
         folder = await dest_provider.create_folder(item=dest_item, new_name=src_path.name)
-
         folder.children = []
 
         items = await self.children(item=src_path)
 
-        for i in range(0, len(items), wb_settings.OP_CONCURRENCY):  # type: ignore
+        for i in range(0, len(items), wb_settings.OP_CONCURRENCY):
             futures = []
-            for item in items[i:i + wb_settings.OP_CONCURRENCY]:  # type: ignore
+            for item in items[i:i + wb_settings.OP_CONCURRENCY]:
                 futures.append(asyncio.ensure_future(func(dest_provider, item=item, destination_item=folder)))
 
                 if item.is_folder:
@@ -345,92 +341,42 @@ class BaseProvider(metaclass=abc.ABCMeta):
 
         return path, False
 
-    async def revalidate_path(self, base, path: str, folder: bool=False):
-        """Take a path and a base path and build a AquaValetPath representing `/base/path`.  For
-        id-based providers, this will need to lookup the id of the new child object.
-
-        :param  base: ( :class:`.AquaValetPath` ) The base folder to look under
-        :param path: ( :class:`str`) the path of a child of `base`, relative to `base`
-        :param folder: ( :class:`bool` )whether the returned AquaValetPath should represent a folder
-        :rtype: :class:`.AquaValetPath`
-        """
-        return base.child(path, folder=folder)
-
     async def zip(self, session, **kwargs) -> asyncio.StreamReader:
         """Streams a Zip archive of the given folder
 
         :param  path: ( :class:`.AquaValetPath` ) The folder to compress
         """
 
-        metadata = await self.children()  # type: ignore
-        return streams.ZipStreamReader(ZipStreamGenerator(self, self.item, metadata, session))  # type: ignore
-
-    def shares_storage_root(self, other: 'BaseProvider') -> bool:
-        """Returns True if ``self`` and ``other`` both point to the same storage root.  Used to
-        detect when a file move/copy action might result in the file overwriting itself. Most
-        providers have enough uniquely identifing information in the settings to detect this,
-        but some providers may need to override this to do further detection.
-
-        :param  other: ( :class:`.BaseProvider`) another provider instance to compare with
-        :rtype: :class:`bool`  (True if both providers use the same storage root)
-        """
-        return self.NAME == other.NAME and self.settings == other.settings
+        children = await self.children()  # type: ignore
+        return streams.ZipStreamReader(ZipStreamGenerator(self, self.item, children, session))  # type: ignore
 
     @abc.abstractmethod
-    async def download(self, src_path, **kwargs) -> streams.ResponseStreamReader:
-        """Download a file from this provider.
-
-        :param src_path: ( :class:`.AquaValetPath` ) Path to the file to be downloaded
-        :param \*\*kwargs: ( :class:`dict` ) Arguments to be parsed by child classes
-        :rtype: :class:`.ResponseStreamReader`
-        :raises: :class:`.DownloadError`
-        """
+    async def download(self, item=None) -> streams.ResponseStreamReader:
         raise NotImplementedError
 
     @abc.abstractmethod
-    async def upload(self, stream, path, new_name):
+    async def upload(self, stream, new_name, item=None):
         raise NotImplementedError
 
     @abc.abstractmethod
-    async def delete(self, src_path, **kwargs) -> None:
-        """
-        :param src_path: ( :class:`.AquaValetPath` ) Path to be deleted
-        :param \*\*kwargs: ( :class:`dict` ) Arguments to be parsed by child classes
-        :rtype: :class:`None`
-        :raises: :class:`.DeleteError`
-        """
+    async def delete(self, item=None) -> None:
         raise NotImplementedError
 
     @abc.abstractmethod
-    async def metadata(self, path, **kwargs) \
-            -> typing.Union[wb_metadata.BaseMetadata, typing.List[wb_metadata.BaseMetadata]]:
-        """Get metadata about the specified resource from this provider. Will be a :class:`list`
-        if the resource is a directory otherwise an instance of
-        :class:`.BaseFileMetadata`
-
-        .. note::
-            Mypy doesn't seem to do very well with functions that can return more than one type of thing.
-            See: https://github.com/python/mypy/issues/1693
-
-        :param path: ( :class:`.AquaValetPath` ) The path to a file or folder
-        :param \*\*kwargs: ( :class:`dict` ) Arguments to be parsed by child classes
-        :rtype: :class:`.BaseMetadata`
-        :rtype: :class:`list` of :class:`.BaseMetadata`
-        :raises: :class:`.MetadataError`
-        """
+    async def metadata(self, item=None) -> wb_metadata.BaseMetadata:
         raise NotImplementedError
 
     @abc.abstractmethod
-    async def validate_item(self, path: str, **kwargs):
+    async def validate_item(self, item=None) -> wb_metadata.BaseMetadata:
         raise NotImplementedError
 
-    async def revisions(self, path, **kwargs):
+    async def versions(self, item=None) -> wb_metadata.BaseMetadata:
         """Return a list of :class:`.BaseFileRevisionMetadata` objects representing the revisions
         available for the file at ``path``.
         """
         return []  # TODO Raise 405 by default h/t @rliebz
 
-    async def create_folder(self, path, item=None):
+    async def create_folder(self, path, item=None) -> wb_metadata.BaseMetadata:
         raise exceptions.ProviderError({'message': 'Folder creation not supported.'}, code=405)
 
     def _build_range_header(self, slice_tup: typing.Tuple[int, int]) -> str:
