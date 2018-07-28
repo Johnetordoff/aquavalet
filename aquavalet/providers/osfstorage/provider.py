@@ -11,7 +11,3 @@ class OSFStorageProvider(OsfProvider):
 
     def __init__(self, auth):
        self.token = OSF_TOKEN
-
-    def __init__(self, auth):
-       self.token = OSF_TOKEN
-

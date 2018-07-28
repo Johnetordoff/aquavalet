@@ -37,7 +37,7 @@ class OsfProvider(provider.BaseProvider):
         if self.internal_provider == 'osfstorage':
             async with aiohttp.ClientSession() as session:
                 async with session.get(
-                    url=self.API_URL.format(path),
+                    url=self.API_URL.format(path=path),
                     headers=self.default_headers
                 ) as resp:
                     if resp.status == 200:

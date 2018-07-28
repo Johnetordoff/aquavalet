@@ -1,16 +1,16 @@
 import re
 from aquavalet.core import exceptions
+import aiohttp
 
 from aquavalet.providers.osfstyle.provider import OsfProvider
 from aquavalet.providers.artifacts.metadata import ArtifactsMetadata
 from aquavalet.settings import ARTIFACTS_TOKEN
-import aiohttp
 
 
 class ArtifactsProvider(OsfProvider):
     NAME = 'artifacts'
     BASE_URL = 'https://files.artifacts.ai/v1/resources/'
-    API_URL = 'https://api.artifacts.ai/v2/files{}/?meta='
+    API_URL = 'https://api.artifacts.ai/v2/nodes/{resource}/files/{internal_provider}{path}'
 
     Item = ArtifactsMetadata
 
@@ -60,7 +60,7 @@ class ArtifactsProvider(OsfProvider):
         if self.internal_provider == 'osfstorage':
             async with aiohttp.ClientSession() as session:
                 async with session.get(
-                    url=f'https://api.artifacts.ai/v2/nodes/{self.resource}/files/{self.internal_provider}{path}',
+                    url=self.API_URL.format(resource=self.resource, internal_provider=self.internal_provider, path=path),
                     headers=self.default_headers
                 ) as resp:
                     if resp.status == 200:
