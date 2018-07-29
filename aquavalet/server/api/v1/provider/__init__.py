@@ -76,9 +76,7 @@ class ProviderHandler(core.BaseHandler):
         })
 
     async def rename(self, provider,  path):
-        new_name = self.get_query_argument('new_name', default=None)
-        if new_name is None:
-            raise exceptions.InvalidPathError('new_name is a required parameter for renaming.')
+        new_name = self.require_query_argument('new_name')
 
         await self.provider.rename(new_name)
 
@@ -128,7 +126,8 @@ class ProviderHandler(core.BaseHandler):
         if not self.provider.item.is_folder:
             raise exceptions.InvalidPathError(f'{self.item.path} is not a directory, perhaps try using a trailing slash.')
 
-        new_name = self.get_query_argument('new_name', default=None)
+        new_name = self.require_query_argument('new_name')
+
         await self.provider.create_folder(new_name)
 
     async def copy(self, provider,  path):
@@ -217,7 +216,6 @@ class ProviderHandler(core.BaseHandler):
         async for chunk in stream.file_gen:
             self.write(chunk)
 
-
     async def download_folder_as_zip(self, provider,  path):
         zipfile_name = self.provider.item.name or '{}-archive'.format(self.provider.NAME)
         self.set_header('Content-Type', 'application/zip')
@@ -227,13 +225,24 @@ class ProviderHandler(core.BaseHandler):
 
             stream = await self.provider.zip(session)
 
-            # Needs work
-            self.write(await stream.read())
+            chunk = await stream.read(settings.CHUNK_SIZE)
+            while chunk:
+                self.write(chunk)
+                self.bytes_downloaded += len(chunk)
+                chunk = await stream.read(settings.CHUNK_SIZE)
+                await self.flush()
 
     def on_finish(self):
         status, method = self.get_status(), self.request.method.upper()
 
         #self._send_hook(action)
+
+    def require_query_argument(self, param, message):
+        value = self.get_query_argument(param, default=None)
+        if not value:
+            raise exceptions.InvalidParameters(message=message)
+        return value
+
 
     def _send_hook(self, action):
         source = None

@@ -80,19 +80,6 @@ def async_retry(retries=5, backoff=1, exceptions=(Exception, )):
 
     return _async_retry
 
-
-async def send_signed_request(method, url, payload):
-    message, signature = signer.sign_payload(payload)
-    return (await aiohttp.request(
-        method, url,
-        data=json.dumps({
-            'payload': message.decode(),
-            'signature': signature,
-        }),
-        headers={'Content-Type': 'application/json'},
-    ))
-
-
 class ZipStreamGenerator:
     def __init__(self, provider, parent_path, metadata_objs, session):
         self.session = session
@@ -113,40 +100,6 @@ class ZipStreamGenerator:
                 self.remaining.extend(items)
                 return await self.__anext__()
             else:
-                return current.name, EmptyStream()
+                return current.unix_path, EmptyStream()
 
         return current.unix_path, await self.provider.download(self.session, item=current)
-
-
-class RequestHandlerContext:
-
-    def __init__(self, request_coro):
-        self.request = None
-        self.request_coro = request_coro
-
-    async def __aenter__(self):
-        self.request = await self.request_coro
-        return self.request
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self.request.release()
-        if exc_type:
-            raise exc_val.with_traceback(exc_tb)
-
-
-class AsyncIterator:
-    """A wrapper class that makes normal iterators
-    look like async iterators
-    """
-
-    def __init__(self, iterable):
-        self.iterable = iter(iterable)
-
-    async def __aiter__(self):
-        return self.iterable
-
-    async def __anext__(self):
-        try:
-            return next(self.iterable)
-        except StopIteration:
-            raise StopAsyncIteration

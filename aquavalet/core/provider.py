@@ -15,7 +15,6 @@ from aquavalet.core import exceptions
 from aquavalet import settings as wb_settings
 from aquavalet.core import metadata as wb_metadata
 from aquavalet.core.utils import ZipStreamGenerator
-from aquavalet.core.utils import RequestHandlerContext
 
 
 logger = logging.getLogger(__name__)
@@ -172,7 +171,6 @@ class BaseProvider(metaclass=abc.ABCMeta):
             return await dest_provider.upload(download_stream, item=destination_item, new_name=item.name)
 
     async def _recursive_op(self, func, dest_provider, src_path, dest_item, **kwargs):
-
         folder = await dest_provider.create_folder(item=dest_item, new_name=src_path.name)
         folder.children = []
 

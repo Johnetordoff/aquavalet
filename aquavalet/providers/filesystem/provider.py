@@ -27,6 +27,10 @@ class FileSystemProvider(provider.BaseProvider):
         if not os.path.exists(path) or os.path.isdir(path) and not path.endswith('/'):
             raise exceptions.NotFoundError(f'Item at \'{path}\' could not be found, folders must end with \'/\'')
 
+
+        if path == '/':
+            return FileSystemItemMetadata.root()
+
         return FileSystemItemMetadata.build(path)
 
     def can_intra_copy(self, dest_provider, path=None):

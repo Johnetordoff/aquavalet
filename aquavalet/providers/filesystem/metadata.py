@@ -9,6 +9,17 @@ class FileSystemItemMetadata(metadata.BaseMetadata):
         self.raw = raw
         self.default_segments = [self.provider]
 
+    @classmethod
+    def root(cls):
+        raw = {
+            'name': f'filesystem root',
+            'kind': 'folder',
+            'modified': '',
+            'etag': '',
+            'path': '/',
+        }
+
+        return cls(raw)
 
     @property
     def provider(self):
@@ -17,7 +28,8 @@ class FileSystemItemMetadata(metadata.BaseMetadata):
     @classmethod
     def build(cls, path):
         raw = {
-            'path': path
+            'path': path,
+            'name': os.path.basename(path.rstrip('/'))
         }
 
         return cls(raw)
@@ -38,6 +50,8 @@ class FileSystemItemMetadata(metadata.BaseMetadata):
 
     @property
     def name(self):
+        if self.is_root:
+            return 'filesystem root'
         return os.path.basename(self.raw['path'].rstrip('/'))
 
     def rename(self, new_name):
