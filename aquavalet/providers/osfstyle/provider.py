@@ -65,6 +65,8 @@ class OsfProvider(provider.BaseProvider):
     async def download(self, session, version=None, range=None, item=None):
         item = item or self.item
 
+        return self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}'
+
         resp = await session.get(
             url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}',
             headers=self.default_headers

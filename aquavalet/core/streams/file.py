@@ -1,15 +1,14 @@
 import os
 import asyncio
-
+import aiofiles
+import mimetypes
 
 from aquavalet.core.streams.base import BaseStream
-
 
 class FileStreamReader(BaseStream):
 
     def __init__(self, file_pointer):
         super().__init__()
-        self.file_gen = None
         self.file_pointer = file_pointer
         self.read_size = None
         self.content_type = 'application/octet-stream'
@@ -26,34 +25,20 @@ class FileStreamReader(BaseStream):
         self.file_pointer.close()
         self.feed_eof()
 
-    def chunk_reader(self):
-        while True:
-            chunk = self.file_pointer.read(self.read_size)
-            if not chunk:
-                self.feed_eof()
-                yield b''
-
-            yield chunk
-
     @property
     def content_range(self):
         return None
 
-    def make_chunk_reader(self, stream_reader):
-        self.file_pointer.seek(0)
-
-        return ChunkedFileReader(stream_reader)
+    def iter_any(self):
+        return ChunkedFileGenerator(self)
 
     async def _read(self, size):
-        self.file_gen = self.file_gen or self.make_chunk_reader(self)
+        self.content = self.file_gen or self.make_chunk_reader()
         self.read_size = size
-        # add sleep of 0 so read will yield and continue in next io loop iteration
-        # asyncio.sleep(0) yields None by default, which displeases tornado
-        await asyncio.sleep(0.001)
         async for chunk in self.file_gen:
             return chunk
 
-class ChunkedFileReader():
+class ChunkedFileGenerator():
 
     def __init__(self, stream_read):
         self.stream_read = stream_read

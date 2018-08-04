@@ -52,6 +52,7 @@ class ProviderHandler(core.BaseHandler):
             self.reader, _ = await asyncio.open_unix_connection(sock=self.rsock)
             _, self.writer = await asyncio.open_unix_connection(sock=self.wsock)
 
+
             self.stream = RequestStreamReader(self.request, self.reader)
         else:
             self.stream = None
@@ -115,7 +116,8 @@ class ProviderHandler(core.BaseHandler):
             return await self.children(provider,  path)
 
     async def upload(self, provider,  path):
-        new_name = self.get_query_argument('new_name', default=None)
+        new_name = self.require_query_argument('new_name', "'new_name' is a required argument")
+
         self.writer.write_eof()
         await self.provider.upload(self.stream, new_name)
 
@@ -126,7 +128,7 @@ class ProviderHandler(core.BaseHandler):
         if not self.provider.item.is_folder:
             raise exceptions.InvalidPathError(f'{self.item.path} is not a directory, perhaps try using a trailing slash.')
 
-        new_name = self.require_query_argument('new_name')
+        new_name = self.require_query_argument('new_name', "'new_name' is a required argument")
 
         await self.provider.create_folder(new_name)
 
@@ -182,7 +184,6 @@ class ProviderHandler(core.BaseHandler):
                 version=version,
                 range=request_range,
             )
-
             if getattr(stream, 'partial', None):
                 self.set_status(206)
                 self.set_header('Content-Range', stream.content_range)
@@ -199,22 +200,20 @@ class ProviderHandler(core.BaseHandler):
             if ext in mimetypes.types_map:
                 self.set_header('Content-Type', mimetypes.types_map[ext])
 
-            if self.provider.NAME == 'filesystem':
-                await self.write_non_aiohttp_stream(stream)
-            else:
-                async for chunk in stream.response.content.iter_any():
-                    self.write(chunk)
-                    self.bytes_downloaded += len(chunk)
-                    await self.flush()
+            async for chunk in stream.iter_any():
+                self.write(chunk)
+                self.bytes_downloaded += len(chunk)
+                await self.flush()
 
             if getattr(stream, 'partial', False):
                 await stream.response.release()
 
     async def write_non_aiohttp_stream(self, stream):
-        # Needs work
         stream.file_gen = stream.make_chunk_reader(stream)
         async for chunk in stream.file_gen:
             self.write(chunk)
+            self.bytes_downloaded += len(chunk)
+            await self.flush()
 
     async def download_folder_as_zip(self, provider,  path):
         zipfile_name = self.provider.item.name or '{}-archive'.format(self.provider.NAME)

@@ -3,3 +3,4 @@ celery==4.2.0
 invoke==0.22.1
 stevedore==1.28.0
 tornado==5.0.2
+aiofiles==0.3.2

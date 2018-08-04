@@ -50,7 +50,7 @@ class FileSystemProvider(provider.BaseProvider):
         except FileNotFoundError as exc:
             raise exceptions.InvalidPathError('Invalid path \'{}\' specified'.format(exc.filename))
 
-    async def download(self, revision=None, range=None, item=None):
+    async def download(self, session, item=None, version=None, range=None):
         item = item or self.item
 
         file_pointer = open(item.path, 'rb')

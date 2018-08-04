@@ -142,6 +142,7 @@ class ResponseStreamReader(BaseStream):
             self._size = size
         self._name = name
         self.response = response
+        self.iter_any = response.content.iter_any
 
     @property
     def partial(self):

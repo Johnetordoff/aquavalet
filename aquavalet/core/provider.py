@@ -14,7 +14,7 @@ from aquavalet.core import streams
 from aquavalet.core import exceptions
 from aquavalet import settings as wb_settings
 from aquavalet.core import metadata as wb_metadata
-from aquavalet.core.utils import ZipStreamGenerator
+from aquavalet.core.utils import ZipStreamGeneratorReader
 
 
 logger = logging.getLogger(__name__)
@@ -346,10 +346,10 @@ class BaseProvider(metaclass=abc.ABCMeta):
         """
 
         children = await self.children()  # type: ignore
-        return streams.ZipStreamReader(ZipStreamGenerator(self, self.item, children, session))  # type: ignore
+        return ZipStreamGeneratorReader(self, self.item, children, session)  # type: ignore
 
     @abc.abstractmethod
-    async def download(self, item=None) -> streams.ResponseStreamReader:
+    async def download(self, item=None, version=None, range=None) -> streams.ResponseStreamReader:
         raise NotImplementedError
 
     @abc.abstractmethod

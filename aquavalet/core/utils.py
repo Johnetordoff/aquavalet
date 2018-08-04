@@ -11,7 +11,7 @@ from stevedore import driver
 from aquavalet.core import exceptions
 from aquavalet.server import settings as server_settings
 from aquavalet.core.streams import EmptyStream
-
+from aquavalet.core.streams.zip import ZipLocalFile, ZipArchiveCentralDirectory
 
 logger = logging.getLogger(__name__)
 
@@ -80,12 +80,15 @@ def async_retry(retries=5, backoff=1, exceptions=(Exception, )):
 
     return _async_retry
 
-class ZipStreamGenerator:
+class ZipStreamGeneratorReader:
     def __init__(self, provider, parent_path, metadata_objs, session):
         self.session = session
         self.provider = provider
         self.parent_path = parent_path
         self.remaining = metadata_objs
+        self.stream = None
+        self.finished_streams = []
+        self._eof = False
 
     async def __aiter__(self):
         return self
@@ -103,3 +106,22 @@ class ZipStreamGenerator:
                 return current.unix_path, EmptyStream()
 
         return current.unix_path, await self.provider.download(self.session, item=current)
+
+    async def read(self, n=-1):
+        if not self.stream:
+            try:
+                self.stream = ZipLocalFile(await self.__anext__())
+            except StopAsyncIteration:
+                if self._eof:
+                    return b''
+                self._eof = True
+                # Append a stream for the archive's footer (central directory)
+                self.stream = ZipArchiveCentralDirectory(self.finished_streams)
+
+        chunk = await self.stream.read(n)
+        if len(chunk) < n and self.stream.at_eof():
+            self.finished_streams.append(self.stream)
+            self.stream = None
+            chunk += await self.read(n - len(chunk))
+
+        return chunk
