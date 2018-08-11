@@ -7,8 +7,8 @@ from aquavalet.core import metadata
 
 class BaseOsfStyleItemMetadata(metadata.BaseMetadata):
 
-    def __init__(self, raw, path, internal_provider, resource):
-        super().__init__(raw, path)
+    def __init__(self, raw, internal_provider, resource):
+        super().__init__(raw)
 
         self.internal_provider = internal_provider
         self.resource = resource

@@ -2,14 +2,28 @@ import os
 import json
 
 import pytest
-import aiohttpretty
+import aresponses
+from aiohttp import web
 
 from aquavalet.core import metadata
 from aquavalet.core import exceptions
-from aquavalet.providers.osfstorage.settings import FILE_PATH_COMPLETE, FILE_PATH_PENDING
-from aquavalet.providers.osfstorage.metadata import (OsfStorageFileMetadata,
-                                                     OsfStorageFolderMetadata,
-                                                     OsfStorageRevisionMetadata)
+from .fixtures import provider, folder_metadata, file_metadata_json
+import json
+
+from aquavalet.providers.osfstorage.metadata import OsfMetadata
+
+
+
+class TestValidateItem:
+
+    @pytest.mark.asyncio
+    async def test_validate_item(self, provider, file_metadata_json, aresponses):
+        resp = web.Response(body=json.dumps(file_metadata_json), headers={'content-type': 'application/json'})
+        aresponses.add('api.osf.io', '/v2/files/s3242423/', 'get', resp )
+        item = await provider.validate_item('/osfstorage/guid0/s3242423' )
+        print(item.path)
+        print(item.name)
+        assert False
 
 class TestCreateFolder:
 
@@ -17,10 +31,9 @@ class TestCreateFolder:
     @pytest.mark.aiohttpretty
     async def test_create_folder(self, folder_path, provider, folder_metadata, mock_time):
 
-        data = json.dumps(folder_metadata)
         resp = await provider.create_folder(folder_path)
 
-        assert isinstance(resp, OsfStorageFolderMetadata)
+        assert isinstance(resp, OsfMetadata)
 
 
 class TestDownload:

@@ -45,7 +45,7 @@ class OsfProvider(provider.BaseProvider):
                     else:
                         raise await self.handle_response(resp, path=path)
 
-        return self.Item(data['attributes'], path, self.internal_provider, self.resource)
+        return self.Item(data['attributes'], self.internal_provider, self.resource)
 
     def can_duplicate_names(self):
         return True
