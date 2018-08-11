@@ -77,7 +77,7 @@ class ProviderHandler(core.BaseHandler):
         })
 
     async def rename(self, provider,  path):
-        new_name = self.require_query_argument('new_name')
+        new_name = self.require_query_argument('new_name', "'new_name' is a required argument")
 
         await self.provider.rename(new_name)
 
@@ -133,17 +133,17 @@ class ProviderHandler(core.BaseHandler):
         await self.provider.create_folder(new_name)
 
     async def copy(self, provider,  path):
-        dest_path = self.get_query_argument('to', default=None)
-        dest_provider = self.get_query_argument('destination_provider', default=None)
-        self.dest_provider = utils.make_provider(dest_provider, None)
+        dest_path = self.require_query_argument('to', "'to' is a required argument")
+        dest_provider = self.require_query_argument('destination_provider', "'destination_provider' is a required argument")
+        self.dest_provider = utils.make_provider(dest_provider, auth=None)
 
         self.dest_provider.item = await self.dest_provider.validate_item(dest_path)
         return await self.provider.copy(self.dest_provider)
 
     async def move(self, provider,  path):
-        dest_path = self.get_query_argument('to', default=None)
-        dest_provider = self.get_query_argument('destination_provider', default=None)
-        self.dest_provider = utils.make_provider(dest_provider, None)
+        dest_path = self.require_query_argument('to', "'to' is a required argument")
+        dest_provider = self.require_query_argument('destination_provider', "'destination_provider' is a required argument")
+        self.dest_provider = utils.make_provider(dest_provider, auth=None)
 
         self.dest_provider.item = await self.dest_provider.validate_item(dest_path)
         await self.provider.move(self.dest_provider)
@@ -171,19 +171,30 @@ class ProviderHandler(core.BaseHandler):
             'data': [metadata.json_api_serialized() for metadata in metadata]
         })
 
-    async def download(self, provider,  path):
-        if 'Range' not in self.request.headers:
-            request_range = None
-        else:
-            request_range = utils.parse_request_range(self.request.headers['Range'])
+    def get_header(self, key):
+        return self.request.headers.get(key)
 
-        version = self.get_query_argument('version', default=None) or self.get_query_argument('revision', default=None)
+    async def download(self, provider,  path):
+        range = self.get_header('Range')
+        version = self.get_query_argument('version', default=None)
+
+        #if self.provider.direct_download_url() and not range: auth problems
+        #    self.redirect(self.provider.direct_download_url())
+        #    return
+
+        if range:
+            range = tornado.httputil._parse_request_range(range)
+
         async with aiohttp.ClientSession() as session:
             stream = await self.provider.download(
                 session,
                 version=version,
-                range=request_range,
+                range=range,
             )
+
+            if range:
+                await stream.response.content.readexactly(range[0])
+
             if getattr(stream, 'partial', None):
                 self.set_status(206)
                 self.set_header('Content-Range', stream.content_range)

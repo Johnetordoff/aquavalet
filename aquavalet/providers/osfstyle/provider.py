@@ -65,13 +65,16 @@ class OsfProvider(provider.BaseProvider):
     async def download(self, session, version=None, range=None, item=None):
         item = item or self.item
 
-        return self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}'
+        download_header = self.default_headers
+
+        if range:
+            download_header.update({'Range': 'bytes={}-{}'.format(range[0], range[1] - 1)})
 
         resp = await session.get(
             url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}',
-            headers=self.default_headers
+            headers=download_header
         )
-        return streams.ResponseStreamReader(resp)
+        return streams.ResponseStreamReader(resp, range)
 
     async def upload(self, stream, new_name, item=None):
         item = item or self.item

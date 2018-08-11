@@ -77,8 +77,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
 
     BASE_URL = None
 
-    def __init__(self, auth: dict,
-                 retry_on: typing.Set[int]={408, 502, 503, 504}) -> None:
+    def __init__(self, auth: dict, retry_on: typing.Set[int]={408, 502, 503, 504}) -> None:
         """
         :param auth: ( :class:`dict` ) Information about the user this provider will act on the behalf of
         :param credentials: ( :class:`dict` ) The credentials used to authenticate with the provider,
@@ -383,7 +382,3 @@ class BaseProvider(metaclass=abc.ABCMeta):
             '' if start is None else start,
             '' if end is None else end
         )
-
-    def __repr__(self):
-        # Note: credentials are not included on purpose.
-        return '<{}({}, {})>'.format(self.__class__.__name__, self.auth, self.settings)
