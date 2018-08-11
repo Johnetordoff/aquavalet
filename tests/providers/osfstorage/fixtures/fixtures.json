@@ -1,0 +1,82 @@
+{
+	"file_metadata": {
+		"meta": {
+			"version": "2.0"
+		},
+		"data": {
+			"relationships": {
+				"node": {
+					"data": {
+						"type": "nodes",
+						"id": "vy6x2"
+					},
+					"links": {
+						"related": {
+							"href": "https://api.osf.io/v2/nodes/vy6x2/",
+							"meta": {}
+						}
+					}
+				},
+				"target": {
+					"links": {
+						"related": {
+							"href": "https://api.osf.io/v2/nodes/vy6x2/",
+							"meta": {
+								"type": "node"
+							}
+						}
+					}
+				},
+				"comments": {
+					"links": {
+						"related": {
+							"href": "https://api.osf.io/v2/nodes/vy6x2/comments/?filter%5Btarget%5D=q5djf",
+							"meta": {}
+						}
+					}
+				},
+				"versions": {
+					"links": {
+						"related": {
+							"href": "https://api.osf.io/v2/files/5b6ee0c390a7e0001986aff5/versions/",
+							"meta": {}
+						}
+					}
+				}
+			},
+			"attributes": {
+				"extra": {
+					"hashes": {
+						"sha256": "eb19aeb332debec75b53593b293d13c4fb464eab41433dfb735ab4f83437f985",
+						"md5": "f597261726528f8e3c002fbbd67cbae3"
+					},
+					"downloads": 0
+				},
+				"path": "/5b6ee0c390a7e0001986aff5",
+				"current_version": 1,
+				"current_user_can_comment": true,
+				"guid": "q5djf",
+				"materialized_path": "/test1-1.txt",
+				"tags": [],
+				"size": 28,
+				"kind": "file",
+				"name": "test.txt",
+				"date_modified": "2018-08-11T13:12:36.048663Z",
+				"last_touched": null,
+				"provider": "osfstorage",
+				"date_created": "2018-08-11T13:12:36.048663Z",
+				"checkout": null
+			},
+			"type": "files",
+			"id": "5b6ee0c390a7e0001986aff5",
+			"links": {
+				"info": "https://api.osf.io/v2/files/5b6ee0c390a7e0001986aff5/",
+				"self": "https://api.osf.io/v2/files/5b6ee0c390a7e0001986aff5/",
+				"move": "https://files.osf.io/v1/resources/vy6x2/providers/osfstorage/5b6ee0c390a7e0001986aff5",
+				"upload": "https://files.osf.io/v1/resources/vy6x2/providers/osfstorage/5b6ee0c390a7e0001986aff5",
+				"download": "https://osf.io/download/q5djf/",
+				"delete": "https://files.osf.io/v1/resources/vy6x2/providers/osfstorage/5b6ee0c390a7e0001986aff5"
+			}
+		}
+	}
+}

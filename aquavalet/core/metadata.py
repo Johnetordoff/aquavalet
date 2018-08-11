@@ -4,12 +4,11 @@ import hashlib
 import mimetypes
 from urllib.parse import urlparse, quote
 
-from aquavalet.core import utils
 from aquavalet.server import settings
 
 
 class BaseMetadata(metaclass=abc.ABCMeta):
-    def __init__(self, raw: dict, path) -> None:
+    def __init__(self, raw: dict) -> None:
 
         self.raw = raw
         self.default_segments = [self.provider]

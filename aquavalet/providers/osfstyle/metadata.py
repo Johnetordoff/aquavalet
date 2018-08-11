@@ -92,6 +92,11 @@ class BaseOsfStyleItemMetadata(metadata.BaseMetadata):
     def path(self):
         return self.raw['path']
 
+    @property
+    def mimetype(self):
+        _, ext = os.path.splitext(self.name)
+        return mimetypes.types_map.get(ext)
+
     def serialized(self) -> dict:
         _, ext = os.path.splitext(self.name)
         return {
@@ -102,7 +107,7 @@ class BaseOsfStyleItemMetadata(metadata.BaseMetadata):
             'size': self.size,
             'created': self.created,
             'modified': self.modified,
-            'mimetype': mimetypes.types_map.get(ext),
+            'mimetype': self.mimetype,
             'provider': self.provider,
             'etag': hashlib.sha256('{}::{}'.format(self.provider, self.etag).encode('utf-8')).hexdigest(),
         }
