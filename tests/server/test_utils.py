@@ -5,16 +5,6 @@ from tornado import testing
 
 from tests.server.api.v1.utils import ServerTestCase
 
-from aquavalet.server.utils import CORsMixin, parse_request_range
-
-
-class MockHandler(CORsMixin):
-
-    request = None
-    headers = {}
-
-    def set_header(self, key, value):
-        self.headers[key] = value
 
 class MockRequest(object):
 

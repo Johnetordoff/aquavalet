@@ -4,14 +4,10 @@ import asyncio
 from unittest import mock
 
 import pytest
-import aiohttpretty
-from boto.glacier.exceptions import UnexpectedHTTPResponseError
 
 from tests import utils as test_utils
 
-from aquavalet.core import signing
 from aquavalet.providers.osfstorage.tasks import utils
-from aquavalet.providers.osfstorage.tasks import backup
 from aquavalet.providers.osfstorage.tasks import parity
 from aquavalet.providers.osfstorage.tasks import exceptions
 from aquavalet.providers.osfstorage import settings as osf_settings

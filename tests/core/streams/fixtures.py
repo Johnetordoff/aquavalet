@@ -2,13 +2,7 @@ from http import HTTPStatus
 
 import pytest
 
-from tests.utils import MockCoroutine
 from aquavalet.core.streams.http import ResponseStreamReader
-
-
-@pytest.fixture
-def mock_content():
-    return type('mock_content', (object,), {'read': MockCoroutine(return_value=b'data')})
 
 
 @pytest.fixture

@@ -11,7 +11,6 @@ from http import HTTPStatus
 import aiohttp
 from celery.utils.log import get_task_logger
 
-from aquavalet.core import signing
 from aquavalet.tasks.app import app
 from aquavalet.providers.osfstorage import settings
 from aquavalet.providers.osfstorage.tasks import exceptions

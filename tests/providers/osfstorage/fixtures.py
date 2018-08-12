@@ -27,19 +27,32 @@ def upload_response():
         return json.load(fp)['upload_response']
 
 @pytest.fixture
-def folder_metadata():
+def folder_metadata_json():
     with open(os.path.join(os.path.dirname(__file__), 'fixtures/fixtures.json'), 'r') as fp:
         return json.load(fp)['folder_metadata']
 
+@pytest.fixture
+def folder_metadata_resp(folder_metadata_json):
+    return json_resp(folder_metadata_json)
 
 @pytest.fixture
 def file_metadata_json():
     with open(os.path.join(os.path.dirname(__file__), 'fixtures/fixtures.json'), 'r') as fp:
         return json.load(fp)['file_metadata']
 
+
 @pytest.fixture
 def file_metadata_resp(file_metadata_json):
     return json_resp(file_metadata_json)
+
+@pytest.fixture
+def response_404_json():
+    with open(os.path.join(os.path.dirname(__file__), 'fixtures/fixtures.json'), 'r') as fp:
+        return json.load(fp)['api_response_404']
+
+@pytest.fixture
+def response_404(response_404_json):
+    return json_resp(response_404_json, status=404)
 
 @pytest.fixture
 def revisions_metadata():

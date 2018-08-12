@@ -2,8 +2,7 @@ import os
 
 import pytest
 
-from aquavalet.providers.filesystem.metadata import (FileSystemFileMetadata,
-                                                     FileSystemFolderMetadata)
+from aquavalet.providers.filesystem.metadata import FileSystemItemMetadata
 
 
 @pytest.fixture
@@ -38,7 +37,7 @@ def subfolder_metadata():
 class TestMetadata:
 
     def test_file_metadata(self, file_metadata):
-        data = FileSystemFileMetadata(file_metadata, '/')
+        data = FileSystemItemMetadata(file_metadata, '/')
         assert data.path == '/code/website/osfstoragecache/77094244-aa24-48da-9437-d8ce6f7a94e9'
         assert data.provider == 'filesystem'
         assert data.modified == 'Wed, 20 Sep 2017 15:16:02 +0000'
@@ -163,7 +162,7 @@ class TestMetadata:
         }
 
     def test_folder_metadata(self, folder_metadata):
-        data = FileSystemFolderMetadata(folder_metadata, '/')
+        data = FileSystemItemMetadata(folder_metadata, '/')
         assert data.path == '/folder1/'
         assert data.name == 'folder1'
         assert data.provider == 'filesystem'
@@ -217,7 +216,7 @@ class TestMetadata:
         }
 
     def test_subfolder_metadata(self, subfolder_metadata):
-        data = FileSystemFolderMetadata(subfolder_metadata, '/')
+        data = FileSystemItemMetadata(subfolder_metadata, '/')
         assert data.path == '/folder1/folder2/'
         assert data.name == 'folder2'
         assert data.provider == 'filesystem'

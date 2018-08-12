@@ -78,5 +78,85 @@
 				"delete": "https://files.osf.io/v1/resources/vy6x2/providers/osfstorage/5b6ee0c390a7e0001986aff5"
 			}
 		}
+	},
+	"folder_metadata": {
+		"data": {
+			"relationships": {
+				"files": {
+					"links": {
+						"related": {
+							"href": "https://api.osf.io/v2/nodes/vy6x2/files/osfstorage/5b5de758f63e210010ec8f53/",
+							"meta": {}
+						}
+					}
+				},
+				"node": {
+					"data": {
+						"type": "nodes",
+						"id": "vy6x2"
+					},
+					"links": {
+						"related": {
+							"href": "https://api.osf.io/v2/nodes/vy6x2/",
+							"meta": {}
+						}
+					}
+				},
+				"target": {
+					"links": {
+						"related": {
+							"href": "https://api.osf.io/v2/nodes/vy6x2/",
+							"meta": {
+								"type": "node"
+							}
+						}
+					}
+				}
+			},
+			"links": {
+				"info": "https://api.osf.io/v2/files/5b5de758f63e210010ec8f53/",
+				"new_folder": "https://files.osf.io/v1/resources/vy6x2/providers/osfstorage/5b5de758f63e210010ec8f53/?kind=folder",
+				"self": "https://api.osf.io/v2/files/5b5de758f63e210010ec8f53/",
+				"move": "https://files.osf.io/v1/resources/vy6x2/providers/osfstorage/5b5de758f63e210010ec8f53/",
+				"upload": "https://files.osf.io/v1/resources/vy6x2/providers/osfstorage/5b5de758f63e210010ec8f53/",
+				"delete": "https://files.osf.io/v1/resources/vy6x2/providers/osfstorage/5b5de758f63e210010ec8f53/"
+			},
+			"attributes": {
+				"extra": {
+					"hashes": {
+						"sha256": null,
+						"md5": null
+					}
+				},
+				"kind": "folder",
+				"name": "test_folder",
+				"last_touched": null,
+				"materialized_path": "/test_folder/",
+				"date_modified": null,
+				"current_version": 1,
+				"date_created": null,
+				"provider": "osfstorage",
+				"path": "/5b5de758f63e210010ec8f53/",
+				"current_user_can_comment": true,
+				"guid": null,
+				"checkout": null,
+				"tags": [],
+				"size": null
+			},
+			"type": "files",
+			"id": "5b5de758f63e210010ec8f53"
+		},
+		"meta": {
+			"version": "2.0"
+		}
+	},
+	"api_response_404": {
+		"errors": [
+			{
+				"detail": "Not found."}
+		],
+		"meta": {
+			"version": "2.0"
+		}
 	}
 }

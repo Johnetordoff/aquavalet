@@ -7,7 +7,7 @@ from aquavalet.core import exceptions, streams
 
 class OsfProvider(provider.BaseProvider):
     NAME = 'OSF'
-    PATH_PATTERN = r'\/(?P<internal_provider>(?:\w|\d)+)?\/(?P<resource>[a-zA-Z0-9]{5,})?(?P<path>\/.*)?'
+    PATH_PATTERN = r'^\/(?P<internal_provider>(?:\w|\d)+)?\/(?P<resource>[a-zA-Z0-9]{5,})?(?P<path>\/.*)?'
 
     @property
     def default_headers(self):
@@ -18,9 +18,6 @@ class OsfProvider(provider.BaseProvider):
         if match:
             groupdict = match.groupdict()
         else:
-            raise exceptions.InvalidPathError(f'No internal provider in url, path must follow pattern {self.PATH_PATTERN}')
-
-        if not groupdict.get('internal_provider'):
             raise exceptions.InvalidPathError(f'No internal provider in url, path must follow pattern {self.PATH_PATTERN}')
         self.internal_provider = groupdict.get('internal_provider')
 
@@ -33,34 +30,19 @@ class OsfProvider(provider.BaseProvider):
         elif groupdict.get('path') == '/':
             return self.Item.root(self.internal_provider, self.resource)
         path = groupdict.get('path')
-
         if self.internal_provider == 'osfstorage':
             async with aiohttp.ClientSession() as session:
                 async with session.get(
                     url=self.API_URL.format(path=path),
                     headers=self.default_headers
                 ) as resp:
+                    print(resp.status)
                     if resp.status == 200:
                         data = (await resp.json())['data']
                     else:
                         raise await self.handle_response(resp, path=path)
 
         return self.Item(data['attributes'], self.internal_provider, self.resource)
-
-    def can_duplicate_names(self):
-        return True
-
-    def can_intra_copy(self, other, path=None):
-        return isinstance(other, self.__class__)
-
-    def can_intra_move(self, other, path=None):
-        return isinstance(other, self.__class__)
-
-    async def intra_move(self, dest_provider, src_path, dest_path):
-        pass
-
-    async def intra_copy(self, dest_provider, src_path, dest_path):
-        pass
 
     async def download(self, session, version=None, range=None, item=None):
         item = item or self.item

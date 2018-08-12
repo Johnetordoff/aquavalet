@@ -25,7 +25,7 @@ class BaseOsfStyleItemMetadata(metadata.BaseMetadata):
             'etag': '',
             'path': '/',
         }
-        return cls(raw, '/', internal_provider, resource)
+        return cls(raw, internal_provider, resource)
 
     @property
     def name(self):

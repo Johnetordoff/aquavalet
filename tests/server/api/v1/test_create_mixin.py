@@ -6,9 +6,6 @@ from unittest import mock
 from aquavalet.core import exceptions
 from aquavalet.server.api.v1.provider.create import CreateMixin
 
-from tests.utils import MockCoroutine
-
-
 class BaseCreateMixinTest:
 
     def setup_method(self, method):
