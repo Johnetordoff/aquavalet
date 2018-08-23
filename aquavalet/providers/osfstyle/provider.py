@@ -3,7 +3,13 @@ import json
 import aiohttp
 
 from aquavalet.core import provider
-from aquavalet.core import exceptions, streams
+
+from aquavalet.core import streams
+from aquavalet.providers.utils import require_group, require_match
+
+message_no_internal_provider = 'No internal provider in url, path must follow pattern ^\/(?P<internal_provider>(?:\w|\d)+)?\/(?P<resource>[a-zA-Z0-9]{5,})?(?P<path>\/.*)?'
+message_no_resource = 'No internal provider in url, path must follow pattern ^\/(?P<internal_provider>(?:\w|\d)+)?\/(?P<resource>[a-zA-Z0-9]{5,})?(?P<path>\/.*)?'
+message_no_path = 'No path in url, path must follow pattern ^\/(?P<internal_provider>(?:\w|\d)+)?\/(?P<resource>[a-zA-Z0-9]{5,})?(?P<path>\/.*)?'
 
 class OsfProvider(provider.BaseProvider):
     NAME = 'OSF'
@@ -14,29 +20,21 @@ class OsfProvider(provider.BaseProvider):
         return {'Authorization': f'Bearer {self.token}'}
 
     async def validate_item(self, path):
-        match = re.match(self.PATH_PATTERN, path)
-        if match:
-            groupdict = match.groupdict()
-        else:
-            raise exceptions.InvalidPathError(f'No internal provider in url, path must follow pattern {self.PATH_PATTERN}')
-        self.internal_provider = groupdict.get('internal_provider')
+        match = require_match(self.PATH_PATTERN, path, 'match could not be found', message_no_internal_provider)
 
-        if not groupdict.get('resource'):
-            raise exceptions.InvalidPathError(f'No resource in url, path must follow pattern {self.PATH_PATTERN}')
-        self.resource = groupdict.get('resource')
+        self.internal_provider = require_group(match, 'internal_provider', message_no_internal_provider)
+        self.resource = require_group(match, 'resource', message_no_resource)
+        path = require_group(match, 'path')
 
-        if not groupdict.get('path'):
-            raise exceptions.InvalidPathError(f'No path in url, path must follow pattern {self.PATH_PATTERN}')
-        elif groupdict.get('path') == '/':
+        if path == '/':
             return self.Item.root(self.internal_provider, self.resource)
-        path = groupdict.get('path')
+
         if self.internal_provider == 'osfstorage':
             async with aiohttp.ClientSession() as session:
                 async with session.get(
                     url=self.API_URL.format(path=path),
                     headers=self.default_headers
                 ) as resp:
-                    print(resp.status)
                     if resp.status == 200:
                         data = (await resp.json())['data']
                     else:

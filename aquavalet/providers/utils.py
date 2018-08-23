@@ -1,3 +1,4 @@
+import re
 from aquavalet.core import exceptions
 
 def require_group(match, group_name, message=''):
@@ -7,3 +8,13 @@ def require_group(match, group_name, message=''):
         return group
     else:
         raise exceptions.InvalidPathError(message)
+
+
+def require_match(pattern, string, message=''):
+    match = re.match(pattern, string)
+    print(match)
+    if match:
+        return match
+    else:
+        raise exceptions.InvalidPathError(message)
+

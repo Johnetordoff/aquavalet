@@ -1,4 +1,5 @@
 import pytest
+import aiohttp
 
 from .fixtures import (
     provider,
@@ -7,10 +8,14 @@ from .fixtures import (
     file_metadata_json,
     file_metadata_resp,
     folder_metadata_json,
-    folder_metadata_resp
+    folder_metadata_resp,
+    file_metadata_object,
+    download_resp
+
 )
 
 from aquavalet.providers.osfstorage.metadata import OsfMetadata
+from aquavalet.core.streams import ResponseStreamReader
 from aquavalet.core.exceptions import (
     InvalidPathError,
     NotFoundError
@@ -77,3 +82,14 @@ class TestValidateItem:
         assert item.kind == 'folder'
         assert item.mimetype is None
 
+class TestDownload:
+
+    @pytest.mark.asyncio
+    async def test_download(self, provider, file_metadata_object, download_resp, aresponses):
+        aresponses.add('files.osf.io', '/v1/resources/guid0/providers/osfstorage' + file_metadata_object.id, 'get', download_resp)
+
+        async with aiohttp.ClientSession() as session:
+            stream = await provider.download(session, item=file_metadata_object)
+
+        assert isinstance(stream, ResponseStreamReader)
+        assert await stream.read() == b'test stream!'

@@ -1,7 +1,7 @@
 import io
 import os
 import json
-from tests.utils import json_resp
+from tests.utils import json_resp, data_resp
 
 import pytest
 
@@ -36,6 +36,10 @@ def folder_metadata_resp(folder_metadata_json):
     return json_resp(folder_metadata_json)
 
 @pytest.fixture
+def download_resp():
+    return data_resp(b'test stream!')
+
+@pytest.fixture
 def file_metadata_json():
     with open(os.path.join(os.path.dirname(__file__), 'fixtures/fixtures.json'), 'r') as fp:
         return json.load(fp)['file_metadata']
@@ -60,8 +64,8 @@ def revisions_metadata():
         return json.load(fp)['revisions_metadata']
 
 @pytest.fixture
-def file_metadata_object(file_metadata):
-    return OsfMetadata(file_metadata)
+def file_metadata_object(file_metadata_json, provider):
+    return OsfMetadata(file_metadata_json['data']['attributes'], provider.internal_provider, provider.resource)
 
 
 @pytest.fixture
@@ -83,4 +87,7 @@ def file_stream(file_like):
 
 @pytest.fixture
 def provider():
-    return OSFStorageProvider({})
+    provider = OSFStorageProvider({})
+    provider.internal_provider = 'osfstorage'
+    provider.resource = 'guid0'
+    return provider
