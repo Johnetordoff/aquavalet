@@ -92,4 +92,7 @@ class TestDownload:
             stream = await provider.download(session, item=file_metadata_object)
 
         assert isinstance(stream, ResponseStreamReader)
+        assert stream.size == 12
+        assert stream.name == None
+        assert stream.content_type == 'application/octet-stream'
         assert await stream.read() == b'test stream!'

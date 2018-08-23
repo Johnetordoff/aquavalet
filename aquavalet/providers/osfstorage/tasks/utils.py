@@ -1,19 +1,11 @@
-import os
-import glob
-import json
-import errno
 import logging
 import functools
 import contextlib
-import subprocess
-from http import HTTPStatus
 
-import aiohttp
 from celery.utils.log import get_task_logger
 
 from aquavalet.tasks.app import app
 from aquavalet.providers.osfstorage import settings
-from aquavalet.providers.osfstorage.tasks import exceptions
 
 
 logger = get_task_logger(__name__)

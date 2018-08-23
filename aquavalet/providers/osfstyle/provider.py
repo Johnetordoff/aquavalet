@@ -20,7 +20,7 @@ class OsfProvider(provider.BaseProvider):
         return {'Authorization': f'Bearer {self.token}'}
 
     async def validate_item(self, path):
-        match = require_match(self.PATH_PATTERN, path, 'match could not be found', message_no_internal_provider)
+        match = require_match(self.PATH_PATTERN, path, 'match could not be found')
 
         self.internal_provider = require_group(match, 'internal_provider', message_no_internal_provider)
         self.resource = require_group(match, 'resource', message_no_resource)
