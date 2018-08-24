@@ -42,13 +42,13 @@ class OsfProvider(provider.BaseProvider):
 
         return self.Item(data['attributes'], self.internal_provider, self.resource)
 
-    async def download(self, session, version=None, range=None, item=None):
+    async def download(self, session, version=None, rng=None, item=None):
         item = item or self.item
 
         download_header = self.default_headers
 
         if range:
-            download_header.update({'Range': 'bytes={}-{}'.format(range[0], range[1] - 1)})
+            download_header.update({'Range': str(self._build_range_header(rng))})
 
         resp = await session.get(
             url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}',

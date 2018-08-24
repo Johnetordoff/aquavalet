@@ -2,299 +2,239 @@ import pytest
 
 import io
 import os
-import shutil
 from http import client
 
-from aquavalet.core import streams
-from aquavalet.core import metadata
+from aquavalet.core.streams import FileStreamReader, StringStream
+from aquavalet.providers.filesystem.metadata import FileSystemMetadata
 from aquavalet.core import exceptions
+
+from .fixtures import (
+    provider,
+    setup_filesystem
+)
 
 from aquavalet.providers.filesystem import FileSystemProvider
 
 
-@pytest.fixture
-def auth():
-    return {}
-
-
-@pytest.fixture
-def credentials():
-    return {}
-
-
-@pytest.fixture
-def settings(tmpdir):
-    return {'folder': str(tmpdir)}
-
-
-@pytest.fixture
-def provider(auth, credentials, settings):
-    return FileSystemProvider(auth, credentials, settings)
-
-
-@pytest.fixture(scope="function", autouse=True)
-def setup_filesystem(provider):
-    shutil.rmtree(provider.folder)
-    os.makedirs(provider.folder, exist_ok=True)
-
-    with open(os.path.join(provider.folder, 'flower.jpg'), 'wb') as fp:
-        fp.write(b'I am a file')
-
-    os.mkdir(os.path.join(provider.folder, 'subfolder'))
-    os.mkdir(os.path.join(provider.folder, 'other_subfolder'))
-
-    with open(os.path.join(provider.folder, 'subfolder', 'nested.txt'), 'wb') as fp:
-        fp.write(b'Here is my content')
-
-
-class TestValidatePath:
+class TestValidateItem:
 
     @pytest.mark.asyncio
-    async def test_validate_v1_path_file(self, provider):
-        try:
-            wb_path_v1 = await provider.validate_v1_path('/flower.jpg')
-        except Exception as exc:
-            pytest.fail(str(exc))
+    async def test_validate_item(self, provider, setup_filesystem):
 
+        item = await provider.validate_item('test folder/flower.jpg')
+
+        assert isinstance(item, FileSystemMetadata)
+        assert item.name == 'flower.jpg'
+        assert item.id == 'test folder/flower.jpg'
+        assert item.path == 'test folder/flower.jpg'
+        assert item.kind == 'file'
+        assert item.parent == 'test folder/'
+
+
+    @pytest.mark.asyncio
+    async def test_validate_item_not_found(self, provider):
         with pytest.raises(exceptions.NotFoundError) as exc:
-            await provider.validate_v1_path('/flower.jpg/')
+            await provider.validate_item('/missing.txt')
 
-        assert exc.value.code == client.NOT_FOUND
+        assert exc.value.message == "Item at '/missing.txt' could not be found, folders must end with '/'"
 
-        wb_path_v0 = await provider.validate_path('/flower.jpg')
-
-        assert wb_path_v1 == wb_path_v0
+class TestDownload:
 
     @pytest.mark.asyncio
-    async def test_validate_v1_path_folder(self, provider):
-        try:
-            wb_path_v1 = await provider.validate_v1_path('/subfolder/')
-        except Exception as exc:
-            pytest.fail(str(exc))
+    async def test_download(self, provider, setup_filesystem):
+        item = await provider.validate_item('test folder/flower.jpg')
 
-        with pytest.raises(exceptions.NotFoundError) as exc:
-            await provider.validate_v1_path('/subfolder')
+        stream = await provider.download(item=item)
 
-        assert exc.value.code == client.NOT_FOUND
+        isinstance(stream, FileStreamReader)
+        assert stream.size == 11
 
-        wb_path_v0 = await provider.validate_path('/subfolder/')
-
-        assert wb_path_v1 == wb_path_v0
-
-
-class TestCRUD:
-
-    @pytest.mark.asyncio
-    async def test_download(self, provider):
-        path = await provider.validate_path('/flower.jpg')
-
-        result = await provider.download(path)
-        content = await result.read()
-
+        content = await stream.read()
         assert content == b'I am a file'
 
     @pytest.mark.asyncio
     async def test_download_range(self, provider):
-        path = await provider.validate_path('/flower.jpg')
+        item = await provider.validate_item('test folder/flower.jpg')
 
-        result = await provider.download(path, range=(0, 1))
-        assert result.partial
-        content = await result.read()
-        assert content == b'I '
+        stream = await provider.download(item=item, range=(0, 1))
+        assert stream.partial
+        assert stream.size == 2
+        assert await stream.read() == b'I '
 
-        result = await provider.download(path, range=(2, 5))
-        assert result.partial
-        content = await result.read()
-        assert content == b'am a'
+        stream = await provider.download(item=item, range=(2, 5))
+        assert stream.partial
+        assert stream.size == 4
+        assert await stream.read() == b'am a'
 
     @pytest.mark.asyncio
     async def test_download_range_open_ended(self, provider):
-        path = await provider.validate_path('/flower.jpg')
+        item = await provider.validate_item('test folder/flower.jpg')
 
-        result = await provider.download(path, range=(0, None))
-        assert hasattr('result', 'partial') == False
-        content = await result.read()
-
-        assert content == b'I am a file'
+        stream = await provider.download(item=item, range=(0, None))
+        assert not stream.partial
+        assert await stream.read() == b'I am a file'
 
     @pytest.mark.asyncio
-    async def test_download_not_found(self, provider):
-        path = await provider.validate_path('/missing.txt')
+    async def test_download_zip(self, provider):
+        item = await provider.validate_item('test folder/')
 
-        with pytest.raises(exceptions.DownloadError):
-            await provider.download(path)
+        stream = await provider.zip(None, item=item)
+        assert await stream.read() == b'I am a file'
+
+
+class TestUpload:
 
     @pytest.mark.asyncio
-    async def test_upload_create(self, provider):
-        file_name = 'upload.txt'
-        file_folder = '/'
-        file_path = os.path.join(file_folder, file_name)
+    async def test_upload(self, provider):
+        item = await provider.validate_item('test folder/')
+
         file_content = b'Test Upload Content'
-        file_stream = streams.StringStream(file_content)
+        file_stream = StringStream(file_content)
 
-        path = await provider.validate_path(file_path)
-        metadata, created = await provider.upload(file_stream, path)
+        await provider.upload(stream=file_stream, item=item, new_name='upload.txt')
 
-        assert metadata.name == file_name
-        assert metadata.path == file_path
-        assert metadata.size == len(file_content)
-        assert created is True
+        item = await provider.validate_item('test folder/upload.txt')
 
-    @pytest.mark.asyncio
-    async def test_upload_update(self, provider):
-        file_name = 'flower.jpg'
-        file_folder = '/'
-        file_path = os.path.join(file_folder, file_name)
-        file_content = b'Short and stout'
-        file_stream = streams.FileStreamReader(io.BytesIO(file_content))
+        assert item.name == 'upload.txt'
+        assert item.path == 'test folder/upload.txt'
+        assert item.size == len(file_content)
 
-        path = await provider.validate_path(file_path)
-        metadata, created = await provider.upload(file_stream, path)
 
-        assert metadata.name == file_name
-        assert metadata.path == file_path
-        assert metadata.size == len(file_content)
-        assert created is False
+class TestDelete:
 
     @pytest.mark.asyncio
-    async def test_upload_nested_create(self, provider):
-        file_name = 'new.txt'
-        file_folder = '/newsubfolder'
-        file_path = os.path.join(file_folder, file_name)
-        file_content = b'Test New Nested Content'
-        file_stream = streams.FileStreamReader(io.BytesIO(file_content))
+    async def test_delete_file(self, provider, setup_filesystem):
+        item = await provider.validate_item('test folder/flower.jpg')
 
-        path = await provider.validate_path(file_path)
-        metadata, created = await provider.upload(file_stream, path)
+        await provider.delete(item=item)
 
-        assert metadata.name == file_name
-        assert metadata.path == file_path
-        assert metadata.size == len(file_content)
-        assert created is True
-
-    @pytest.mark.asyncio
-    async def test_upload_nested_update(self, provider):
-        file_name = 'nested.txt'
-        file_folder = '/subfolder'
-        file_path = os.path.join(file_folder, file_name)
-        file_content = b'Test Update Nested Content'
-        file_stream = streams.FileStreamReader(io.BytesIO(file_content))
-
-        path = await provider.validate_path(file_path)
-        metadata, created = await provider.upload(file_stream, path)
-
-        assert metadata.name == file_name
-        assert metadata.path == file_path
-        assert metadata.size == len(file_content)
-        assert created is False
-
-    @pytest.mark.asyncio
-    async def test_delete_file(self, provider):
-        path = await provider.validate_path('/flower.jpg')
-
-        await provider.delete(path)
-
-        with pytest.raises(exceptions.MetadataError):
-            await provider.metadata(path)
+        with pytest.raises(exceptions.NotFoundError):
+            await provider.validate_item('test folder/flower.jpg')
 
     @pytest.mark.asyncio
     async def test_delete_folder(self, provider):
-        path = await provider.validate_path('/subfolder/')
+        item = await provider.validate_item('test folder/subfolder/')
 
-        await provider.delete(path)
+        await provider.delete(item=item)
 
-        with pytest.raises(exceptions.MetadataError):
-            await provider.metadata(path)
+        with pytest.raises(exceptions.NotFoundError):
+            await provider.validate_item('test folder/subfolder/')
 
     @pytest.mark.asyncio
     async def test_delete_root(self, provider):
-        path = await provider.validate_path('/')
+        path = await provider.validate_item('/')
 
-        await provider.delete(path)
+        with pytest.raises(Exception) as exc:  # temp
+            await provider.delete(path)
 
-        assert os.path.exists(provider.folder)
+        assert str(exc.value) == "That's the root!"
+
+        assert os.path.exists('/')
+
+
+class TestChildren:
+
+    @pytest.mark.asyncio
+    async def test_children(self, provider):
+        item = await provider.validate_item('test folder/')
+        children = await provider.children(item=item)
+
+        assert isinstance(children, list)
+        assert len(children) == 3
+
+        file = next(x for x in children if x.kind == 'file')
+        assert file.name == 'flower.jpg'
+        assert file.path == 'test folder/flower.jpg'
+        folder = next(x for x in children if x.kind == 'folder')
+        assert folder.name == 'subfolder' or 'other_subfolder'
+        assert folder.path == 'test folder/subfolder/' or 'test folder/other_subfolder/'
 
 
 class TestMetadata:
+    """
+    The metadata method doesn't really exist in this provider, so these tests are just here for no  reason.
+    """
 
     @pytest.mark.asyncio
-    async def test_metadata(self, provider):
-        path = await provider.validate_path('/')
-        result = await provider.metadata(path)
+    async def test_metadata_file(self, provider):
+        item = await provider.validate_item('test folder/flower.jpg')
 
-        assert isinstance(result, list)
-        assert len(result) == 3
-
-        file = next(x for x in result if x.kind == 'file')
-        assert file.name == 'flower.jpg'
-        assert file.path == '/flower.jpg'
-        folder = next(x for x in result if x.kind == 'folder')
-        assert folder.name == 'subfolder' or 'other_subfolder'
-        assert folder.path == '/subfolder/' or '/other_subfolder/'
+        assert isinstance(item, FileSystemMetadata)
+        assert item.kind == 'file'
+        assert item.name == 'flower.jpg'
+        assert item.path == 'test folder/flower.jpg'
 
     @pytest.mark.asyncio
-    async def test_metadata_root_file(self, provider):
-        path = await provider.validate_path('/flower.jpg')
-        result = await provider.metadata(path)
+    async def test_metadata_folder(self, provider):
+        item = await provider.validate_item('test folder/subfolder/')
 
-        assert isinstance(result, metadata.BaseFileMetadata)
-        assert result.kind == 'file'
-        assert result.name == 'flower.jpg'
-        assert result.path == '/flower.jpg'
+        assert isinstance(item, FileSystemMetadata)
+        assert item.kind == 'folder'
+        assert item.name == 'subfolder'
+        assert item.path == 'test folder/subfolder/'
 
     @pytest.mark.asyncio
     async def test_metadata_missing(self, provider):
-        path = await provider.validate_path('/missing.txt')
 
-        with pytest.raises(exceptions.MetadataError):
-            await provider.metadata(path)
+        with pytest.raises(exceptions.NotFoundError):
+            await provider.validate_item('/missing.txt')
 
 
 class TestIntra:
 
     @pytest.mark.asyncio
-    async def test_intra_copy_file(self, provider):
-        src_path = await provider.validate_path('/flower.jpg')
-        dest_path = await provider.validate_path('/subfolder/flower.jpg')
+    async def test_intra_copy_file(self, provider, setup_filesystem):
+        src_item = await provider.validate_item('test folder/flower.jpg')
+        dest_item = await provider.validate_item('test folder/subfolder/')
 
-        result = await provider.intra_copy(provider, src_path, dest_path)
+        await provider.intra_copy(provider, src_item, dest_item)
 
-        assert result[1] is True
-        assert isinstance(result[0], metadata.BaseFileMetadata)
-        assert result[0].path == '/subfolder/flower.jpg'
-        assert result[0].kind == 'file'
-        assert result[0].name == 'flower.jpg'
+        item = await provider.validate_item('test folder/subfolder/flower.jpg')
+
+        assert isinstance(item, FileSystemMetadata)
+        assert item.path == 'test folder/subfolder/flower.jpg'
+        assert item.kind == 'file'
+        assert item.name == 'flower.jpg'
+
+        await provider.validate_item('test folder/flower.jpg')  # asserts not deleted
+
+    @pytest.mark.asyncio
+    async def test_intra_move_file(self, provider, setup_filesystem):
+        src_item = await provider.validate_item('test folder/flower.jpg')
+        dest_item = await provider.validate_item('test folder/subfolder/')
+
+        await provider.intra_move(provider, src_item, dest_item)
+
+        item = await provider.validate_item('test folder/subfolder/flower.jpg')
+
+        assert isinstance(item, FileSystemMetadata)
+        assert item.path == 'test folder/subfolder/flower.jpg'
+        assert item.kind == 'file'
+        assert item.name == 'flower.jpg'
+
+        with pytest.raises(exceptions.NotFoundError):
+            await provider.validate_item('test folder/flower.jpg')
+
 
     @pytest.mark.asyncio
     async def test_intra_move_folder(self, provider):
-        src_path = await provider.validate_path('/subfolder/')
-        dest_path = await provider.validate_path('/other_subfolder/subfolder/')
+        src_item = await provider.validate_item('test folder/subfolder/')
+        dest_item = await provider.validate_item('test folder/other_subfolder/')
 
-        result = await provider.intra_move(provider, src_path, dest_path)
+        await provider.intra_move(provider, src_item, dest_item)
 
-        assert result[1] is True
-        assert result[0][0].path == '/other_subfolder/subfolder/nested.txt'
-        assert result[0][0].kind == 'file'
-        assert result[0][0].name == 'nested.txt'
+        item = await provider.validate_item('test folder/other_subfolder/subfolder/nested.txt')
 
-    @pytest.mark.asyncio
-    async def test_intra_move_file(self, provider):
-        src_path = await provider.validate_path('/flower.jpg')
-        dest_path = await provider.validate_path('/subfolder/flower.jpg')
+        assert item.path == 'test folder/other_subfolder/subfolder/nested.txt'
+        assert item.kind == 'file'
+        assert item.name == 'nested.txt'
 
-        result = await provider.intra_move(provider, src_path, dest_path)
 
-        assert result[1] is True
-        assert isinstance(result[0], metadata.BaseFileMetadata)
-        assert result[0].path == '/subfolder/flower.jpg'
-        assert result[0].kind == 'file'
-        assert result[0].name == 'flower.jpg'
+class TestInter:
+    pass
 
 
 class TestOperations:
-
-    def test_can_duplicate_names(self, provider):
-        assert provider.can_duplicate_names() is False
 
     def test_can_intra_copy(self, provider):
         assert provider.can_intra_copy(provider)

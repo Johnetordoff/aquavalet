@@ -12,7 +12,7 @@ import aiohttp
 
 from aquavalet.core import streams
 from aquavalet.core import exceptions
-from aquavalet import settings as wb_settings
+from aquavalet.settings import CONCURRENT_OPS
 from aquavalet.core import metadata as wb_metadata
 from aquavalet.core.utils import ZipStreamGeneratorReader
 
@@ -175,9 +175,9 @@ class BaseProvider(metaclass=abc.ABCMeta):
 
         items = await self.children(item=src_path)
 
-        for i in range(0, len(items), wb_settings.OP_CONCURRENCY):
+        for i in range(0, len(items), CONCURRENT_OPS):
             futures = []
-            for item in items[i:i + wb_settings.OP_CONCURRENCY]:
+            for item in items[i:i + CONCURRENT_OPS]:
                 futures.append(asyncio.ensure_future(func(dest_provider, item=item, destination_item=folder)))
 
                 if item.is_folder:
@@ -194,158 +194,36 @@ class BaseProvider(metaclass=abc.ABCMeta):
         return folder
 
     async def handle_naming(self, src_path, dest_path, rename: str=None, conflict: str='replace'):
-        """Given a :class:`.AquaValetPath` and the desired name, handle any potential naming issues.
-
-        i.e.:
-
-        ::
-
-            cp /file.txt /folder/           ->    /folder/file.txt
-            cp /folder/ /folder/            ->    /folder/folder/
-            cp /file.txt /folder/file.txt   ->    /folder/file.txt
-            cp /file.txt /folder/file.txt   ->    /folder/file (1).txt
-            cp /file.txt /folder/doc.txt    ->    /folder/doc.txt
-
-
-        :param src_path: ( :class:`.AquaValetPath` ) The object that is being copied
-        :param dest_path: ( :class:`.AquaValetPath` ) The path that is being copied to or into
-        :param rename: ( :class:`str` ) The desired name of the resulting path, may be incremented
-        :param conflict: ( :class:`str` ) The conflict resolution strategy, ``replace`` or ``keep``
-
-        :rtype: :class:`.AquaValetPath`
-        """
-        if self.item.is_folder and dest_path.is_file:
-            # Cant copy a directory to a file
-            raise ValueError('Destination must be a directory if the source is')
-
-        if not dest_path.is_file:
-            # Directories always are going to be copied into
-            # cp /folder1/ /folder2/ -> /folder1/folder2/
-            dest_path = await self.revalidate_path(
-                dest_path,
-                rename or src_path.name,
-                folder=src_path.is_dir
-            )
+        """"""
+        dest_path = await self.revalidate_path(
+            dest_path,
+            rename or src_path.name,
+            folder=src_path.is_dir
+        )
 
         dest_path, _ = await self.handle_name_conflict(dest_path, conflict=conflict)
 
         return dest_path
 
-    def can_intra_copy(self, other: 'BaseProvider', path) -> bool:
-        """Indicates if a quick copy can be performed between the current provider and `other`.
-
-        .. note::
-            Defaults to False
-
-        :param other: ( :class:`.BaseProvider` ) The provider to check against
-        :param  path: ( :class:`.AquaValetPath` ) The path of the desired resource
-        :rtype: :class:`bool`
+    def can_intra_copy(self, other, path) -> bool:
+        """
         """
         return False
 
-    def can_intra_move(self, other: 'BaseProvider', path) -> bool:
-        """Indicates if a quick move can be performed between the current provider and `other`.
-
-        .. note::
-            Defaults to False
-
-        :param other: ( :class:`.BaseProvider` ) The provider to check against
-        :param path: ( :class:`.AquaValetPath` ) The path of the desired resource
-        :rtype: :class:`bool`
+    def can_intra_move(self, other, path) -> bool:
+        """
         """
         return False
 
-    async def intra_copy(self, dest_provider: 'BaseProvider', source_path, dest_path) -> typing.Tuple[wb_metadata.BaseMetadata, bool]:
-        """If the provider supports copying files and/or folders within itself by some means other
-        than download/upload, then ``can_intra_copy`` should return ``True``.  This method will
-        implement the copy.  It accepts the destination provider, a source path, and the
-        destination path.  Returns the metadata for the newly created file and a boolean indicating
-        whether the copied entity is completely new (``True``) or overwrote a previously-existing
-        file (``False``).
-
-        :param  dest_provider: ( :class:`.BaseProvider` )  a provider instance for the destination
-        :param  src_path: ( :class:`.AquaValetPath` )  the Path of the entity being copied
-        :param  dest_path: ( :class:`.AquaValetPath` ) the Path of the destination being copied to
-        :rtype: (:class:`.BaseFileMetadata`, :class:`bool`)
-        """
-        raise NotImplementedError
-
-    async def intra_move(self, dest_provider: 'BaseProvider', src_path, dest_path) -> typing.Tuple[wb_metadata.BaseMetadata, bool]:
-        """If the provider supports moving files and/or folders within itself by some means other
-        than download/upload/delete, then ``can_intra_move`` should return ``True``.  This method
-        will implement the move.  It accepts the destination provider, a source path, and the
-        destination path.  Returns the metadata for the newly created file and a boolean indicating
-        whether the moved entity is completely new (``True``) or overwrote a previously-existing
-        file (``False``).
-
-        :param  dest_provider: ( :class:`.BaseProvider` ) a provider instance for the destination
-        :param  src_path: ( :class:`.AquaValetPath` ) the Path of the entity being moved
-        :param  dest_path: ( :class:`.AquaValetPath` ) the Path of the destination being moved to
-        :rtype: (:class:`.BaseFileMetadata`, :class:`bool`)
-        """
-        data, created = await self.intra_copy(dest_provider, src_path, dest_path)
-        #await self.delete(src_path)
-        return data, created
-
-    async def exists(self, path, **kwargs) \
-            -> typing.Union[bool, wb_metadata.BaseMetadata, typing.List[wb_metadata.BaseMetadata]]:
-        """Check for existence of AquaValetPath
-
-        Attempt to retrieve provider metadata to determine existence of a AquaValetPath.  If
-        successful, will return the result of `self.metadata()` which may be `[]` for empty
-        folders.
-
-        :param  path: ( :class:`.AquaValetPath` ) path to check for
-        :rtype: (`self.metadata()` or False)
-        """
-        try:
-            return await self.metadata(path, **kwargs)
-        except exceptions.NotFoundError:
-            return False
-        except exceptions.MetadataError as e:
-            if e.code != 404:
-                raise
-        return False
-
-    async def handle_name_conflict(self, path, conflict: str='replace', **kwargs):
-        """Check AquaValetPath and resolve conflicts
-
-        Given a AquaValetPath and a conflict resolution pattern determine
-        the correct file path to upload to and indicate if that file exists or not
-
-        :param  path: ( :class:`.AquaValetPath` ) Desired path to check for conflict
-        :param conflict: ( :class:`str` ) replace, keep, warn
-        :rtype: (:class:`.AquaValetPath` or False)
-        :raises: :class:`.NamingConflict`
-        """
-        exists = await self.exists(path, **kwargs)
-        if (not exists and not exists == []) or conflict == 'replace':
-            return path, exists  # type: ignore
-        if conflict == 'warn':
-            raise exceptions.NamingConflict(path.name)
-
-        while True:
-            path.increment_name()
-            test_path = await self.revalidate_path(
-                path.parent,
-                path.name,
-                folder=path.is_dir
-            )
-
-            exists = await self.exists(test_path, **kwargs)
-            if not (exists or exists == []):
-                break
-
-        return path, False
-
-    async def zip(self, session, **kwargs) -> asyncio.StreamReader:
+    async def zip(self, session, item=None) -> ZipStreamGeneratorReader:
         """Streams a Zip archive of the given folder
 
         :param  path: ( :class:`.AquaValetPath` ) The folder to compress
         """
+        item = item or self.item
 
-        children = await self.children()  # type: ignore
-        return ZipStreamGeneratorReader(self, self.item, children, session)  # type: ignore
+        children = await self.children(item=item)  # type: ignore
+        return ZipStreamGeneratorReader(self, item, children, session)  # type: ignore
 
     @abc.abstractmethod
     async def download(self, item=None, version=None, range=None) -> streams.ResponseStreamReader:
@@ -364,6 +242,10 @@ class BaseProvider(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
+    async def children(self, item=None) -> wb_metadata.BaseMetadata:
+        raise NotImplementedError
+
+    @abc.abstractmethod
     async def validate_item(self, item=None) -> wb_metadata.BaseMetadata:
         raise NotImplementedError
 
@@ -378,7 +260,6 @@ class BaseProvider(metaclass=abc.ABCMeta):
 
     def _build_range_header(self, slice_tup: typing.Tuple[int, int]) -> str:
         start, end = slice_tup
-        return 'bytes={}-{}'.format(
-            '' if start is None else start,
-            '' if end is None else end
-        )
+        start = '' if start is None else start
+        end = '' if end is None else end
+        return 'bytes={}-{}'.format(start, end)

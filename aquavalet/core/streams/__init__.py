@@ -5,7 +5,6 @@ from aquavalet.core.streams.base import StringStream  # noqa
 from aquavalet.core.streams.base import EmptyStream  # noqa
 
 from aquavalet.core.streams.file import FileStreamReader  # noqa
-from aquavalet.core.streams.file import PartialFileStreamReader  # noqa
 
 from aquavalet.core.streams.http import FormDataStream  # noqa
 from aquavalet.core.streams.http import RequestStreamReader  # noqa

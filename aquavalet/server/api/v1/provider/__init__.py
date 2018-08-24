@@ -153,6 +153,7 @@ class ProviderHandler(core.BaseHandler):
     async def delete(self, provider,  path):
         comfirm_delete = self.get_query_argument('comfirm_delete', default=None)
         await self.provider.delete(comfirm_delete)
+        self.set_status(204)
 
     async def data_received(self, chunk):
         """Note: Only called during uploads."""

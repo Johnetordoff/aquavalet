@@ -96,3 +96,27 @@ class TestDownload:
         assert stream.name == None
         assert stream.content_type == 'application/octet-stream'
         assert await stream.read() == b'test stream!'
+
+    @pytest.mark.asyncio
+    async def test_download_range(self, provider, file_metadata_object, download_resp, aresponses):
+        aresponses.add('files.osf.io', '/v1/resources/guid0/providers/osfstorage' + file_metadata_object.id, 'get', download_resp)
+
+        async with aiohttp.ClientSession() as session:
+            stream = await provider.download(session, item=file_metadata_object, range=(0,3))
+
+        assert isinstance(stream, ResponseStreamReader)
+        assert stream.size == 12
+        assert stream.name == None
+        assert stream.content_type == 'application/octet-stream'
+        assert await stream.read() == b'test stream!'
+
+
+class TestUpload:  #
+
+    @pytest.mark.asyncio
+    async def test_upload(self, provider, file_metadata_object, download_resp, aresponses):
+        aresponses.add('files.osf.io', '/v1/resources/guid0/providers/osfstorage' + file_metadata_object.id, 'get', download_resp)
+
+        item = await provider.download(item=file_metadata_object)
+
+        assert isinstance(item, OsfMetadata)

@@ -1,13 +1,25 @@
 import os
+import datetime
+import mimetypes
+
 from aquavalet.core import metadata
 
 
 
-class FileSystemItemMetadata(metadata.BaseMetadata):
+class FileSystemMetadata(metadata.BaseMetadata):
 
-    def __init__(self, raw):
-        self.raw = raw
+    def __init__(self, raw=None, path=None):
+        self.raw = {}
+        path = path or raw['path']
         self.default_segments = [self.provider]
+        modified = datetime.datetime.utcfromtimestamp(os.path.getmtime(path)).replace(tzinfo=datetime.timezone.utc)
+        self.raw.update({
+            'size': os.path.getsize(path),
+            'modified': modified.isoformat(),
+            'mime_type': mimetypes.guess_type(path)[0],
+            'path': path,
+            'name': os.path.basename(path.rstrip('/'))
+        })
 
     @classmethod
     def root(cls):
@@ -24,15 +36,6 @@ class FileSystemItemMetadata(metadata.BaseMetadata):
     @property
     def provider(self):
         return 'filesystem'
-
-    @classmethod
-    def build(cls, path):
-        raw = {
-            'path': path,
-            'name': os.path.basename(path.rstrip('/'))
-        }
-
-        return cls(raw)
 
     @property
     def id(self):
@@ -66,6 +69,10 @@ class FileSystemItemMetadata(metadata.BaseMetadata):
 
     @property
     def path(self):
+        return self.raw['path']
+
+    @property
+    def unix_path(self):
         return self.raw['path']
 
     @property
