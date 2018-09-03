@@ -28,14 +28,8 @@ def mypy(ctx):
 
 
 @task
-def test(ctx, verbose=False, types=False):
-    flake(ctx)
-    if types:
-        mypy(ctx)
-
-    cmd = 'py.test --cov-report term-missing --cov aquavalet tests'
-    if verbose:
-        cmd += ' -v'
+def test(ctx):
+    cmd = 'python -m pytest --cov-report=html --cov=aquavalet/providers/filesystem/'
     ctx.run(cmd, pty=True)
 
 

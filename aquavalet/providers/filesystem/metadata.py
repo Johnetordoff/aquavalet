@@ -4,8 +4,6 @@ import mimetypes
 
 from aquavalet.core import metadata
 
-
-
 class FileSystemMetadata(metadata.BaseMetadata):
 
     def __init__(self, raw=None, path=None):

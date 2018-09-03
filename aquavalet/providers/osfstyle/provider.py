@@ -24,7 +24,7 @@ class OsfProvider(provider.BaseProvider):
 
         self.internal_provider = require_group(match, 'internal_provider', message_no_internal_provider)
         self.resource = require_group(match, 'resource', message_no_resource)
-        path = require_group(match, 'path')
+        path = require_group(match, 'path', message_no_path)
 
         if path == '/':
             return self.Item.root(self.internal_provider, self.resource)
@@ -33,7 +33,7 @@ class OsfProvider(provider.BaseProvider):
             async with aiohttp.ClientSession() as session:
                 async with session.get(
                     url=self.API_URL.format(path=path),
-                    headers=self.default_headers
+                    headers=self.default_headers,
                 ) as resp:
                     if resp.status == 200:
                         data = (await resp.json())['data']
@@ -42,13 +42,11 @@ class OsfProvider(provider.BaseProvider):
 
         return self.Item(data['attributes'], self.internal_provider, self.resource)
 
-    async def download(self, session, version=None, rng=None, item=None):
-        item = item or self.item
-
+    async def download(self, item, session, version=None, range=None):
         download_header = self.default_headers
 
         if range:
-            download_header.update({'Range': str(self._build_range_header(rng))})
+            download_header.update({'Range': str(self._build_range_header(range))})
 
         resp = await session.get(
             url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}',
@@ -56,8 +54,7 @@ class OsfProvider(provider.BaseProvider):
         )
         return streams.ResponseStreamReader(resp, range)
 
-    async def upload(self, stream, new_name, item=None):
-        item = item or self.item
+    async def upload(self, item, stream, new_name):
 
         async with aiohttp.ClientSession() as session:
             async with session.put(
@@ -66,8 +63,12 @@ class OsfProvider(provider.BaseProvider):
                 headers=self.default_headers,
                 params={'kind': 'file', 'name': new_name}
             ) as resp:
-                print(resp)
-                print(await resp.json())
+                if resp.status in (200, 201):
+                    data = (await resp.json())['data']
+                else:
+                    raise await self.handle_response(resp, item)
+
+            return self.Item(data['attributes'], self.internal_provider, self.resource)
 
     async def delete(self, confirm_delete=0, item=None):
         item = item or self.item
@@ -81,11 +82,10 @@ class OsfProvider(provider.BaseProvider):
                 print(resp)
 
 
-    async def metadata(self, version=None):
-        return self.item
+    async def metadata(self, item, version=None):
+        return item
 
-    async def create_folder(self, new_name, item=None):
-        item = item or self.item
+    async def create_folder(self, item, new_name):
 
         async with aiohttp.ClientSession() as session:
             async with session.put(
@@ -100,8 +100,7 @@ class OsfProvider(provider.BaseProvider):
 
                 return self.Item(data['attributes'], item, self.internal_provider, self.resource)
 
-    async def rename(self, new_name, item=None):
-        item = item or self.item
+    async def rename(self, item, new_name):
 
         async with aiohttp.ClientSession() as session:
             async with session.post(
@@ -111,8 +110,7 @@ class OsfProvider(provider.BaseProvider):
             ) as resp:
                 print(resp)
 
-    async def children(self, item=None):
-        item = item or self.item
+    async def children(self, item):
 
         async with aiohttp.ClientSession() as session:
             async with session.get(
@@ -124,11 +122,9 @@ class OsfProvider(provider.BaseProvider):
                 else:
                     raise await self.handle_response(resp, item)
 
-        return [self.Item(metadata['attributes'], item.path, internal_provider=self.internal_provider, resource=self.resource) for metadata in data]
+        return [self.Item(metadata['attributes'], internal_provider=self.internal_provider, resource=self.resource) for metadata in data]
 
-    async def parent(self, item=None):
-        item = item or self.item
-
+    async def parent(self, item):
         if item.is_root:
             return item
 
@@ -153,9 +149,9 @@ class OsfProvider(provider.BaseProvider):
                     else:
                         raise await self.handle_response(resp, item)
 
-        return self.Item(child_item['attributes'], item.path, internal_provider=self.internal_provider, resource=self.resource)
+        return self.Item(child_item['attributes'], internal_provider=self.internal_provider, resource=self.resource)
 
-    async def root(self, item=None):
+    async def root(self, item):
         if item.is_root:
             return self
 

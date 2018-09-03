@@ -12,7 +12,6 @@ def require_group(match, group_name, message=''):
 
 def require_match(pattern, string, message=''):
     match = re.match(pattern, string)
-    print(match)
     if match:
         return match
     else:

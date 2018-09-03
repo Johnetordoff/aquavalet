@@ -108,7 +108,7 @@ class TestDownload:
         assert stream.size == 12
         assert stream.name == None
         assert stream.content_type == 'application/octet-stream'
-        assert await stream.read() == b'test stream!'
+        assert await stream.read() == b'test'
 
 
 class TestUpload:  #
@@ -117,6 +117,6 @@ class TestUpload:  #
     async def test_upload(self, provider, file_metadata_object, download_resp, aresponses):
         aresponses.add('files.osf.io', '/v1/resources/guid0/providers/osfstorage' + file_metadata_object.id, 'get', download_resp)
 
-        item = await provider.download(item=file_metadata_object)
+        item = await provider.upload(item=file_metadata_object)
 
         assert isinstance(item, OsfMetadata)

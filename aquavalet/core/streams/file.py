@@ -36,6 +36,10 @@ class FileStreamReader(BaseStream):
         self.file_pointer.close()
         self.feed_eof()
 
+    def at_eof(self):
+        return self.file_pointer.tell() == self.size
+
+
     @property
     def content_range(self):
         return None

@@ -2,7 +2,7 @@ import pytest
 
 import io
 import os
-from http import client
+import zipfile
 
 from aquavalet.core.streams import FileStreamReader, StringStream
 from aquavalet.providers.filesystem.metadata import FileSystemMetadata
@@ -10,10 +10,25 @@ from aquavalet.core import exceptions
 
 from .fixtures import (
     provider,
-    setup_filesystem
+    setup_filesystem,
+    file_metadata,
+    folder_metadata,
+    root_metadata,
+    missing_file_metadata
 )
 
 from aquavalet.providers.filesystem import FileSystemProvider
+
+class TestCreateFolder:
+
+    @pytest.mark.asyncio
+    async def test_create_folder(self, provider, setup_filesystem):
+        item = await provider.validate_item('test folder/')
+
+        item = await provider.create_folder(item, 'new_folder')
+
+        assert item.name == 'new_folder'
+        assert item.path == 'test folder/new_folder/'
 
 
 class TestValidateItem:
@@ -32,11 +47,25 @@ class TestValidateItem:
 
 
     @pytest.mark.asyncio
+    async def test_validate_item_root(self, provider, setup_filesystem):
+
+        item = await provider.validate_item('/')
+
+        assert isinstance(item, FileSystemMetadata)
+        assert item.name == 'filesystem root'
+        assert item.id == '/'
+        assert item.path == '/'
+        assert item.kind == 'folder'
+        assert item.parent == '/'
+
+
+    @pytest.mark.asyncio
     async def test_validate_item_not_found(self, provider):
         with pytest.raises(exceptions.NotFoundError) as exc:
             await provider.validate_item('/missing.txt')
 
         assert exc.value.message == "Item at '/missing.txt' could not be found, folders must end with '/'"
+
 
 class TestDownload:
 
@@ -75,12 +104,25 @@ class TestDownload:
         assert await stream.read() == b'I am a file'
 
     @pytest.mark.asyncio
-    async def test_download_zip(self, provider):
+    async def test_download_zip(self, provider, setup_filesystem):
         item = await provider.validate_item('test folder/')
 
-        stream = await provider.zip(None, item=item)
-        assert await stream.read() == b'I am a file'
+        stream = await provider.zip(item, None)
 
+        data = await stream.read()
+
+        zip = zipfile.ZipFile(io.BytesIO(data))
+
+        # Verify CRCs
+        assert zip.testzip() is None
+
+        # Check content of included files
+
+        zipped1 = zip.open('subfolder/nested.txt')
+        assert zipped1.read() == b'Here is my content'
+
+        zipped2 = zip.open('flower.jpg')
+        assert zipped2.read() == b'I am a file'
 
 class TestUpload:
 
@@ -121,15 +163,20 @@ class TestDelete:
             await provider.validate_item('test folder/subfolder/')
 
     @pytest.mark.asyncio
-    async def test_delete_root(self, provider):
-        path = await provider.validate_item('/')
-
-        with pytest.raises(Exception) as exc:  # temp
-            await provider.delete(path)
+    async def test_delete_root(self, provider, root_metadata):
+        with pytest.raises(Exception) as exc:  # TODO find stadard exception
+            await provider.delete(root_metadata)
 
         assert str(exc.value) == "That's the root!"
 
         assert os.path.exists('/')
+
+
+    @pytest.mark.asyncio
+    async def test_delete_404(self, provider, missing_file_metadata):
+
+        with pytest.raises(exceptions.NotFoundError) as exc:  # temp
+            await provider.delete(missing_file_metadata)
 
 
 class TestChildren:
@@ -173,21 +220,11 @@ class TestMetadata:
         assert item.name == 'subfolder'
         assert item.path == 'test folder/subfolder/'
 
-    @pytest.mark.asyncio
-    async def test_metadata_missing(self, provider):
-
-        with pytest.raises(exceptions.NotFoundError):
-            await provider.validate_item('/missing.txt')
-
-
-class TestIntra:
+class TestIntraCopy:
 
     @pytest.mark.asyncio
-    async def test_intra_copy_file(self, provider, setup_filesystem):
-        src_item = await provider.validate_item('test folder/flower.jpg')
-        dest_item = await provider.validate_item('test folder/subfolder/')
-
-        await provider.intra_copy(provider, src_item, dest_item)
+    async def test_intra_copy_file(self, provider, file_metadata, folder_metadata, setup_filesystem):
+        await provider.intra_copy(provider, file_metadata, folder_metadata)
 
         item = await provider.validate_item('test folder/subfolder/flower.jpg')
 
@@ -198,12 +235,30 @@ class TestIntra:
 
         await provider.validate_item('test folder/flower.jpg')  # asserts not deleted
 
-    @pytest.mark.asyncio
-    async def test_intra_move_file(self, provider, setup_filesystem):
-        src_item = await provider.validate_item('test folder/flower.jpg')
-        dest_item = await provider.validate_item('test folder/subfolder/')
 
-        await provider.intra_move(provider, src_item, dest_item)
+    @pytest.mark.asyncio
+    async def test_intra_copy_folder(self, provider, file_metadata, folder_metadata, setup_filesystem):
+        await provider.intra_copy(provider, folder_metadata, folder_metadata)
+
+        item = await provider.validate_item('test folder/subfolder/nested.txt')
+
+        assert item.path == 'test folder/subfolder/nested.txt'
+        assert item.kind == 'file'
+        assert item.name == 'nested.txt'
+
+        await provider.validate_item('test folder/subfolder/nested.txt')  # asserts not deleted
+
+
+    @pytest.mark.asyncio
+    async def test_intra_copy_missiong(self, provider, missing_file_metadata, folder_metadata, setup_filesystem):
+        with pytest.raises(exceptions.NotFoundError):
+            await provider.intra_copy(provider, missing_file_metadata, folder_metadata)
+
+class TestIntraMove:
+
+    @pytest.mark.asyncio
+    async def test_intra_move_file(self, provider, file_metadata, folder_metadata, setup_filesystem):
+        await provider.intra_move(provider, file_metadata, folder_metadata)
 
         item = await provider.validate_item('test folder/subfolder/flower.jpg')
 
@@ -217,22 +272,41 @@ class TestIntra:
 
 
     @pytest.mark.asyncio
-    async def test_intra_move_folder(self, provider):
-        src_item = await provider.validate_item('test folder/subfolder/')
-        dest_item = await provider.validate_item('test folder/other_subfolder/')
+    async def test_intra_move_folder(self, provider, folder_metadata, setup_filesystem):
+        await provider.intra_move(provider, folder_metadata, folder_metadata)
 
-        await provider.intra_move(provider, src_item, dest_item)
+        item = await provider.validate_item('test folder/other_subfolder/')
 
-        item = await provider.validate_item('test folder/other_subfolder/subfolder/nested.txt')
-
-        assert item.path == 'test folder/other_subfolder/subfolder/nested.txt'
+        assert item.path == 'test folder/other_subfolder/flower.jpg'
         assert item.kind == 'file'
-        assert item.name == 'nested.txt'
+        assert item.name == 'flower.jpg'
+
+        with pytest.raises(exceptions.NotFoundError):
+            await provider.validate_item('test folder/other_subfolder/flower.jpg')
+
+    @pytest.mark.asyncio
+    async def test_intra_move_missing(self, provider, missing_file_metadata, folder_metadata, setup_filesystem):
+        with pytest.raises(exceptions.NotFoundError):
+            await provider.intra_move(provider, missing_file_metadata, folder_metadata)
 
 
-class TestInter:
-    pass
+class TestRename:
 
+    @pytest.mark.asyncio
+    async def test_rename(self, provider, file_metadata):
+        await provider.rename(file_metadata, 'new_name')
+
+        item = await provider.validate_item('test folder/new_name')
+
+        assert isinstance(item, FileSystemMetadata)
+        assert item.path == 'test folder/new_name'
+        assert item.kind == 'file'
+        assert item.name == 'new_name'
+
+    @pytest.mark.asyncio
+    async def test_rename_missing(self, provider, missing_file_metadata):
+        with pytest.raises(exceptions.NotFoundError):
+            await provider.rename(missing_file_metadata, 'new_name')
 
 class TestOperations:
 

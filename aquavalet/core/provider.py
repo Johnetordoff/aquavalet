@@ -14,6 +14,7 @@ from aquavalet.core import streams
 from aquavalet.core import exceptions
 from aquavalet.settings import CONCURRENT_OPS
 from aquavalet.core import metadata as wb_metadata
+from aquavalet.core.streams import ZipStreamReader
 from aquavalet.core.utils import ZipStreamGeneratorReader
 
 
@@ -140,36 +141,32 @@ class BaseProvider(metaclass=abc.ABCMeta):
             400: exceptions.InvalidPathError(data),
             401: exceptions.AuthError(f'Bad credentials provided'),
             403: exceptions.Forbidden(f'Forbidden'),
-            404: exceptions.NotFoundError(f'Item at path \'{path or item.path}\' cannot be found.'),
-            409: exceptions.Conflict(f'Conflict \'{path or item.path}\'.'),
-            410: exceptions.Gone(f'Item at path \'{path or item.path}\' has been removed.')
+            404: exceptions.NotFoundError(f'Item at path \'{path or item.name}\' cannot be found.'),
+            409: exceptions.Conflict(f'Conflict \'{path or item.name}\'.'),
+            410: exceptions.Gone(f'Item at path \'{path or item.name}\' has been removed.')
         }[resp.status]
 
-    async def move(self, dest_provider, item=None, destination_item=None):
-        item = item or self.item
-        destination_item = destination_item or dest_provider.item
+    async def move(self, dest_provider, item, destination_item):
 
         if item.is_folder:
             return await self._recursive_op(self.move, dest_provider, item, destination_item)  # type: ignore
 
         async with aiohttp.ClientSession() as session:
-            download_stream = await self.download(session, item=item)
-            return await dest_provider.upload(download_stream, item=destination_item, new_name=item.name)
+            download_stream = await self.download(item, session)
+            return await dest_provider.upload(destination_item, download_stream, new_name=item.name)
 
         await self.delete(item)
 
-    async def copy(self, dest_provider, item=None, destination_item=None):
-        item = item or self.item
-        destination_item = destination_item or dest_provider.item
+    async def copy(self, item, destination_item, dest_provider):
 
         if item.is_folder:
-            return await self._recursive_op(self.copy, dest_provider, item, destination_item)  # type: ignore
+            return await self._recursive_op(self.copy, item, destination_item, dest_provider)
 
         async with aiohttp.ClientSession() as session:
-            download_stream = await self.download(session, item=item)
-            return await dest_provider.upload(download_stream, item=destination_item, new_name=item.name)
+            download_stream = await self.download(item, session)
+            return await dest_provider.upload(destination_item, download_stream, new_name=item.name)
 
-    async def _recursive_op(self, func, dest_provider, src_path, dest_item, **kwargs):
+    async def _recursive_op(self, func, src_path, dest_item, dest_provider):
         folder = await dest_provider.create_folder(item=dest_item, new_name=src_path.name)
         folder.children = []
 
@@ -215,15 +212,13 @@ class BaseProvider(metaclass=abc.ABCMeta):
         """
         return False
 
-    async def zip(self, session, item=None) -> ZipStreamGeneratorReader:
+    async def zip(self, item, session) -> ZipStreamGeneratorReader:
         """Streams a Zip archive of the given folder
 
         :param  path: ( :class:`.AquaValetPath` ) The folder to compress
         """
-        item = item or self.item
-
-        children = await self.children(item=item)  # type: ignore
-        return ZipStreamGeneratorReader(self, item, children, session)  # type: ignore
+        children = await self.children(item)
+        return ZipStreamReader(ZipStreamGeneratorReader(self, item, children, session))
 
     @abc.abstractmethod
     async def download(self, item=None, version=None, range=None) -> streams.ResponseStreamReader:

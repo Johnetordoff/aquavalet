@@ -383,5 +383,4 @@ class ZipStreamReader(asyncio.StreamReader):
             self.finished_streams.append(self.stream)
             self.stream = None
             chunk += await self.read(n - len(chunk))
-
         return chunk

@@ -84,7 +84,7 @@ class ZipStreamGeneratorReader:
     def __init__(self, provider, parent_path, metadata_objs, session):
         self.session = session
         self.provider = provider
-        self.parent_path = parent_path
+        self.parent_path = parent_path.unix_path
         self.remaining = metadata_objs
         self.stream = None
         self.finished_streams = []
@@ -103,25 +103,5 @@ class ZipStreamGeneratorReader:
                 self.remaining.extend(items)
                 return await self.__anext__()
             else:
-                return current.unix_path, EmptyStream()
-
-        return current.unix_path, await self.provider.download(self.session, item=current)
-
-    async def read(self, n=-1):
-        if not self.stream:
-            try:
-                self.stream = ZipLocalFile(await self.__anext__())
-            except StopAsyncIteration:
-                if self._eof:
-                    return b''
-                self._eof = True
-                # Append a stream for the archive's footer (central directory)
-                self.stream = ZipArchiveCentralDirectory(self.finished_streams)
-
-        chunk = await self.stream.read(n)
-        if len(chunk) < n and self.stream.at_eof():
-            self.finished_streams.append(self.stream)
-            self.stream = None
-            chunk += await self.read(n - len(chunk))
-
-        return chunk
+                return current.unix_path.replace(self.parent_path, ''), EmptyStream()
+        return current.unix_path.replace(self.parent_path, ''), await self.provider.download(current, self.session)

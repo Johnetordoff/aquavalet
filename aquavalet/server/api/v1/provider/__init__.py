@@ -60,7 +60,7 @@ class ProviderHandler(core.BaseHandler):
     async def metadata(self, provider,  path):
 
         version = self.get_query_argument('version', default=None)
-        metadata = await self.provider.metadata(version=version)
+        metadata = await self.provider.metadata(self.provider.item, version=version)
 
         return self.write({
             'data': metadata.json_api_serialized()
@@ -70,7 +70,7 @@ class ProviderHandler(core.BaseHandler):
         if not self.provider.item.is_folder:
             raise exceptions.InvalidPathError('Only folders can be queried for children.')
 
-        metadata = await self.provider.children()
+        metadata = await self.provider.children(self.provider.item)
 
         return self.write({
             'data': [metadata.json_api_serialized() for metadata in metadata]
@@ -79,7 +79,7 @@ class ProviderHandler(core.BaseHandler):
     async def rename(self, provider,  path):
         new_name = self.require_query_argument('new_name', "'new_name' is a required argument")
 
-        await self.provider.rename(new_name)
+        await self.provider.rename(self.provider.item, new_name)
 
 
     async def get(self, provider,  path):
@@ -119,7 +119,7 @@ class ProviderHandler(core.BaseHandler):
         new_name = self.require_query_argument('new_name', "'new_name' is a required argument")
 
         self.writer.write_eof()
-        await self.provider.upload(self.stream, new_name)
+        await self.provider.upload(self.provider.item, self.stream, new_name)
 
         self.writer.close()
         self.wsock.close()
@@ -130,15 +130,18 @@ class ProviderHandler(core.BaseHandler):
 
         new_name = self.require_query_argument('new_name', "'new_name' is a required argument")
 
-        await self.provider.create_folder(new_name)
+        await self.provider.create_folder(self.provider.item, new_name)
 
     async def copy(self, provider,  path):
         dest_path = self.require_query_argument('to', "'to' is a required argument")
         dest_provider = self.require_query_argument('destination_provider', "'destination_provider' is a required argument")
         self.dest_provider = utils.make_provider(dest_provider, auth=None)
-
+        print(dest_path)
         self.dest_provider.item = await self.dest_provider.validate_item(dest_path)
-        return await self.provider.copy(self.dest_provider)
+        if self.provider.can_intra_copy(dest_path, self.dest_provider,):
+            return await self.provider.intra_copy(self.provider.item)
+
+        return await self.provider.copy(self.provider.item, self.dest_provider.item, self.dest_provider)
 
     async def move(self, provider,  path):
         dest_path = self.require_query_argument('to', "'to' is a required argument")
@@ -146,13 +149,16 @@ class ProviderHandler(core.BaseHandler):
         self.dest_provider = utils.make_provider(dest_provider, auth=None)
 
         self.dest_provider.item = await self.dest_provider.validate_item(dest_path)
-        await self.provider.move(self.dest_provider)
+        if self.provider.can_intra_move(self.dest_provider):
+            return await self.provider.intra_move(self.provider.item, self.dest_provider)
+
+        await self.provider.move(self.provider.item, self.dest_provider)
 
         await self.provider.delete()
 
     async def delete(self, provider,  path):
         comfirm_delete = self.get_query_argument('comfirm_delete', default=None)
-        await self.provider.delete(comfirm_delete)
+        await self.provider.delete(self.provider.item, comfirm_delete)
         self.set_status(204)
 
     async def data_received(self, chunk):
@@ -188,6 +194,7 @@ class ProviderHandler(core.BaseHandler):
 
         async with aiohttp.ClientSession() as session:
             stream = await self.provider.download(
+                self.provider.item,
                 session,
                 version=version,
                 range=range,
@@ -234,7 +241,7 @@ class ProviderHandler(core.BaseHandler):
 
         async with aiohttp.ClientSession() as session:
 
-            stream = await self.provider.zip(session)
+            stream = await self.provider.zip(self.provider.item, session)
 
             chunk = await stream.read(settings.CHUNK_SIZE)
             while chunk:

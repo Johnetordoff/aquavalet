@@ -32,31 +32,25 @@ class FileSystemProvider(provider.BaseProvider):
 
         return FileSystemMetadata(path=path)
 
-    def can_intra_copy(self, dest_provider, path=None):
-        return type(self) == type(dest_provider)
-
-    async def intra_copy(self, dest_provider, src_path, dest_path):
+    async def intra_copy(self, src_path, dest_path, dest_provider):
         try:
             shutil.copy(src_path.path, dest_path.path)
         except FileNotFoundError as exc:
-            raise exceptions.InvalidPathError('Invalid path \'{}\' specified'.format(exc.filename))
+            raise exceptions.NotFoundError(f'Item at \'{exc.filename}\' could not be found, folders must end with \'/\'')
 
     async def intra_move(self, dest_provider, src_path, dest_path):
         try:
             shutil.move(src_path.path, dest_path.path)
         except FileNotFoundError as exc:
-            raise exceptions.InvalidPathError('Invalid path \'{}\' specified'.format(exc.filename))
+            raise exceptions.NotFoundError(f'Item at \'{exc.filename}\' could not be found, folders must end with \'/\'')
 
-    async def rename(self, new_name, item=None):
-        item = item or self.item
-
+    async def rename(self, item, new_name):
         try:
             os.rename(item.path, item.rename(new_name))
         except FileNotFoundError as exc:
-            raise exceptions.InvalidPathError('Invalid path \'{}\' specified'.format(exc.filename))
+            raise exceptions.NotFoundError('Invalid path \'{}\' specified'.format(exc.filename))
 
-    async def download(self, session=None, item=None, version=None, range=None):
-        item = item or self.item
+    async def download(self, item, session=None, version=None, range=None):
 
         file_pointer = open(item.path, 'rb')
 
@@ -65,15 +59,13 @@ class FileSystemProvider(provider.BaseProvider):
 
         return streams.FileStreamReader(file_pointer)
 
-    async def upload(self, stream=None, item=None, new_name=None):
-        item = item or self.item
-        print(item.path + new_name)
+    async def upload(self, item, stream=None, new_name=None):
+
         with open(item.path + new_name, 'wb') as file_pointer:
             async for chunk in stream.generator:
                 file_pointer.write(chunk)
 
-    async def delete(self, item=None):
-        item = item or self.item
+    async def delete(self, item, comfirm_delete=False):
 
         if item.is_file:
             try:
@@ -85,13 +77,10 @@ class FileSystemProvider(provider.BaseProvider):
                 raise Exception('That\'s the root!')
             shutil.rmtree(item.path)
 
-    async def metadata(self, version=None, item=None):
-        item = item or self.item
-
+    async def metadata(self, item, version=None):
         return item
 
-    async def children(self, item=None):
-        item = item or self.item
+    async def children(self, item):
 
         children = os.listdir(item.path)
         children = [os.path.join(item.path, child) for child in children]
@@ -99,9 +88,14 @@ class FileSystemProvider(provider.BaseProvider):
 
         return [FileSystemMetadata(path=child) for child in children]
 
-    async def create_folder(self, new_name, item=None):
-        item = self.item or item
-
+    async def create_folder(self, item, new_name):
         os.makedirs(item.child(new_name), exist_ok=True)
         item.raw['path'] = item.child(new_name)  #TODO Do this better
         return item
+
+    def can_intra_copy(self, dest_provider, item=None):
+        return type(self) == type(dest_provider)
+
+    def can_intra_move(self, dest_provider, item=None):
+        return type(self) == type(dest_provider)
+
