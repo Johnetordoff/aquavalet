@@ -7,11 +7,16 @@ from functools import partial
 import tornado.web
 import tornado.platform.asyncio
 
+from aquavalet.server.request_handler import ProviderHandler
 from aquavalet.server.api import v1
 from aquavalet.server import handlers
 from aquavalet.server import settings as server_settings
 
 logger = logging.getLogger(__name__)
+
+HANDLERS = [
+    ProviderHandler.as_entry()
+]
 
 
 def sig_handler(sig, frame):
@@ -29,7 +34,7 @@ def sig_handler(sig, frame):
 def api_to_handlers(api):
     return [
         (os.path.join('/', pattern.lstrip('/')), handler)
-        for (pattern, handler) in api.HANDLERS
+        for (pattern, handler) in HANDLERS
     ]
 
 

@@ -1,10 +1,10 @@
-import re
 import json
 import aiohttp
 
 from aquavalet.core import provider
 
 from aquavalet.core import streams
+from aquavalet.core import exceptions
 from aquavalet.providers.utils import require_group, require_match
 
 message_no_internal_provider = 'No internal provider in url, path must follow pattern ^\/(?P<internal_provider>(?:\w|\d)+)?\/(?P<resource>[a-zA-Z0-9]{5,})?(?P<path>\/.*)?'
@@ -25,7 +25,6 @@ class OsfProvider(provider.BaseProvider):
         self.internal_provider = require_group(match, 'internal_provider', message_no_internal_provider)
         self.resource = require_group(match, 'resource', message_no_resource)
         path = require_group(match, 'path', message_no_path)
-
         if path == '/':
             return self.Item.root(self.internal_provider, self.resource)
 
@@ -54,51 +53,71 @@ class OsfProvider(provider.BaseProvider):
         )
         return streams.ResponseStreamReader(resp, range)
 
-    async def upload(self, item, stream, new_name):
+    async def upload(self, item, stream, new_name, conflict):
 
         async with aiohttp.ClientSession() as session:
             async with session.put(
                 data=stream.generator.stream_sender(),
                 url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}',
                 headers=self.default_headers,
-                params={'kind': 'file', 'name': new_name}
+                params={'kind': 'file', 'name': new_name, 'conflict': conflict}
             ) as resp:
                 if resp.status in (200, 201):
                     data = (await resp.json())['data']
                 else:
-                    raise await self.handle_response(resp, item)
+                    return await self.handle_response(resp=resp, item=item, new_name=new_name, stream=stream, conflict=conflict)
 
             return self.Item(data['attributes'], self.internal_provider, self.resource)
 
-    async def delete(self, confirm_delete=0, item=None):
-        item = item or self.item
+    async def handle_conflict_replace(self, resp, item, path, stream, new_name, conflict):
+        children = await self.children(item)
+
+        for item in children:
+            if item.name == new_name:
+                break
 
         async with aiohttp.ClientSession() as session:
-            async with await session.delete(
+            async with session.put(
+                data=stream.generator.stream_sender(),
+                url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}',
+                headers=self.default_headers,
+            ) as resp:
+                if resp.status in (200, 201):
+                    data = (await resp.json())['data']
+                else:
+                    return await self.handle_response(resp=resp, item=item, new_name=new_name, stream=stream, conflict=conflict)
+
+            return self.Item(data['attributes'], self.internal_provider, self.resource)
+
+    async def delete(self, item, confirm_delete=0):
+        async with aiohttp.ClientSession() as session:
+            async with session.delete(
                 url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}',
                 params={'confirm_delete': 0},
                 headers=self.default_headers
             ) as resp:
-                print(resp)
+                if resp.status in (204,):
+                    return None
+                else:
+                    raise await self.handle_response(resp, item)
 
 
     async def metadata(self, item, version=None):
         return item
 
     async def create_folder(self, item, new_name):
-
         async with aiohttp.ClientSession() as session:
             async with session.put(
                 url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}',
                 headers=self.default_headers,
                 params={'kind': 'folder', 'name': new_name}
             ) as resp:
-                if resp.status in (200, 201):
+                if resp.status in (201,):
                     data = (await resp.json())['data']
                 else:
-                    raise await self.handle_response(resp, item)
+                    raise await self.handle_response(resp, item, new_name=new_name)
 
-                return self.Item(data['attributes'], item, self.internal_provider, self.resource)
+                return self.Item(data['attributes'], self.internal_provider, self.resource)
 
     async def rename(self, item, new_name):
 
@@ -108,10 +127,14 @@ class OsfProvider(provider.BaseProvider):
                 data=json.dumps({'action': 'rename', 'rename': new_name}),
                 headers=self.default_headers
             ) as resp:
-                print(resp)
+                if resp.status == 200:
+                    data = (await resp.json())['data']
+                else:
+                    raise await self.handle_response(resp, item)
+
+                return self.Item(data['attributes'], self.internal_provider, self.resource)
 
     async def children(self, item):
-
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}',
@@ -123,36 +146,3 @@ class OsfProvider(provider.BaseProvider):
                     raise await self.handle_response(resp, item)
 
         return [self.Item(metadata['attributes'], internal_provider=self.internal_provider, resource=self.resource) for metadata in data]
-
-    async def parent(self, item):
-        if item.is_root:
-            return item
-
-        if item.unix_path_parent == '/':
-            return await self.root(item=item)
-
-        name = ''
-        child_link = self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}/'
-        while name != item.unix_path_parent:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    url=child_link + '?meta=',
-                    headers=self.default_headers
-                ) as resp:
-                    if resp.status == 200:
-                        data = (await resp.json())['data']
-                        for child_item in data:
-                            unix_path = child_item['attributes']['materialized']
-                            if unix_path in item.unix_path_parent:
-                                child_link = child_item['links']['move']
-                                name = child_item['attributes']['materialized']
-                    else:
-                        raise await self.handle_response(resp, item)
-
-        return self.Item(child_item['attributes'], internal_provider=self.internal_provider, resource=self.resource)
-
-    async def root(self, item):
-        if item.is_root:
-            return self
-
-        return await self.validate_item(f'/{self.internal_provider}/{self.resource}/')

@@ -82,6 +82,10 @@ class BaseMetadata(metaclass=abc.ABCMeta):
         """
         raise NotImplementedError
 
+    def version_name(self, num=None) -> str:
+        name, ext = os.path.splitext(self.raw['name'])
+        return name + '({})' + ext
+
     @property
     def etag(self) -> str:
         raise NotImplementedError

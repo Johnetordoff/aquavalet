@@ -16,8 +16,6 @@ from aquavalet.core.streams.zip import ZipLocalFile, ZipArchiveCentralDirectory
 logger = logging.getLogger(__name__)
 
 
-sentry_dsn = None
-
 
 def make_provider(name: str, auth: dict):
     """Returns an instance of :class:`aquavalet.core.provider.BaseProvider`

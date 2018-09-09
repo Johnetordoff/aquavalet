@@ -224,7 +224,7 @@ class TestIntraCopy:
 
     @pytest.mark.asyncio
     async def test_intra_copy_file(self, provider, file_metadata, folder_metadata, setup_filesystem):
-        await provider.intra_copy(provider, file_metadata, folder_metadata)
+        await provider.intra_copy(file_metadata, folder_metadata)
 
         item = await provider.validate_item('test folder/subfolder/flower.jpg')
 
@@ -238,7 +238,7 @@ class TestIntraCopy:
 
     @pytest.mark.asyncio
     async def test_intra_copy_folder(self, provider, file_metadata, folder_metadata, setup_filesystem):
-        await provider.intra_copy(provider, folder_metadata, folder_metadata)
+        await provider.intra_copy(folder_metadata, folder_metadata)
 
         item = await provider.validate_item('test folder/subfolder/nested.txt')
 
@@ -252,13 +252,13 @@ class TestIntraCopy:
     @pytest.mark.asyncio
     async def test_intra_copy_missiong(self, provider, missing_file_metadata, folder_metadata, setup_filesystem):
         with pytest.raises(exceptions.NotFoundError):
-            await provider.intra_copy(provider, missing_file_metadata, folder_metadata)
+            await provider.intra_copy(missing_file_metadata, folder_metadata)
 
 class TestIntraMove:
 
     @pytest.mark.asyncio
     async def test_intra_move_file(self, provider, file_metadata, folder_metadata, setup_filesystem):
-        await provider.intra_move(provider, file_metadata, folder_metadata)
+        await provider.intra_move(file_metadata, folder_metadata)
 
         item = await provider.validate_item('test folder/subfolder/flower.jpg')
 
@@ -273,13 +273,13 @@ class TestIntraMove:
 
     @pytest.mark.asyncio
     async def test_intra_move_folder(self, provider, folder_metadata, setup_filesystem):
-        await provider.intra_move(provider, folder_metadata, folder_metadata)
+        await provider.intra_move(folder_metadata, folder_metadata)
 
         item = await provider.validate_item('test folder/other_subfolder/')
 
-        assert item.path == 'test folder/other_subfolder/flower.jpg'
-        assert item.kind == 'file'
-        assert item.name == 'flower.jpg'
+        assert item.path == 'test folder/other_subfolder/'
+        assert item.kind == 'folder'
+        assert item.name == 'other_subfolder'
 
         with pytest.raises(exceptions.NotFoundError):
             await provider.validate_item('test folder/other_subfolder/flower.jpg')
@@ -287,7 +287,7 @@ class TestIntraMove:
     @pytest.mark.asyncio
     async def test_intra_move_missing(self, provider, missing_file_metadata, folder_metadata, setup_filesystem):
         with pytest.raises(exceptions.NotFoundError):
-            await provider.intra_move(provider, missing_file_metadata, folder_metadata)
+            await provider.intra_move(missing_file_metadata, folder_metadata, provider)
 
 
 class TestRename:

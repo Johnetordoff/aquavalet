@@ -135,36 +135,57 @@ class BaseProvider(metaclass=abc.ABCMeta):
             if value is not None
         }
 
-    async def handle_response(self, resp, item=None, path=None):
+    async def handle_response(self, resp=None, item=None, path=None, new_name=None, conflict='warn', stream=None):
         data = await resp.json()
-        return {
-            400: exceptions.InvalidPathError(data),
-            401: exceptions.AuthError(f'Bad credentials provided'),
-            403: exceptions.Forbidden(f'Forbidden'),
-            404: exceptions.NotFoundError(f'Item at path \'{path or item.name}\' cannot be found.'),
-            409: exceptions.Conflict(f'Conflict \'{path or item.name}\'.'),
-            410: exceptions.Gone(f'Item at path \'{path or item.name}\' has been removed.')
-        }[resp.status]
 
-    async def move(self, dest_provider, item, destination_item):
+        if resp.status == 409:
+            return await self.handle_conflict(resp=resp, item=item, path=path, new_name=new_name, conflict=conflict, stream=stream)
+        else:
+            raise {
+                400: exceptions.InvalidPathError(data),
+                401: exceptions.AuthError(f'Bad credentials provided'),
+                403: exceptions.Forbidden(f'Forbidden'),
+                404: exceptions.NotFoundError(f'Item at path \'{path or item.name}\' cannot be found.'),
+                409: self.handle_conflict(new_name=new_name, path=path, stream=stream, conflict=conflict),
+                410: exceptions.Gone(f'Item at path \'{path or item.name}\' has been removed.')
+            }[resp.status]
+
+    async def handle_conflict(self, resp=None, item=None, path=None, new_name=None,  conflict='warn', stream=None):
+        if conflict == 'warn':
+            return await self.handle_conflict_warn(new_name)
+        if conflict == 'replace':
+            return await self.handle_conflict_replace(resp=resp, item=item, path=path, new_name=new_name, conflict=conflict, stream=stream)
+        if conflict == 'rename':
+            return await self.handle_conflict_rename(resp=resp, item=item, path=path, new_name=new_name, conflict=conflict, stream=stream)
+
+    def handle_conflict_warn(self, new_name):
+        raise exceptions.Conflict(f'Conflict \'{new_name}\'.')
+
+    def handle_conflict_replace(self):
+        raise NotImplementedError()
+
+    def handle_conflict_rename(self, new_name):
+        raise NotImplementedError()
+
+    async def move(self, dest_provider, item, destination_item, conflict):
 
         if item.is_folder:
             return await self._recursive_op(self.move, dest_provider, item, destination_item)  # type: ignore
 
         async with aiohttp.ClientSession() as session:
             download_stream = await self.download(item, session)
-            return await dest_provider.upload(destination_item, download_stream, new_name=item.name)
+            await dest_provider.upload(destination_item, download_stream, new_name=item.name, conflict=conflict)
 
         await self.delete(item)
 
-    async def copy(self, item, destination_item, dest_provider):
+    async def copy(self, item, destination_item, dest_provider, conflict):
 
         if item.is_folder:
             return await self._recursive_op(self.copy, item, destination_item, dest_provider)
 
         async with aiohttp.ClientSession() as session:
             download_stream = await self.download(item, session)
-            return await dest_provider.upload(destination_item, download_stream, new_name=item.name)
+            await dest_provider.upload(destination_item, download_stream, new_name=item.name, conflict=conflict)
 
     async def _recursive_op(self, func, src_path, dest_item, dest_provider):
         folder = await dest_provider.create_folder(item=dest_item, new_name=src_path.name)

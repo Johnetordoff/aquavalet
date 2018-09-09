@@ -46,5 +46,3 @@ CONCURRENT_OPS = 5
 DEFAULT_CONFLICT = 'warn'
 
 logging.config.dictConfig(DEFAULT_LOGGING_CONFIG)
-
-SENTRY_DSN = None

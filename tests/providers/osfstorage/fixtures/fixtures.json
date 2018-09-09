@@ -158,5 +158,113 @@
 		"meta": {
 			"version": "2.0"
 		}
+	},
+	"upload_response": {
+		"data": {
+			"links": {
+				"delete": "https://files.osf.io/v1/resources/vy6x2/providers/osfstorage/5b8d55ae6a59a50017708986",
+				"upload": "https://files.osf.io/v1/resources/vy6x2/providers/osfstorage/5b8d55ae6a59a50017708986?kind=file",
+				"download": "https://files.osf.io/v1/resources/vy6x2/providers/osfstorage/5b8d55ae6a59a50017708986",
+				"move": "https://files.osf.io/v1/resources/vy6x2/providers/osfstorage/5b8d55ae6a59a50017708986"
+			},
+			"type": "files",
+			"id": "osfstorage/5b8d55ae6a59a50017708986",
+			"attributes": {
+				"path": "/5b8d55ae6a59a50017708986",
+				"size": 0,
+				"name": "test.txt",
+				"kind": "file",
+				"sizeInt": 0,
+				"extra": {
+					"guid": null,
+					"version": 2,
+					"downloads": 0,
+					"checkout": null,
+					"latestVersionSeen": null,
+					"hashes": {
+						"md5": "d41d8cd98f00b204e9800998ecf8427e",
+						"sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+					}
+				},
+				"resource": "vy6x2",
+				"provider": "osfstorage",
+				"materialized": "/flower.jpg",
+				"modified_utc": "2018-09-09T00:55:51+00:00",
+				"contentType": "application/octet-stream",
+				"etag": "c09d2e551c1387bebbb736280ec11f1d8611ae70a4de8323be01fb213337cb03",
+				"modified": "2018-09-09T00:55:51.230099+00:00",
+				"created_utc": null
+			}
+		}
+	},
+	"create_folder_response": {
+		"data": {
+			"id": "osfstorage/5b9533710b4b7d000f1bdd90/",
+			"type": "files",
+			"attributes": {
+				"extra": {},
+				"kind": "folder",
+				"name": "test",
+				"path": "/5b9533710b4b7d000f1bdd90/",
+				"provider": "osfstorage",
+				"materialized": "/folder3/",
+				"etag": "5caf8ab73c068565297e455ebce37fd64b6897a2284ec9d7ecba8b6093082bcd",
+				"resource": "ujpqz",
+				"size": null
+			},
+			"links": {
+				"move": "http://localhost:7777/v1/resources/ujpqz/providers/osfstorage/5b9533710b4b7d000f1bdd90/",
+				"upload": "http://localhost:7777/v1/resources/ujpqz/providers/osfstorage/5b9533710b4b7d000f1bdd90/?kind=file",
+				"delete": "http://localhost:7777/v1/resources/ujpqz/providers/osfstorage/5b9533710b4b7d000f1bdd90/",
+				"new_folder": "http://localhost:7777/v1/resources/ujpqz/providers/osfstorage/5b9533710b4b7d000f1bdd90/?kind=folder"
+			}
+		}
+	},
+	"children_response": {
+		"data": [
+			{
+				"id": "/5b537030c86a8c001243ce7a",
+				"type": "files",
+				"attributes": {
+					"kind": "file",
+					"name": "test-1",
+					"path": "/5b537030c86a8c001243ce7a",
+					"unix_path": "/test_folder/test-1",
+					"size": 240,
+					"created": "2018-07-21T17:41:04.187172+00:00",
+					"modified": "2018-07-21T17:41:04.187172+00:00",
+					"mimetype": null,
+					"provider": "osfstorage",
+					"etag": "60d0f3ff8602ee6ea58aa61217598eb9ce1d11bc68e586c32ae341163ccf03a5"
+				},
+				"links": {
+					"info": "http://localhost:7777/osfstorage/osfstorage/vy6x2/5b537030c86a8c001243ce7a?serve=meta",
+					"delete": "http://localhost:7777/osfstorage/osfstorage/vy6x2/5b537030c86a8c001243ce7a?serve=delete",
+					"download": "http://localhost:7777/osfstorage/osfstorage/vy6x2/5b537030c86a8c001243ce7a?serve=download"
+				}
+			},
+			{
+				"id": "/5b4247025b38c4001068a7b6/",
+				"type": "files",
+				"attributes": {
+					"kind": "folder",
+					"name": "test2",
+					"path": "/5b4247025b38c4001068a7b6/",
+					"unix_path": "/test_folder/test2/",
+					"size": null,
+					"created": null,
+					"modified": null,
+					"mimetype": null,
+					"provider": "osfstorage",
+					"etag": "ab45b0cd13580f549d31a59a19243521379edf82d259da86551ea4d763e10e7e"
+				},
+				"links": {
+					"info": "http://localhost:7777/osfstorage/osfstorage/vy6x2/5b4247025b38c4001068a7b6/?serve=meta",
+					"delete": "http://localhost:7777/osfstorage/osfstorage/vy6x2/5b4247025b38c4001068a7b6/?serve=delete",
+					"children": "http://localhost:7777/osfstorage/osfstorage/vy6x2/5b4247025b38c4001068a7b6/?serve=children",
+					"upload": "http://localhost:7777/osfstorage/osfstorage/vy6x2/5b4247025b38c4001068a7b6/?serve=upload"
+				}
+			}
+		]
 	}
 }

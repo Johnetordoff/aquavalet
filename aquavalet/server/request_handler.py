@@ -1,20 +1,18 @@
-import os
-
-import socket
 import asyncio
-import aiohttp
 import logging
-from http import HTTPStatus
-
-import tornado.gen
 import mimetypes
-from aquavalet import settings
+import os
+import socket
 
-from aquavalet.core import utils
+import aiohttp
+import tornado.gen
+
+from aquavalet import settings
 from aquavalet.core import exceptions
 from aquavalet.core import remote_logging
+from aquavalet.core import utils
 from aquavalet.core.streams import RequestStreamReader
-from aquavalet.server.api.v1 import core
+from aquavalet.server import core
 
 logger = logging.getLogger(__name__)
 
@@ -117,9 +115,10 @@ class ProviderHandler(core.BaseHandler):
 
     async def upload(self, provider,  path):
         new_name = self.require_query_argument('new_name', "'new_name' is a required argument")
+        conflict = self.get_query_argument('conflict', default='warn')
 
         self.writer.write_eof()
-        await self.provider.upload(self.provider.item, self.stream, new_name)
+        await self.provider.upload(self.provider.item, self.stream, new_name, conflict)
 
         self.writer.close()
         self.wsock.close()
@@ -136,23 +135,26 @@ class ProviderHandler(core.BaseHandler):
         dest_path = self.require_query_argument('to', "'to' is a required argument")
         dest_provider = self.require_query_argument('destination_provider', "'destination_provider' is a required argument")
         self.dest_provider = utils.make_provider(dest_provider, auth=None)
-        print(dest_path)
+        conflict = self.get_query_argument('conflict', default='warn')
+
+
         self.dest_provider.item = await self.dest_provider.validate_item(dest_path)
         if self.provider.can_intra_copy(dest_path, self.dest_provider,):
             return await self.provider.intra_copy(self.provider.item)
 
-        return await self.provider.copy(self.provider.item, self.dest_provider.item, self.dest_provider)
+        return await self.provider.copy(self.provider.item, self.dest_provider.item, self.dest_provider, conflict)
 
     async def move(self, provider,  path):
         dest_path = self.require_query_argument('to', "'to' is a required argument")
         dest_provider = self.require_query_argument('destination_provider', "'destination_provider' is a required argument")
         self.dest_provider = utils.make_provider(dest_provider, auth=None)
+        conflict = self.get_query_argument('conflict', default='warn')
 
         self.dest_provider.item = await self.dest_provider.validate_item(dest_path)
         if self.provider.can_intra_move(self.dest_provider):
             return await self.provider.intra_move(self.provider.item, self.dest_provider)
 
-        await self.provider.move(self.provider.item, self.dest_provider)
+        await self.provider.move(self.provider.item, self.dest_provider, conflict)
 
         await self.provider.delete()
 

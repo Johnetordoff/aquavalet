@@ -32,13 +32,13 @@ class FileSystemProvider(provider.BaseProvider):
 
         return FileSystemMetadata(path=path)
 
-    async def intra_copy(self, src_path, dest_path, dest_provider):
+    async def intra_copy(self, src_path, dest_path, dest_provider=None):
         try:
             shutil.copy(src_path.path, dest_path.path)
         except FileNotFoundError as exc:
             raise exceptions.NotFoundError(f'Item at \'{exc.filename}\' could not be found, folders must end with \'/\'')
 
-    async def intra_move(self, dest_provider, src_path, dest_path):
+    async def intra_move(self, src_path, dest_path, dest_provider=None):
         try:
             shutil.move(src_path.path, dest_path.path)
         except FileNotFoundError as exc:

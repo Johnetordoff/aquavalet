@@ -10,8 +10,13 @@ from .fixtures import (
     folder_metadata_json,
     folder_metadata_resp,
     file_metadata_object,
-    download_resp
-
+    download_resp,
+    upload_resp,
+    delete_resp,
+    create_folder_response_json,
+    create_folder_resp,
+    children_resp,
+    file_stream,
 )
 
 from aquavalet.providers.osfstorage.metadata import OsfMetadata
@@ -20,6 +25,7 @@ from aquavalet.core.exceptions import (
     InvalidPathError,
     NotFoundError
 )
+
 
 class TestValidateItem:
 
@@ -82,6 +88,7 @@ class TestValidateItem:
         assert item.kind == 'folder'
         assert item.mimetype is None
 
+
 class TestDownload:
 
     @pytest.mark.asyncio
@@ -89,7 +96,7 @@ class TestDownload:
         aresponses.add('files.osf.io', '/v1/resources/guid0/providers/osfstorage' + file_metadata_object.id, 'get', download_resp)
 
         async with aiohttp.ClientSession() as session:
-            stream = await provider.download(session, item=file_metadata_object)
+            stream = await provider.download(file_metadata_object, session)
 
         assert isinstance(stream, ResponseStreamReader)
         assert stream.size == 12
@@ -102,21 +109,78 @@ class TestDownload:
         aresponses.add('files.osf.io', '/v1/resources/guid0/providers/osfstorage' + file_metadata_object.id, 'get', download_resp)
 
         async with aiohttp.ClientSession() as session:
-            stream = await provider.download(session, item=file_metadata_object, range=(0,3))
+            stream = await provider.download(file_metadata_object, session, range=(0,3))
 
         assert isinstance(stream, ResponseStreamReader)
         assert stream.size == 12
         assert stream.name == None
         assert stream.content_type == 'application/octet-stream'
-        assert await stream.read() == b'test'
+        assert await stream.read() == b'test stream!'  # this should really be truncated, but it's done by osf which is mocked.
 
 
-class TestUpload:  #
+class TestUpload:
 
     @pytest.mark.asyncio
-    async def test_upload(self, provider, file_metadata_object, download_resp, aresponses):
-        aresponses.add('files.osf.io', '/v1/resources/guid0/providers/osfstorage' + file_metadata_object.id, 'get', download_resp)
+    async def test_upload(self, provider, file_metadata_object, upload_resp, aresponses, file_stream):
+        aresponses.add('files.osf.io', '/v1/resources/guid0/providers/osfstorage' + file_metadata_object.id, 'put', upload_resp)
 
-        item = await provider.upload(item=file_metadata_object)
+        item = await provider.upload(item=file_metadata_object, stream=file_stream, new_name='test.txt', conflict='warn')
 
         assert isinstance(item, OsfMetadata)
+        assert item.name == 'test.txt'
+        assert item.mimetype == 'text/plain'
+
+
+class TestDelete:
+
+    @pytest.mark.asyncio
+    async def test_delete(self, provider, file_metadata_object, delete_resp, aresponses):
+        aresponses.add('files.osf.io', '/v1/resources/guid0/providers/osfstorage' + file_metadata_object.id, 'delete', delete_resp)
+
+        item = await provider.delete(file_metadata_object)
+
+        assert item is None
+
+
+class TestCreateFolder:
+
+    @pytest.mark.asyncio
+    async def test_create_folder(self, provider, file_metadata_object, create_folder_resp, aresponses):
+        aresponses.add('files.osf.io', '/v1/resources/guid0/providers/osfstorage' + file_metadata_object.id, 'put', create_folder_resp)
+
+        item = await provider.create_folder(file_metadata_object, 'test')
+
+        assert isinstance(item, OsfMetadata)
+        assert item.name == 'test'
+        assert item.mimetype is None
+
+
+class TestRename:
+
+    @pytest.mark.asyncio
+    async def test_rename(self, provider, file_metadata_object, file_metadata_resp, aresponses):
+        aresponses.add('files.osf.io', '/v1/resources/guid0/providers/osfstorage' + file_metadata_object.id, 'post', file_metadata_resp)
+        item = await provider.rename(file_metadata_object, 'new_name')
+
+        assert isinstance(item, OsfMetadata)
+        assert item.path == '/5b6ee0c390a7e0001986aff5'
+        assert item.kind == 'file'
+        assert item.name == 'test.txt'  # this should really be 'new_name, but it's done by osf which is mocked.
+
+
+class TestChildren:
+
+    @pytest.mark.asyncio
+    async def test_children(self, provider, file_metadata_object, children_resp, aresponses):
+        aresponses.add('files.osf.io', '/v1/resources/guid0/providers/osfstorage' + file_metadata_object.id, 'get', children_resp)
+        item = await provider.children(file_metadata_object)
+
+        assert isinstance(item, list)
+        assert len(item) == 2
+        assert item[0].path == '/5b537030c86a8c001243ce7a'
+        assert item[0].name == 'test-1'
+        assert item[0].kind == 'file'
+        assert item[1].path == '/5b4247025b38c4001068a7b6/'
+        assert item[1].name == 'test2'
+        assert item[1].kind == 'folder'
+
