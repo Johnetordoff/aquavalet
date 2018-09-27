@@ -1,6 +1,4 @@
-# Reference README-docker-compose.md for instructions.
-
-version: '3'
+version: '3.4'
 
 volumes:
   rabbitmq_vol:
@@ -46,6 +44,7 @@ services:
       - .docker-compose.av.env
     volumes:
       - av_requirements_vol:/usr/local/lib/python3.6
+      - ./:/code:cached
     stdin_open: true
 
   av_worker:

@@ -155,13 +155,19 @@ class BaseProvider(metaclass=abc.ABCMeta):
             return await self.handle_conflict_warn(new_name)
         if conflict == 'replace':
             return await self.handle_conflict_replace(resp=resp, item=item, path=path, new_name=new_name, conflict=conflict, stream=stream)
+        if conflict == 'new_version':
+            return await self.handle_conflict_new_version(resp=resp, item=item, path=path, new_name=new_name, conflict=conflict, stream=stream)
         if conflict == 'rename':
             return await self.handle_conflict_rename(resp=resp, item=item, path=path, new_name=new_name, conflict=conflict, stream=stream)
 
     def handle_conflict_warn(self, new_name):
         raise exceptions.Conflict(f'Conflict \'{new_name}\'.')
 
-    def handle_conflict_replace(self):
+    async def handle_conflict_replace(self, resp=None, item=None, path=None, new_name=None, conflict=None, stream=None):
+        await self.delete(item)
+        await self.upload(item, stream=stream, new_name=new_name)
+
+    def handle_conflict_new_version(self):
         raise NotImplementedError()
 
     def handle_conflict_rename(self, new_name):

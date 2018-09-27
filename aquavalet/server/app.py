@@ -8,7 +8,6 @@ import tornado.web
 import tornado.platform.asyncio
 
 from aquavalet.server.request_handler import ProviderHandler
-from aquavalet.server.api import v1
 from aquavalet.server import handlers
 from aquavalet.server import settings as server_settings
 
@@ -40,7 +39,7 @@ def api_to_handlers(api):
 
 def make_app(debug):
     app = tornado.web.Application(
-        api_to_handlers(v1) +
+        api_to_handlers('v1') +
         [(r'/', handlers.RootHandler)],
         [(r'/status', handlers.StatusHandler)],
         debug=debug,
