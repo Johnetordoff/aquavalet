@@ -4,12 +4,16 @@ import aiohttp
 from aquavalet.core import provider
 
 from aquavalet.core import streams
-from aquavalet.core import exceptions
 from aquavalet.providers.utils import require_group, require_match
+
+from tornado.httpclient import AsyncHTTPClient
 
 message_no_internal_provider = 'No internal provider in url, path must follow pattern ^\/(?P<internal_provider>(?:\w|\d)+)?\/(?P<resource>[a-zA-Z0-9]{5,})?(?P<path>\/.*)?'
 message_no_resource = 'No internal provider in url, path must follow pattern ^\/(?P<internal_provider>(?:\w|\d)+)?\/(?P<resource>[a-zA-Z0-9]{5,})?(?P<path>\/.*)?'
 message_no_path = 'No path in url, path must follow pattern ^\/(?P<internal_provider>(?:\w|\d)+)?\/(?P<resource>[a-zA-Z0-9]{5,})?(?P<path>\/.*)?'
+
+http_client = AsyncHTTPClient()
+
 
 class OsfProvider(provider.BaseProvider):
     NAME = 'OSF'
@@ -29,15 +33,11 @@ class OsfProvider(provider.BaseProvider):
             return self.Item.root(self.internal_provider, self.resource)
 
         if self.internal_provider == 'osfstorage':
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    url=self.API_URL.format(path=path),
-                    headers=self.default_headers,
-                ) as resp:
-                    if resp.status == 200:
-                        data = (await resp.json())['data']
-                    else:
-                        raise await self.handle_response(resp, path=path)
+            resp = await http_client.fetch(self.API_URL.format(path=path), headers=self.default_headers)
+            if resp.code == 200:
+                data = json.loads(resp.body)['data']
+            else:
+                raise await self.handle_response(resp, path=path)
 
         return self.Item(data['attributes'], self.internal_provider, self.resource)
 
@@ -90,16 +90,15 @@ class OsfProvider(provider.BaseProvider):
             return self.Item(data['attributes'], self.internal_provider, self.resource)
 
     async def delete(self, item, confirm_delete=0):
-        async with aiohttp.ClientSession() as session:
-            async with session.delete(
-                url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}',
-                params={'confirm_delete': 0},
-                headers=self.default_headers
-            ) as resp:
-                if resp.status in (204,):
-                    return None
-                else:
-                    raise await self.handle_response(resp, item)
+        resp = await http_client.fetch(
+            self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}',
+            method='DELETE',
+            headers=self.default_headers
+        )
+        if resp.code == 204:
+            return None
+        else:
+            raise await self.handle_response(resp, item)
 
 
     async def metadata(self, item, version=None):
@@ -135,14 +134,13 @@ class OsfProvider(provider.BaseProvider):
                 return self.Item(data['attributes'], self.internal_provider, self.resource)
 
     async def children(self, item):
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}',
-                headers=self.default_headers
-            ) as resp:
-                if resp.status == 200:
-                    data = (await resp.json())['data']
-                else:
-                    raise await self.handle_response(resp, item)
+        resp = await http_client.fetch(
+            self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}',
+            headers=self.default_headers
+        )
+        if resp.code == 200:
+            data = json.loads(resp.body)['data']
+        else:
+            raise await self.handle_response(resp, item)
 
         return [self.Item(metadata['attributes'], internal_provider=self.internal_provider, resource=self.resource) for metadata in data]
