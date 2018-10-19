@@ -16,7 +16,11 @@ from .fixtures import (
     create_folder_response_json,
     create_folder_resp,
     children_resp,
-    file_stream,
+)
+
+from tests.core.streams.fixtures import (
+    mock_request,
+    request_stream,
 )
 
 from aquavalet.providers.osfstorage.metadata import OsfMetadata
@@ -121,10 +125,10 @@ class TestDownload:
 class TestUpload:
 
     @pytest.mark.asyncio
-    async def test_upload(self, provider, file_metadata_object, upload_resp, aresponses, file_stream):
+    async def test_upload(self, provider, file_metadata_object, upload_resp, aresponses, request_stream):
         aresponses.add('files.osf.io', '/v1/resources/guid0/providers/osfstorage' + file_metadata_object.id, 'put', upload_resp)
 
-        item = await provider.upload(item=file_metadata_object, stream=file_stream, new_name='test.txt', conflict='warn')
+        item = await provider.upload(item=file_metadata_object, stream=request_stream, new_name='test.txt', conflict='warn')
 
         assert isinstance(item, OsfMetadata)
         assert item.name == 'test.txt'

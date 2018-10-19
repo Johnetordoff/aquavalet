@@ -1,5 +1,4 @@
-aiohttp==3.3.2
-celery==4.2.0
+aiohttp==3.4.4
 invoke==0.22.1
 stevedore==1.28.0
 tornado==5.0.2

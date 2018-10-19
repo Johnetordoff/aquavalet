@@ -6,8 +6,4 @@ To install:
 
 `docker build . -t av`
 
-`docker volume create --name=av-sync`
-
-`docker-sync start`
-
 `docker-compose up`

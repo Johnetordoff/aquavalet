@@ -32,19 +32,6 @@ def test(ctx):
     cmd = 'python -m pytest --cov-report=html --cov=aquavalet/providers/filesystem/'
     ctx.run(cmd, pty=True)
 
-
-@task
-def celery(ctx, loglevel='INFO', hostname='%h'):
-
-    from aquavalet.tasks.app import app
-    command = ['worker']
-    if loglevel:
-        command.extend(['--loglevel', loglevel])
-    if hostname:
-        command.extend(['--hostname', hostname])
-    app.worker_main(command)
-
-
 @task
 def rabbitmq(ctx):
     ctx.run('rabbitmq-server', pty=True)

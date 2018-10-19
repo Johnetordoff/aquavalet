@@ -1,14 +1,10 @@
-import io
 import os
 import json
-
-import aiohttp
 
 from tests.utils import json_resp, data_resp, empty_resp
 
 import pytest
 
-from aquavalet.core import streams
 from aquavalet.providers.osfstorage.provider import OSFStorageProvider
 from aquavalet.providers.osfstorage.metadata import OsfMetadata
 
@@ -40,7 +36,6 @@ def folder_metadata_json():
 
 @pytest.fixture
 def folder_metadata_resp(folder_metadata_json):
-
     return json_resp(folder_metadata_json)
 
 @pytest.fixture
@@ -83,10 +78,6 @@ def folder_metadata_object(folder_metadata):
 @pytest.fixture
 def revision_metadata_object(revisions_metadata):
     return OsfMetadata(revisions_metadata['revisions'][0])
-
-@pytest.fixture
-def file_stream():
-    return streams.FileStreamReader(io.BytesIO(b'Test Upload Content'))
 
 @pytest.fixture
 def provider():

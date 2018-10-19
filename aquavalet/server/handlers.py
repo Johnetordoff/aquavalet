@@ -1,5 +1,6 @@
+import json
 import tornado.web
-from aquavalet.tasks.app import app
+import aiohttp
 from aquavalet import settings
 
 from aquavalet.providers.filesystem import FileSystemProvider

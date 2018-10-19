@@ -40,8 +40,8 @@ def api_to_handlers(api):
 def make_app(debug):
     app = tornado.web.Application(
         api_to_handlers('v1') +
-        [(r'/', handlers.RootHandler)],
-        [(r'/status', handlers.StatusHandler)],
+        [(r'/', handlers.RootHandler),
+        (r'/status/', handlers.StatusHandler)],
         debug=debug,
     )
     return app

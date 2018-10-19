@@ -11,7 +11,7 @@ class TestAsyncRetry:
     @pytest.mark.asyncio
     async def test_returns_success(self):
         mock_func = mock.Mock(return_value='Foo')
-        retryable = utils.async_retry(5, 0, raven=None)(mock_func)
+        retryable = utils.async_retry(5, 0)(mock_func)
         x = await retryable()
         assert x == 'Foo'
         assert mock_func.call_count == 1

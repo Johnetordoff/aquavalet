@@ -135,6 +135,7 @@ class OsfProvider(provider.BaseProvider):
                 return self.Item(data['attributes'], self.internal_provider, self.resource)
 
     async def children(self, item):
+
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}',

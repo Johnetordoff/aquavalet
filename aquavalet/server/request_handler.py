@@ -40,20 +40,24 @@ class ProviderHandler(core.BaseHandler):
         self.path = self.path_kwargs['path'] or '/'
         provider = self.path_kwargs['provider']
 
+        print(type(self.request))
+
         self.auth = None  # Figure out best approach
         self.provider = utils.make_provider(provider, self.auth)
         self.provider.item = await self.provider.validate_item(self.path)
 
         if self.request.method == 'UPLOAD':
-            # This is necessary
-            self.rsock, self.wsock = socket.socketpair()
-            self.reader, _ = await asyncio.open_unix_connection(sock=self.rsock)
-            _, self.writer = await asyncio.open_unix_connection(sock=self.wsock)
-
-
-            self.stream = RequestStreamReader(self.request, self.reader)
+            self.stream = self.prepare_stream()
         else:
             self.stream = None
+
+
+    async def prepare_stream(self):
+        # This is necessary
+        self.rsock, self.wsock = socket.socketpair()
+        self.reader, _ = await asyncio.open_unix_connection(sock=self.rsock)
+        _, self.writer = await asyncio.open_unix_connection(sock=self.wsock)
+        return RequestStreamReader(self.request, self.reader)
 
     async def metadata(self, provider,  path):
 
@@ -262,31 +266,3 @@ class ProviderHandler(core.BaseHandler):
         if not value:
             raise exceptions.InvalidParameters(message=message)
         return value
-
-
-    def _send_hook(self, action):
-        source = None
-        destination = None
-
-        if action in ('move', 'copy'):
-            # if provider can't intra_move or copy, then the celery task will take care of logging
-            if not getattr(self.provider, 'can_intra_' + action)(self.dest_provider, self.path):
-                return
-
-            source = LogPayload(self.resource, self.provider, path=self.path)
-            destination = LogPayload(
-                self.dest_resource,
-                self.dest_provider,
-                metadata=self.dest_meta,
-            )
-        elif action in ('create', 'create_folder', 'update'):
-            source = LogPayload(self.resource, self.provider, metadata=self.metadata)
-        elif action in ('delete', 'download_file', 'download_zip'):
-            source = LogPayload(self.resource, self.provider, path=self.path)
-        else:
-            return
-
-        remote_logging.log_file_action(action, source=source, destination=destination, api_version='v1',
-                                       request=None,
-                                       bytes_downloaded=self.bytes_downloaded,
-                                       bytes_uploaded=self.bytes_uploaded,)
