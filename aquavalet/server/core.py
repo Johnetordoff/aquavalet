@@ -2,7 +2,6 @@ import tornado.web
 import tornado.gen
 import tornado.iostream
 
-from aquavalet import tasks
 from aquavalet import settings
 from aquavalet.core import exceptions
 

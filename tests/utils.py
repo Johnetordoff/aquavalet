@@ -11,3 +11,4 @@ def data_resp(raw_data, status=200):
 
 def empty_resp(status=200):
     return web.Response(body=aiohttp.streams.EmptyStreamReader(), status=status)
+

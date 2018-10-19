@@ -17,12 +17,3 @@ def log_file_action(action, source, api_version, destination=None, request={},
         log_to_callback(action, source=source, destination=destination,
                         start_time=start_time, errors=errors, request=request,)
     ]
-
-
-async def wait_for_log_futures(*args, **kwargs):
-    """Background actions that are still running when a celery task returns may not complete.
-    This method allows the celery task to wait for logging to finish before returning."""
-    return await asyncio.wait(
-        log_file_action(*args, **kwargs),
-        return_when=asyncio.ALL_COMPLETED
-    )
