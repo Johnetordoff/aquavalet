@@ -1,17 +1,10 @@
-import json
-import pytz
 import asyncio
 import logging
 import functools
-# from concurrent.futures import ProcessPoolExecutor  TODO Get this working
 
-import aiohttp
-from stevedore import driver
 
 from aquavalet.core import exceptions
-from aquavalet.server import settings as server_settings
 from aquavalet.core.streams import EmptyStream
-from aquavalet.core.streams.zip import ZipLocalFile, ZipArchiveCentralDirectory
 
 logger = logging.getLogger(__name__)
 
@@ -26,18 +19,13 @@ def make_provider(name: str, auth: dict):
 
     :rtype: :class:`waterbutler.core.provider.BaseProvider`
     """
-    try:
-        manager = driver.DriverManager(
-            namespace='aquavalet.providers',
-            name=name,
-            invoke_on_load=True,
-            invoke_args=(auth, ),
-        )
-    except RuntimeError:
-        raise exceptions.ProviderNotFound(name)
+    from aquavalet.providers.filesystem import FileSystemProvider
+    from aquavalet.providers.osfstorage import OSFStorageProvider
 
-    return manager.driver
-
+    return {
+        'filesystem': FileSystemProvider,
+        'osfstorage': OSFStorageProvider
+    }[name](auth)
 
 def as_task(func):
     if not asyncio.iscoroutinefunction(func):
