@@ -131,26 +131,26 @@ class ProviderHandler(core.BaseHandler):
 
         await self.provider.create_folder(self.provider.item, new_name)
 
-    async def copy(self, provider,  path):
+    async def get_destination(self, auth=None):
         dest_path = self.require_query_argument('to', "'to' is a required argument")
         dest_provider = self.require_query_argument('destination_provider', "'destination_provider' is a required argument")
-        self.dest_provider = utils.make_provider(dest_provider, auth=None)
+        dest_provider = utils.make_provider(dest_provider, auth=auth)
+        dest_provider.item = await dest_provider.validate_item(dest_path)
+        return dest_provider
+
+    async def copy(self, provider,  path):
         conflict = self.get_query_argument('conflict', default='warn')
+        self.dest_provider = self.get_destination()
 
-
-        self.dest_provider.item = await self.dest_provider.validate_item(dest_path)
-        if self.provider.can_intra_copy(dest_path, self.dest_provider,):
+        if self.provider.can_intra_copy(self.dest_provider):
             return await self.provider.intra_copy(self.provider.item)
 
         return await self.provider.copy(self.provider.item, self.dest_provider.item, self.dest_provider, conflict)
 
     async def move(self, provider,  path):
-        dest_path = self.require_query_argument('to', "'to' is a required argument")
-        dest_provider = self.require_query_argument('destination_provider', "'destination_provider' is a required argument")
-        self.dest_provider = utils.make_provider(dest_provider, auth=None)
         conflict = self.get_query_argument('conflict', default='warn')
+        self.dest_provider = self.get_destination()
 
-        self.dest_provider.item = await self.dest_provider.validate_item(dest_path)
         if self.provider.can_intra_move(self.dest_provider):
             return await self.provider.intra_move(self.provider.item, self.dest_provider)
 
