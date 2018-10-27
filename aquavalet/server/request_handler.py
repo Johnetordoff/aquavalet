@@ -35,29 +35,36 @@ class ProviderHandler(core.BaseHandler):
 
     PATTERN = settings.ROOT_PATTERN
 
+    def initialize(self):
+        self.stream = None
+
     async def prepare(self, *args, **kwargs):
 
         self.path = self.path_kwargs['path'] or '/'
         provider = self.path_kwargs['provider']
-
-        print(type(self.request))
 
         self.auth = None  # Figure out best approach
         self.provider = utils.make_provider(provider, self.auth)
         self.provider.item = await self.provider.validate_item(self.path)
 
         if self.request.method == 'UPLOAD':
-            self.stream = self.prepare_stream()
-        else:
-            self.stream = None
-
+            self.stream = await self.prepare_stream()
 
     async def prepare_stream(self):
         # This is necessary
         self.rsock, self.wsock = socket.socketpair()
         self.reader, _ = await asyncio.open_unix_connection(sock=self.rsock)
         _, self.writer = await asyncio.open_unix_connection(sock=self.wsock)
+
         return RequestStreamReader(self.request, self.reader)
+
+    async def data_received(self, chunk):
+        """Note: Only called during uploads."""
+        self.bytes_uploaded += len(chunk)
+        if self.stream:
+            self.writer.write(chunk)
+            await self.writer.drain()
+
 
     async def metadata(self, provider,  path):
 
@@ -166,13 +173,6 @@ class ProviderHandler(core.BaseHandler):
         comfirm_delete = self.get_query_argument('comfirm_delete', default=None)
         await self.provider.delete(self.provider.item, comfirm_delete)
         self.set_status(204)
-
-    async def data_received(self, chunk):
-        """Note: Only called during uploads."""
-        self.bytes_uploaded += len(chunk)
-        if self.stream:
-            self.writer.write(chunk)
-            await self.writer.drain()
 
     async def versions(self, provider,  path):
         if self.provider.item.is_folder:
