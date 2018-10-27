@@ -20,6 +20,7 @@ class BaseMetadata(metaclass=abc.ABCMeta):
             'kind': self.kind,
             'name': self.name,
             'path': self.id,
+            'size': self.size,
             'modified': self.modified,
             'mimetype': mimetypes.types_map.get(ext),
             'provider': self.provider,

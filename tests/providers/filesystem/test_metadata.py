@@ -8,10 +8,9 @@ from aquavalet.providers.filesystem.metadata import FileSystemMetadata
 @pytest.fixture
 def file_metadata():
     return {
-        'path': '/code/website/osfstoragecache/77094244-aa24-48da-9437-d8ce6f7a94e9',
+        'path': '/test/test.txt',
         'modified_utc': '2017-09-20T15:16:02.601916+00:00',
-        'mime_type': None,
-        'size': 35981,
+        'size': 1234,
         'modified': 'Wed, 20 Sep 2017 15:16:02 +0000'
     }
 
@@ -36,76 +35,42 @@ def subfolder_metadata():
 
 class TestMetadata:
 
-    def test_file_metadata(self, file_metadata):
-        data = FileSystemMetadata(file_metadata, '/')
-        assert data.path == '/code/website/osfstoragecache/77094244-aa24-48da-9437-d8ce6f7a94e9'
+    def test_file_metadata(self, file_metadata, fs):
+
+        fs.create_file('/test/test.txt', contents=b'test')
+        assert os.path.exists('/test/test.txt')
+
+        data = FileSystemMetadata(file_metadata)
+        assert data.path == '/test/test.txt'
         assert data.provider == 'filesystem'
-        assert data.modified == 'Wed, 20 Sep 2017 15:16:02 +0000'
-        assert data.modified_utc == '2017-09-20T15:16:02.601916+00:00'
-        assert data.created_utc is None
-        assert data.content_type is None
-        assert data.name == '77094244-aa24-48da-9437-d8ce6f7a94e9'
-        assert data.size == 35981
-        assert data.etag == ('Wed, 20 Sep 2017 15:16:02 +0000::/'
-            'code/website/osfstoragecache/77094244-aa24-48da-9437-d8ce6f7a94e9')
+
+        # Can't really assert this without time travel
+        #assert data.modified == '2018-10-27T16:43:22.162256+00:00'
+        #assert data.modified_utc == '2017-09-20T15:16:02.601916+00:00'
+        #assert data.etag == ('Wed, 20 Sep 2017 15:16:02 +0000::/'
+         #                    'code/website/osfstoragecache/77094244-aa24-48da-9437-d8ce6f7a94e9')
+
+        assert data.content_type == 'text/plain'
+        assert data.name == 'test.txt'
+        assert data.size == 4
         assert data.kind == 'file'
-        assert data.extra == {}
-        assert data.serialized() == {
-            'extra': {},
-            'kind': 'file',
-            'name': '77094244-aa24-48da-9437-d8ce6f7a94e9',
-            'path': '/code/website/osfstoragecache/77094244-aa24-48da-9437-d8ce6f7a94e9',
-            'provider': 'filesystem',
-            'materialized': '/code/website/osfstoragecache/77094244-aa24-48da-9437-d8ce6f7a94e9',
-            'etag': '1cbfe0429bd8cd51d517ecfa22f92d28c86a0c687334c1f5acf70cdde75526fd',
-            'contentType': None,
-            'modified': 'Wed, 20 Sep 2017 15:16:02 +0000',
-            'modified_utc': '2017-09-20T15:16:02.601916+00:00',
-            'created_utc': None,
-            'size': 35981
-        }
 
-        assert data.json_api_serialized('cn42d') == {
-            'id': 'filesystem/code/website/osfstoragecache/77094244-aa24-48da-9437-d8ce6f7a94e9',
-            'type': 'files',
-            'attributes': {
-                'extra': {},
-                'kind': 'file',
-                'name': '77094244-aa24-48da-9437-d8ce6f7a94e9',
-                'path': '/code/website/osfstoragecache/77094244-aa24-48da-9437-d8ce6f7a94e9',
-                'provider': 'filesystem',
-                'materialized': ('/code/website/osfstoragecache/'
-                    '77094244-aa24-48da-9437-d8ce6f7a94e9'),
-                'etag': '1cbfe0429bd8cd51d517ecfa22f92d28c86a0c687334c1f5acf70cdde75526fd',
-                'contentType': None,
-                'modified': 'Wed, 20 Sep 2017 15:16:02 +0000',
-                'modified_utc': '2017-09-20T15:16:02.601916+00:00',
-                'created_utc': None,
-                'size': 35981,
-                'resource': 'cn42d'
-            },
-            'links': {
-                'move': ('http://localhost:7777/v1/resources/cn42d/providers/filesystem'
-                    '/code/website/osfstoragecache/77094244-aa24-48da-9437-d8ce6f7a94e9'),
-                'upload': ('http://localhost:7777/v1/resources/cn42d/providers/filesystem'
-                    '/code/website/osfstoragecache/77094244-aa24-48da-9437-d8ce6f7a94e9?kind=file'),
-                'delete': ('http://localhost:7777/v1/resources/cn42d/providers/filesystem'
-                    '/code/website/osfstoragecache/77094244-aa24-48da-9437-d8ce6f7a94e9'),
-                'download': ('http://localhost:7777/v1/resources/cn42d/providers/filesystem'
-                    '/code/website/osfstoragecache/77094244-aa24-48da-9437-d8ce6f7a94e9')
-            }
-        }
+        json_api_data = data.json_api_serialized()
 
-        assert data._json_api_links('cn42d') == {
-            'move': ('http://localhost:7777/v1/resources/cn42d/providers/'
-                'filesystem/code/website/osfstoragecache/77094244-aa24-48da-9437-d8ce6f7a94e9'),
-            'upload': ('http://localhost:7777/v1/resources/cn42d/providers/filesystem'
-                '/code/website/osfstoragecache/77094244-aa24-48da-9437-d8ce6f7a94e9?kind=file'),
-            'delete': ('http://localhost:7777/v1/resources/cn42d/providers/'
-                'filesystem/code/website/osfstoragecache/77094244-aa24-48da-9437-d8ce6f7a94e9'),
-            'download': ('http://localhost:7777/v1/resources/cn42d/providers/'
-                'filesystem/code/website/osfstoragecache/77094244-aa24-48da-9437-d8ce6f7a94e9')
-        }
+        assert json_api_data['id'] == '/test/test.txt'
+        assert json_api_data['type'] == 'files'
+        assert json_api_data['attributes']['kind'] == 'file'
+        assert json_api_data['attributes']['mimetype'] == 'text/plain'
+        assert json_api_data['attributes']['size'] == 4
+        assert json_api_data['attributes']['provider'] == 'filesystem'
+
+        assert json_api_data['links']['info'] == 'http://localhost:7777/filesystem/test/test.txt?serve=meta'
+        assert json_api_data['links']['delete'] == 'http://localhost:7777/filesystem/test/test.txt?serve=delete'
+        assert json_api_data['links']['download'] == 'http://localhost:7777/filesystem/test/test.txt?serve=download'
+
+        assert not 'upload' in json_api_data['links']
+        assert not 'children' in json_api_data['links']
+
 
     def test_root_metadata(self, root_metadata):
         data = FileSystemFolderMetadata(root_metadata, '')

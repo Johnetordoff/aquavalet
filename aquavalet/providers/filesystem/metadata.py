@@ -6,9 +6,9 @@ from aquavalet.core import metadata
 
 class FileSystemMetadata(metadata.BaseMetadata):
 
-    def __init__(self, raw=None, path=None):
+    def __init__(self, raw=None):
         self.raw = {}
-        path = path or raw['path']
+        path = raw['path']
         self.default_segments = [self.provider]
         modified = datetime.datetime.utcfromtimestamp(os.path.getmtime(path)).replace(tzinfo=datetime.timezone.utc)
         self.raw.update({

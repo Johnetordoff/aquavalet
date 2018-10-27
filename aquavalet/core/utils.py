@@ -67,13 +67,12 @@ def async_retry(retries=5, backoff=1, exceptions=(Exception, )):
     return _async_retry
 
 class ZipStreamGeneratorReader:
-    def __init__(self, provider, parent_path, metadata_objs, session):
+    def __init__(self, provider, item, children, session):
         self.session = session
         self.provider = provider
-        self.parent_path = parent_path.unix_path
-        self.remaining = metadata_objs
+        self.parent_path = item.unix_path
+        self.remaining = children
         self.stream = None
-        self.finished_streams = []
         self._eof = False
 
     async def __aiter__(self):
