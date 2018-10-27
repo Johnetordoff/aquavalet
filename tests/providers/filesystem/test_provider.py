@@ -10,44 +10,45 @@ from aquavalet.core import exceptions
 
 from .fixtures import (
     provider,
-    setup_filesystem,
     file_metadata,
     folder_metadata,
-    root_metadata,
-    missing_file_metadata
 )
 
 from aquavalet.providers.filesystem import FileSystemProvider
 
+
 class TestCreateFolder:
 
     @pytest.mark.asyncio
-    async def test_create_folder(self, provider, setup_filesystem):
-        item = await provider.validate_item('test folder/')
+    async def test_create_folder(self, provider, fs):
+        item = await provider.validate_item('/')
 
         item = await provider.create_folder(item, 'new_folder')
 
+        assert isinstance(item, FileSystemMetadata)
         assert item.name == 'new_folder'
-        assert item.path == 'test folder/new_folder/'
+        assert item.path == '/new_folder/'
 
 
 class TestValidateItem:
 
     @pytest.mark.asyncio
-    async def test_validate_item(self, provider, setup_filesystem):
+    async def test_validate_item(self, provider, fs):
+        fs.create_dir('test folder/')
+        fs.create_file('test folder/test.txt', contents=b'test')
 
-        item = await provider.validate_item('test folder/flower.jpg')
+        item = await provider.validate_item('test folder/test.txt')
 
         assert isinstance(item, FileSystemMetadata)
-        assert item.name == 'flower.jpg'
-        assert item.id == 'test folder/flower.jpg'
-        assert item.path == 'test folder/flower.jpg'
+        assert item.name == 'test.txt'
+        assert item.id == 'test folder/test.txt'
+        assert item.path == 'test folder/test.txt'
         assert item.kind == 'file'
         assert item.parent == 'test folder/'
 
 
     @pytest.mark.asyncio
-    async def test_validate_item_root(self, provider, setup_filesystem):
+    async def test_validate_item_root(self, provider, fs):
 
         item = await provider.validate_item('/')
 
@@ -70,30 +71,37 @@ class TestValidateItem:
 class TestDownload:
 
     @pytest.mark.asyncio
-    async def test_download(self, provider, setup_filesystem):
-        item = await provider.validate_item('test folder/flower.jpg')
+    async def test_download(self, provider, fs):
+        fs.create_dir('test folder/')
+        fs.create_file('test folder/test.txt', contents=b'test')
+
+
+        item = await provider.validate_item('test folder/test.txt')
 
         stream = await provider.download(item=item)
 
         isinstance(stream, FileStreamReader)
-        assert stream.size == 11
+        assert stream.size == 4
 
         content = await stream.read()
-        assert content == b'I am a file'
+        assert content == b'test'
 
     @pytest.mark.asyncio
-    async def test_download_range(self, provider):
-        item = await provider.validate_item('test folder/flower.jpg')
+    async def test_download_range(self, provider, fs):
+        fs.create_dir('test folder/')
+        fs.create_file('test folder/test.txt', contents=b'test')
+
+        item = await provider.validate_item('test folder/test.txt')
 
         stream = await provider.download(item=item, range=(0, 1))
         assert stream.partial
         assert stream.size == 2
-        assert await stream.read() == b'I '
+        assert await stream.read() == b'te'
 
-        stream = await provider.download(item=item, range=(2, 5))
+        stream = await provider.download(item=item, range=(2, 7))
         assert stream.partial
-        assert stream.size == 4
-        assert await stream.read() == b'am a'
+        #assert stream.size == 4
+        assert await stream.read() == b'st'
 
     @pytest.mark.asyncio
     async def test_download_range_open_ended(self, provider):

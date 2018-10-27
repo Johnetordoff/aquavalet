@@ -37,6 +37,9 @@ class FileStreamReader(BaseStream):
         self.feed_eof()
 
     def at_eof(self):
+        print(self.file_pointer.tell())
+        print(self.size)
+
         return self.file_pointer.tell() == self.size
 
 
@@ -44,12 +47,11 @@ class FileStreamReader(BaseStream):
     def content_range(self):
         return None
 
-    def iter_any(self):
-        return ChunkedFileGenerator(self)
-
     async def _read(self, size):
-        async for chunk in self.iter_any():
-            return chunk
+        if self.read_size:
+            return self.file_pointer.read(self.read_size)
+        return self.file_pointer.read(size)
+
 
 class ChunkedFileGenerator():
 

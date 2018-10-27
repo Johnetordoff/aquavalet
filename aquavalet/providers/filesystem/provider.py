@@ -55,7 +55,7 @@ class FileSystemProvider(provider.BaseProvider):
         file_pointer = open(item.path, 'rb')
 
         if range is not None and range[1] is not None:
-            return streams.FileStreamReader(file_pointer, range)
+            return streams.FileStreamReader(file_pointer)
 
         return streams.FileStreamReader(file_pointer)
 
