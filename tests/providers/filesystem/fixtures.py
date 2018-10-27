@@ -9,11 +9,11 @@ def provider():
     return FileSystemProvider({})
 
 @pytest.fixture
-def file_metadata(setup_filesystem):
+def file_metadata():
     return FileSystemMetadata(path='test folder/flower.jpg')
 
 @pytest.fixture
-def folder_metadata(setup_filesystem):
+def folder_metadata():
     return FileSystemMetadata(path='test folder/other_subfolder/')
 
 
