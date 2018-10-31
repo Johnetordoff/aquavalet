@@ -34,7 +34,10 @@ class FileSystemProvider(provider.BaseProvider):
 
     async def intra_copy(self, src_path, dest_path, dest_provider=None):
         try:
-            shutil.copy(src_path.path, dest_path.path)
+            if src_path.kind == 'file':
+                shutil.copy(src_path.path, dest_path.path)
+            else:
+                shutil.copytree(src_path.path, dest_path.child(src_path.path))
         except FileNotFoundError as exc:
             raise exceptions.NotFoundError(f'Item at \'{exc.filename}\' could not be found, folders must end with \'/\'')
 
@@ -55,14 +58,14 @@ class FileSystemProvider(provider.BaseProvider):
         file_pointer = open(item.path, 'rb')
 
         if range is not None and range[1] is not None:
-            return streams.FileStreamReader(file_pointer)
+            return streams.FileStreamReader(file_pointer, range=range)
 
         return streams.FileStreamReader(file_pointer)
 
-    async def upload(self, item, stream=None, new_name=None):
+    async def upload(self, item, stream=None, new_name=None, conflict='warn'):
 
         with open(item.path + new_name, 'wb') as file_pointer:
-            async for chunk in stream.generator:
+            async for chunk in stream:
                 file_pointer.write(chunk)
 
     async def delete(self, item, comfirm_delete=False):

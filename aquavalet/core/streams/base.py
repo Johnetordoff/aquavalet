@@ -10,7 +10,6 @@ class BaseStream(asyncio.StreamReader, metaclass=abc.ABCMeta):
         super().__init__(*args, **kwargs)
         self.readers = {}
         self.writers = {}
-        self.generator = Generator(self)
 
     @abc.abstractproperty
     def size(self):
@@ -50,26 +49,12 @@ class BaseStream(asyncio.StreamReader, metaclass=abc.ABCMeta):
     async def _read(self, size):
         pass
 
-
-class Generator():
-
-    def __init__(self, stream):
-        self.stream = stream
-
     async def __aiter__(self):
-        return self
-
-    async def stream_sender(self):
-        chunk = await self.stream.read(self.stream.CHUNK_SIZE)
-        while chunk:
-            yield chunk
-            chunk = await self.stream.read(self.stream.CHUNK_SIZE)
-
-    async def __anext__(self):
-        chunk = await self.stream.read(self.stream.CHUNK_SIZE)
+        chunk = await self.read(self.CHUNK_SIZE)
         if not chunk:
             raise StopAsyncIteration()
-        return chunk
+        yield chunk
+
 
 class MultiStream(asyncio.StreamReader):
     """Concatenate a series of `StreamReader` objects into a single stream.

@@ -6,6 +6,7 @@ import socket
 
 from aquavalet.core.streams.http import RequestStreamReader
 from aquavalet.core.streams.file import FileStreamReader
+from aquavalet.core.streams.zip import ZipStreamReader
 from aquavalet.core.utils import ZipStreamGeneratorReader
 from tests.providers.filesystem.fixtures import provider
 
@@ -42,5 +43,10 @@ async def zip_generator(fs, provider):
     item = await provider.validate_item('/')
     children = await provider.children(item)
     return ZipStreamGeneratorReader(provider, item, children, session)
+
+
+@pytest.fixture()
+async def zip_stream(fs, zip_generator):
+    return ZipStreamReader(zip_generator)
 
 

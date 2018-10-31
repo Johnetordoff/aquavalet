@@ -1,5 +1,8 @@
+import io
 import pytest
-from tests.streams.fixtures import zip_generator
+import zipfile
+
+from tests.streams.fixtures import zip_generator, zip_stream
 from tests.providers.filesystem.fixtures import provider
 from aquavalet.core.utils import ZipStreamGeneratorReader
 
@@ -8,27 +11,42 @@ class TestZipStreamGeneratorReader:
     @pytest.mark.asyncio
     async def test_zip_generator(self, zip_generator):
         filename, stream = await zip_generator.__anext__()
-        assert filename == 'tmp'
+        assert filename == 'tmp/'
         assert await stream.read() == b''
 
         filename, stream = await zip_generator.__anext__()
         assert filename == 'test folder/test-1.txt'
         assert await stream.read() == b'test-1'
 
+        filename, stream = await zip_generator.__anext__()
+        assert filename == 'test folder/test-2.txt'
+        assert await stream.read() == b'test-2'
+
+        filename, stream = await zip_generator.__anext__()
+        assert filename == 'test folder/test folder 2/test-3.txt'
+        assert await stream.read() == b'test-3'
+
+        with pytest.raises(StopAsyncIteration):
+            await zip_generator.__anext__()
+
+        await zip_generator.session.close()
+
+
 class TestZipStreamReader:
 
     @pytest.mark.asyncio
-    async def test_zip_stream_read(self, request_stream):
-        assert await request_stream.read() == b'test data'
-        assert request_stream.at_eof()
+    async def test_zip_stream_read(self, zip_stream):
+        data = await zip_stream.read()
+        zf = zipfile.ZipFile(io.BytesIO(data), "r")
+        files = zf.infolist()
+        assert files[0].filename == 'tmp/'
+        assert files[1].filename == 'test folder/test-1.txt'
+        assert files[2].filename == 'test folder/test-2.txt'
+        assert files[3].filename == 'test folder/test folder 2/test-3.txt'
 
     @pytest.mark.asyncio
     async def test_request_stream_size(self, request_stream):
         assert request_stream.size == 9
-
-
-class TestZipStreamReader:
-    pass
 
 
 

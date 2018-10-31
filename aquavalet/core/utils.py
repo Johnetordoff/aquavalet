@@ -66,6 +66,14 @@ def async_retry(retries=5, backoff=1, exceptions=(Exception, )):
 
     return _async_retry
 
+def lreplace(pattern, sub, string):
+    """
+    Replaces 'pattern' in 'string' with 'sub' if 'pattern' starts 'string'.
+    """
+    import re
+    return re.sub('^%s' % pattern, sub, string)
+
+
 class ZipStreamGeneratorReader:
     def __init__(self, provider, item, children, session):
         self.session = session
@@ -88,5 +96,5 @@ class ZipStreamGeneratorReader:
                 self.remaining.extend(items)
                 return await self.__anext__()
             else:
-                return current.unix_path.replace(self.parent_path, ''), EmptyStream()
-        return current.unix_path.replace(self.parent_path, ''), await self.provider.download(current, self.session)
+                return current.unix_path.lstrip(self.parent_path), EmptyStream()
+        return lreplace(self.parent_path, '', current.unix_path), await self.provider.download(current, self.session)
