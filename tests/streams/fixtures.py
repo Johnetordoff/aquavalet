@@ -25,6 +25,10 @@ async def request_stream(stream_data=b'test data'):
 
 
 @pytest.fixture()
+async def response_stream(stream_data=b'test data'):
+    pass
+
+@pytest.fixture()
 async def file_stream(fs, range=None):
     fs.create_file('test.txt', contents=b'test')
     fp = open('test.txt')

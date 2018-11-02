@@ -6,6 +6,7 @@ from tests.streams.fixtures import zip_generator, zip_stream
 from tests.providers.filesystem.fixtures import provider
 from aquavalet.core.utils import ZipStreamGeneratorReader
 
+
 class TestZipStreamGeneratorReader:
 
     @pytest.mark.asyncio
@@ -45,8 +46,8 @@ class TestZipStreamReader:
         assert files[3].filename == 'test folder/test folder 2/test-3.txt'
 
     @pytest.mark.asyncio
-    async def test_request_stream_size(self, request_stream):
-        assert request_stream.size == 9
-
+    async def test_zip_stream_read_partial(self, zip_stream):
+        data = await zip_stream.read(10)  # No idea why you'd want to do this!
+        assert len(data) == 10
 
 

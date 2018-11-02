@@ -1,7 +1,6 @@
 import pytest
 from tests.streams.fixtures import request_stream
 
-
 class TestRequestStream:
 
     @pytest.mark.asyncio
