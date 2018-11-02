@@ -37,9 +37,6 @@ class FileStreamReader(BaseStream):
         self.feed_eof()
 
     def at_eof(self):
-        print(self.file_pointer.tell())
-        print(self.size)
-
         return self.file_pointer.tell() == self.size
 
 

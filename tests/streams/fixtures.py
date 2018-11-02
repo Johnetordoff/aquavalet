@@ -14,7 +14,7 @@ from tests.providers.filesystem.fixtures import provider
 from tornado.httputil import HTTPServerRequest
 
 @pytest.fixture()
-async def request_stream(stream_data=b'test data'):
+def request_stream(stream_data=b'test data'):
     reader = asyncio.StreamReader()
     reader.feed_data(stream_data)
     reader.feed_eof()
@@ -23,6 +23,11 @@ async def request_stream(stream_data=b'test data'):
     request = HTTPServerRequest(uri='http://fake.com', headers=headers, body=stream_data)
     return RequestStreamReader(request, reader)
 
+
+class RequestStreamFactory(object):
+
+    def __new__(self):
+        return request_stream()
 
 @pytest.fixture()
 async def file_stream(fs, range=None):
