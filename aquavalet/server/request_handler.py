@@ -241,7 +241,7 @@ class ProviderHandler(core.BaseHandler):
             await self.flush()
 
     async def download_folder_as_zip(self, provider,  path):
-        zipfile_name = self.provider.item.name or '{}-archive'.format(self.provider.NAME)
+        zipfile_name = self.provider.item.name or '{}-archive'.format(self.provider.name)
         self.set_header('Content-Type', 'application/zip')
         self.set_header('Content-Disposition', 'attachment;filename="{}.zip"'.format(zipfile_name))
 

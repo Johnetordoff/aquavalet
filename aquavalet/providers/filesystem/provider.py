@@ -20,8 +20,7 @@ class FileSystemProvider(provider.BaseProvider):
     This provider is used for local testing.  Files are stored by hash, preserving
     case-sensitivity on case-insensitive host filesystems.
     """
-    NAME = 'filesystem'
-    body = b''
+    name = 'filesystem'
 
     async def validate_item(self, path, **kwargs):
         if not os.path.exists(path) or os.path.isdir(path) and not path.endswith('/'):
@@ -63,6 +62,12 @@ class FileSystemProvider(provider.BaseProvider):
         return streams.FileStreamReader(file_pointer)
 
     async def upload(self, item, stream=None, new_name=None, conflict='warn'):
+        print(os.path.isfile(item.path + new_name))
+        print(item.path + new_name)
+        if os.path.isfile(item.path + new_name):
+            print('new_name')
+
+            return await self.handle_conflict(item=item, conflict=conflict, new_name=new_name, stream=stream)
 
         with open(item.path + new_name, 'wb') as file_pointer:
             async for chunk in stream:
@@ -90,6 +95,9 @@ class FileSystemProvider(provider.BaseProvider):
         children = [child + '/' if os.path.isdir(child) else child for child in children]
 
         return [FileSystemMetadata(path=child) for child in children]
+
+    async def parent(self, item):
+        return FileSystemMetadata(path=item.parent)
 
     async def create_folder(self, item, new_name):
         os.makedirs(item.child(new_name), exist_ok=True)

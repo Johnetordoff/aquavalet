@@ -4,7 +4,7 @@ import io
 import os
 import zipfile
 
-from aquavalet.core.streams import FileStreamReader, StringStream
+from aquavalet.core.streams import FileStreamReader
 from aquavalet.providers.filesystem.metadata import FileSystemMetadata
 from aquavalet.core import exceptions
 
@@ -15,7 +15,7 @@ from .fixtures import (
     missing_file_metadata
 )
 
-from tests.streams.fixtures import request_stream
+from tests.streams.fixtures import request_stream, RequestStreamFactory
 from aquavalet.providers.filesystem import FileSystemProvider
 
 
@@ -139,12 +139,12 @@ class TestDownload:
         zipped1 = zip.open('test folder 2/test-2.txt')
         assert zipped1.read() == b'test-2'
 
+
 class TestUpload:
 
     @pytest.mark.asyncio
     async def test_upload(self, provider, fs, request_stream):
         fs.create_dir('test folder/')
-
         item = await provider.validate_item('test folder/')
         await provider.upload(stream=request_stream, item=item, new_name='upload.txt')
 
@@ -154,6 +154,51 @@ class TestUpload:
         assert item.path == 'test folder/upload.txt'
         assert item.size == 9
 
+    @pytest.mark.asyncio
+    async def test_upload_warn(self, provider, fs, request_stream):
+        fs.create_dir('test folder/')
+        fs.create_file('test folder/upload.txt')
+
+        item = await provider.validate_item('test folder/')
+
+        with pytest.raises(exceptions.Conflict):
+            await provider.upload(stream=request_stream, item=item, new_name='upload.txt', conflict='warn')
+
+        with pytest.raises(exceptions.Conflict):
+            await provider.upload(stream=request_stream, item=item, new_name='upload.txt')
+
+    @pytest.mark.asyncio
+    async def test_upload_replace(self, provider, fs, request_stream):
+        fs.create_dir('test folder/')
+        fs.create_file('test folder/upload.txt', contents=b'1234')
+
+        item = await provider.validate_item('test folder/')
+
+        await provider.upload(stream=request_stream, item=item, new_name='upload.txt', conflict='replace')
+
+        item = await provider.validate_item('test folder/upload.txt')
+
+        stream = await provider.download(item=item)
+        assert await stream.read() == b'test data'
+
+    @pytest.mark.asyncio
+    async def test_upload_new_version(self):
+        """Not possible in filesystem"""
+        pass
+
+    @pytest.mark.asyncio
+    async def test_upload_rename(self, provider, fs):
+        fs.create_dir('test folder/')
+        fs.create_file('test folder/upload.txt')
+
+        item = await provider.validate_item('test folder/')
+
+        await provider.upload(stream=RequestStreamFactory(), item=item, new_name='upload.txt', conflict='rename')
+        await provider.validate_item('test folder/upload(1).txt')
+        print(fs.listdir('test folder/'))
+
+        await provider.upload(stream=RequestStreamFactory(), item=item, new_name='upload.txt', conflict='rename')
+        await provider.validate_item('test folder/upload(2).txt')
 
 class TestDelete:
 

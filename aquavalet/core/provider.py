@@ -1,3 +1,4 @@
+import os
 import abc
 import time
 import typing
@@ -91,7 +92,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
 
     @property
     @abc.abstractmethod
-    def NAME(self) -> str:
+    def name(self) -> str:
         raise NotImplementedError
 
     def __eq__(self, other):
@@ -105,7 +106,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
 
     def serialized(self) -> dict:
         return {
-            'name': self.NAME,
+            'name': self.name,
             'auth': self.auth,
             'settings': self.settings,
             'credentials': self.credentials,
@@ -126,15 +127,6 @@ class BaseProvider(metaclass=abc.ABCMeta):
         """
         return {}
 
-    def build_headers(self, **kwargs) -> dict:
-        headers = self.default_headers
-        headers.update(kwargs)
-        return {
-            key: value
-            for key, value in headers.items()
-            if value is not None
-        }
-
     async def handle_response(self, resp=None, item=None, path=None, new_name=None, conflict='warn', stream=None):
         data = await resp.json()
 
@@ -154,24 +146,35 @@ class BaseProvider(metaclass=abc.ABCMeta):
         if conflict == 'warn':
             return await self.handle_conflict_warn(new_name)
         if conflict == 'replace':
-            return await self.handle_conflict_replace(resp=resp, item=item, path=path, new_name=new_name, conflict=conflict, stream=stream)
+            return await self.handle_conflict_replace(new_name, item, stream)
         if conflict == 'new_version':
             return await self.handle_conflict_new_version(resp=resp, item=item, path=path, new_name=new_name, conflict=conflict, stream=stream)
         if conflict == 'rename':
-            return await self.handle_conflict_rename(resp=resp, item=item, path=path, new_name=new_name, conflict=conflict, stream=stream)
+            return await self.handle_conflict_rename(new_name, item, stream)
 
     def handle_conflict_warn(self, new_name):
         raise exceptions.Conflict(f'Conflict \'{new_name}\'.')
 
-    async def handle_conflict_replace(self, resp=None, item=None, path=None, new_name=None, conflict=None, stream=None):
-        await self.delete(item)
+    async def handle_conflict_replace(self, new_name, item, stream):
+        # TODO: Optimize for name based providers (using Mixin?)
+        blocking_item = next(child for child in (await self.children(item)) if child.name == new_name)
+        await self.delete(blocking_item)
         await self.upload(item, stream=stream, new_name=new_name)
 
     def handle_conflict_new_version(self):
         raise NotImplementedError()
 
-    def handle_conflict_rename(self, new_name):
-        raise NotImplementedError()
+    async def handle_conflict_rename(self, new_name, item, stream):
+        # TODO: Optimize for name based providers (using Mixin?)
+        names = {child.name for child in (await self.children(item))}
+        num = 1
+        print(names)
+        while new_name in names:
+            name, ext = os.path.splitext(new_name)
+            new_name = f'{name}({num}){ext}'
+            num += 1
+        await self.upload(item, stream=stream, new_name=new_name)
+
 
     async def move(self, dest_provider, item, destination_item, conflict):
 
@@ -217,26 +220,10 @@ class BaseProvider(metaclass=abc.ABCMeta):
 
         return folder
 
-    async def handle_naming(self, src_path, dest_path, rename: str=None, conflict: str='replace'):
-        """"""
-        dest_path = await self.revalidate_path(
-            dest_path,
-            rename or src_path.name,
-            folder=src_path.is_dir
-        )
-
-        dest_path, _ = await self.handle_name_conflict(dest_path, conflict=conflict)
-
-        return dest_path
-
     def can_intra_copy(self, other, path) -> bool:
-        """
-        """
         return False
 
     def can_intra_move(self, other, path) -> bool:
-        """
-        """
         return False
 
     async def zip(self, item, session) -> ZipStreamGeneratorReader:
@@ -269,6 +256,10 @@ class BaseProvider(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     async def validate_item(self, item=None) -> wb_metadata.BaseMetadata:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    async def parent(self, item=None) -> wb_metadata.BaseMetadata:
         raise NotImplementedError
 
     async def versions(self, item=None) -> wb_metadata.BaseMetadata:
