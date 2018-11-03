@@ -13,7 +13,7 @@ from aquavalet.core import remote_logging
 from aquavalet.core import utils
 from aquavalet.core.streams import RequestStreamReader
 from aquavalet.server import core
-
+from aquavalet.providers.filesystem import FileSystemProvider
 logger = logging.getLogger(__name__)
 
 
@@ -51,7 +51,6 @@ class ProviderHandler(core.BaseHandler):
             self.stream = await self.prepare_stream()
 
     async def prepare_stream(self):
-        # This is necessary
         self.rsock, self.wsock = socket.socketpair()
         self.reader, _ = await asyncio.open_unix_connection(sock=self.rsock)
         _, self.writer = await asyncio.open_unix_connection(sock=self.wsock)

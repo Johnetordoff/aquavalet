@@ -9,9 +9,6 @@ DOMAIN = "http://localhost:7777"
 
 DEBUG = True
 
-SSL_CERT_FILE = None
-SSL_KEY_FILE = None
-
 XHEADERS = False
 CORS_ALLOW_ORIGIN = '*'
 

@@ -32,7 +32,6 @@ class ArtifactsProvider(OsfProvider):
                 headers=headers,
                 params={'kind': 'file', 'name': new_name}
             ) as resp:
-                print(resp)
                 print(await resp.json())
 
 

@@ -3,7 +3,7 @@ CHUNK_SIZE = 65536  # 64KB
 
 PROJECT_NAME = 'aqua valet'
 
-ROOT_PATTERN = r'(?P<provider>(?:osfstorage|filesystem)+)(?P<path>/.*/?)'
+ROOT_PATTERN = r'/(?P<provider>(?:osfstorage|filesystem)+)(?P<path>/.*/?)'
 DEFAULT_FORMATTER = {
     'format': '[%(asctime)s][%(levelname)s][%(name)s]: %(message)s',
     'pattern': '(?<=cookie=)(.*?)(?=&|$)',

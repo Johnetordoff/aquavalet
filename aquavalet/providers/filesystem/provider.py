@@ -1,14 +1,11 @@
 import os
 import shutil
 import logging
-import datetime
-import mimetypes
 
 from aquavalet.core import streams
 from aquavalet.core import provider
 from aquavalet.core import exceptions
 
-from aquavalet.providers.filesystem import settings
 from aquavalet.providers.filesystem.metadata import FileSystemMetadata
 
 logger = logging.getLogger(__name__)
@@ -62,11 +59,7 @@ class FileSystemProvider(provider.BaseProvider):
         return streams.FileStreamReader(file_pointer)
 
     async def upload(self, item, stream=None, new_name=None, conflict='warn'):
-        print(os.path.isfile(item.path + new_name))
-        print(item.path + new_name)
         if os.path.isfile(item.path + new_name):
-            print('new_name')
-
             return await self.handle_conflict(item=item, conflict=conflict, new_name=new_name, stream=stream)
 
         with open(item.path + new_name, 'wb') as file_pointer:

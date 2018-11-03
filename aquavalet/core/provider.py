@@ -169,7 +169,6 @@ class BaseProvider(metaclass=abc.ABCMeta):
         # TODO: Optimize for name based providers (using Mixin?)
         names = {child.name for child in (await self.children(item))}
         num = 1
-        print(names)
         while new_name in names:
             name, ext = os.path.splitext(new_name)
             if f'{name}({num}){ext}' not in names:

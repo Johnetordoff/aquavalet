@@ -1,9 +1,7 @@
-import json
 import tornado.web
-import aiohttp
 from aquavalet import settings
 
-from aquavalet.providers.filesystem import FileSystemProvider
+
 
 class StatusHandler(tornado.web.RequestHandler):
 

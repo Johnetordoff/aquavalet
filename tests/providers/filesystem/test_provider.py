@@ -132,7 +132,6 @@ class TestDownload:
         assert zip.testzip() is None
 
         # Check content of included files
-        print(zip.infolist())
         zipped1 = zip.open('test-1.txt')
         assert zipped1.read() == b'test-1'
 
@@ -195,7 +194,6 @@ class TestUpload:
 
         await provider.upload(stream=RequestStreamFactory(), item=item, new_name='upload.txt', conflict='rename')
         await provider.validate_item('test folder/upload(1).txt')
-        print(fs.listdir('test folder/'))
 
         await provider.upload(stream=RequestStreamFactory(), item=item, new_name='upload.txt', conflict='rename')
         await provider.validate_item('test folder/upload(2).txt')
