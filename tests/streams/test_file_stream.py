@@ -20,9 +20,22 @@ class TestFileStream:
         assert file_stream_range.at_eof()
 
     @pytest.mark.asyncio
-    async def test_file_stream_read_range_begining(self, fs):
+    async def test_file_stream_read_range_beginning(self, fs):
         file_stream_range = await file_stream(fs, range=(0,1))
         assert await file_stream_range.read() == 'te'
+        assert file_stream_range.at_eof()  # Not sure if correct
+
+    @pytest.mark.asyncio
+    async def test_file_stream_read_chunk(self, fs):
+
+        file_stream_range = await file_stream(fs)
+        file_stream_range.CHUNK_SIZE = 1
+        ind = 0
+        test_data = 'test'
+        async for chunk in file_stream_range:
+            assert chunk == test_data[ind]
+            ind += 1
+
         assert file_stream_range.at_eof()  # Not sure if correct
 
     @pytest.mark.asyncio

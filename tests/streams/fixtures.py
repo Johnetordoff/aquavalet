@@ -24,8 +24,7 @@ def request_stream(stream_data=b'test data'):
     return RequestStreamReader(request, reader)
 
 
-class RequestStreamFactory(object):
-
+class RequestStreamFactory():
     def __new__(self):
         return request_stream()
 

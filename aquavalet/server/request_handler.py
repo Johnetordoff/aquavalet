@@ -103,6 +103,7 @@ class ProviderHandler(core.BaseHandler):
         elif action == 'rename':
             return await self.rename(provider,  path)
         elif action == 'upload':
+            self.stream = await self.prepare_stream()
             return await self.upload(provider,  path)
         elif action == 'create_folder':
             return await self.create_folder(provider,  path)
@@ -129,7 +130,11 @@ class ProviderHandler(core.BaseHandler):
         conflict = self.get_query_argument('conflict', default='warn')
 
         self.writer.write_eof()
-        await self.provider.upload(self.provider.item, self.stream, new_name, conflict)
+        conflict = await self.provider.upload(self.provider.item, self.stream, new_name, conflict)
+        if conflict in ['new_version', 'replace']:
+            self.set_status(200)
+        else:
+            self.set_status(201)
 
         self.writer.close()
         self.wsock.close()
@@ -151,10 +156,10 @@ class ProviderHandler(core.BaseHandler):
 
     async def copy(self, provider,  path):
         conflict = self.get_query_argument('conflict', default='warn')
-        self.dest_provider = self.get_destination()
+        self.dest_provider = await self.get_destination()
 
         if self.provider.can_intra_copy(self.dest_provider):
-            return await self.provider.intra_copy(self.provider.item)
+            return await self.provider.intra_copy(self.provider.item, self.dest_provider.item, self.dest_provider)
 
         return await self.provider.copy(self.provider.item, self.dest_provider.item, self.dest_provider, conflict)
 
@@ -225,20 +230,13 @@ class ProviderHandler(core.BaseHandler):
             if ext in mimetypes.types_map:
                 self.set_header('Content-Type', mimetypes.types_map[ext])
 
-            async for chunk in stream.iter_any():
+            async for chunk in stream:
                 self.write(chunk)
                 self.bytes_downloaded += len(chunk)
                 await self.flush()
 
             if getattr(stream, 'partial', False):
                 await stream.response.release()
-
-    async def write_non_aiohttp_stream(self, stream):
-        stream.file_gen = stream.make_chunk_reader(stream)
-        async for chunk in stream.file_gen:
-            self.write(chunk)
-            self.bytes_downloaded += len(chunk)
-            await self.flush()
 
     async def download_folder_as_zip(self, provider,  path):
         zipfile_name = self.provider.item.name or '{}-archive'.format(self.provider.name)

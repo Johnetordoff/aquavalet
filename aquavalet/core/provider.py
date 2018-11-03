@@ -160,6 +160,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
         blocking_item = next(child for child in (await self.children(item)) if child.name == new_name)
         await self.delete(blocking_item)
         await self.upload(item, stream=stream, new_name=new_name)
+        return 'replace'
 
     def handle_conflict_new_version(self):
         raise NotImplementedError()
@@ -171,10 +172,11 @@ class BaseProvider(metaclass=abc.ABCMeta):
         print(names)
         while new_name in names:
             name, ext = os.path.splitext(new_name)
-            new_name = f'{name}({num}){ext}'
+            if f'{name}({num}){ext}' not in names:
+                new_name =  f'{name}({num}){ext}'
             num += 1
         await self.upload(item, stream=stream, new_name=new_name)
-
+        return 'rename'
 
     async def move(self, dest_provider, item, destination_item, conflict):
 

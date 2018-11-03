@@ -14,5 +14,17 @@ class TestRequestStream:
         assert not request_stream.at_eof()
 
     @pytest.mark.asyncio
+    async def test_request_stream_read_chunked(self, request_stream):
+
+        ind = 0
+        test_data = 'test data'
+        request_stream.CHUNK_SIZE = 1
+        async for chunk in request_stream:
+            assert chunk == bytes(test_data[ind], 'utf-8')
+            ind += 1
+
+        assert request_stream.at_eof()
+
+    @pytest.mark.asyncio
     async def test_request_stream_size(self, request_stream):
         assert request_stream.size == 9

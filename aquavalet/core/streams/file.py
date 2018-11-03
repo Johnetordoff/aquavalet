@@ -39,7 +39,6 @@ class FileStreamReader(BaseStream):
     def at_eof(self):
         return self.file_pointer.tell() == self.size
 
-
     @property
     def content_range(self):
         return None
@@ -48,19 +47,3 @@ class FileStreamReader(BaseStream):
         if self.read_size:
             return self.file_pointer.read(self.read_size)
         return self.file_pointer.read(size)
-
-
-class ChunkedFileGenerator():
-
-    def __init__(self, stream_read):
-        self.stream_read = stream_read
-
-    async def __aiter__(self):
-        return self
-
-    async def __anext__(self):
-        chunk = self.stream_read.file_pointer.read(self.stream_read.read_size)
-        if not chunk:
-            raise StopAsyncIteration()
-
-        return chunk

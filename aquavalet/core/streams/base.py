@@ -49,11 +49,14 @@ class BaseStream(asyncio.StreamReader, metaclass=abc.ABCMeta):
     async def _read(self, size):
         pass
 
-    async def __aiter__(self):
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
         chunk = await self.read(self.CHUNK_SIZE)
         if not chunk:
             raise StopAsyncIteration()
-        yield chunk
+        return chunk
 
 
 class MultiStream(asyncio.StreamReader):
