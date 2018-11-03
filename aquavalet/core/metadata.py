@@ -42,11 +42,11 @@ class BaseMetadata(metaclass=abc.ABCMeta):
 
         actions['info'] = self.construct_path(path_segments, 'meta')
         actions['delete'] = self.construct_path(path_segments, 'delete')
-        #actions['parent'] = self.construct_parent()
 
         if self.kind == 'folder':
             actions['children'] = self.construct_path(path_segments, 'children')
             actions['upload'] = self.construct_path(path_segments, 'upload')
+            actions['download_as_zip'] = self.construct_path(path_segments, 'download_as_zip')
         else:
             actions['download'] = self.construct_path(path_segments, 'download')
 
@@ -83,13 +83,6 @@ class BaseMetadata(metaclass=abc.ABCMeta):
         """
         raise NotImplementedError
 
-    def version_name(self, num=None) -> str:
-        name, ext = os.path.splitext(self.raw['name'])
-        return name + '({})' + ext
-
     @property
     def etag(self) -> str:
         raise NotImplementedError
-
-    def __eq__(self, other: 'BaseMetadata') -> bool:  # type: ignore
-        return isinstance(other, self.__class__) and self.serialized() == other.serialized()
