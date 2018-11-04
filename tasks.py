@@ -46,13 +46,5 @@ def server(ctx):
         remote_parts = os.environ.get('REMOTE_DEBUG').split(':')
         pydevd.settrace(remote_parts[0], port=int(remote_parts[1]), suspend=False, stdoutToServer=True, stderrToServer=True)
 
-    from aquavalet.server.app import serve
+    from aquavalet.app import serve
     serve()
-
-
-@task
-def clean(ctx, verbose=False):
-    cmd = 'find . -name "*.pyc" -delete'
-    if verbose:
-        print(cmd)
-    ctx.run(cmd, pty=True)

@@ -2,8 +2,7 @@ import pytest
 
 from tests import utils
 from unittest import mock
-from aquavalet.core import metadata
-from aquavalet.core import exceptions
+from aquavalet import metadata, exceptions
 
 
 @pytest.fixture

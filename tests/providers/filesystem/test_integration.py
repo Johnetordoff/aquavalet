@@ -1,10 +1,8 @@
 import pytest
 import tornado
-import requests
 import json
 import urllib.parse
-from aquavalet.core import exceptions
-from aquavalet.server.app import make_app
+from aquavalet.app import make_app
 
 @pytest.fixture
 def app():

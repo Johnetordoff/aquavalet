@@ -3,7 +3,7 @@ from unittest import mock
 
 import pytest
 
-from aquavalet.core import utils
+from aquavalet import utils
 
 
 class TestAsyncRetry:

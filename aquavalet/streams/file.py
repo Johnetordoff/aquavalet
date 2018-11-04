@@ -1,9 +1,6 @@
 import os
-import asyncio
-import aiofiles
-import mimetypes
 
-from aquavalet.core.streams.base import BaseStream
+from aquavalet.streams.base import BaseStream
 
 class FileStreamReader(BaseStream):
 

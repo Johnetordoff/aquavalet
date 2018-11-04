@@ -1,10 +1,7 @@
 import json
 import aiohttp
 
-from aquavalet.core import provider
-
-from aquavalet.core import streams
-from aquavalet.core import exceptions
+from aquavalet import streams, provider
 from aquavalet.providers.utils import require_group, require_match
 
 message_no_internal_provider = 'No internal provider in url, path must follow pattern ^\/(?P<internal_provider>(?:\w|\d)+)?\/(?P<resource>[a-zA-Z0-9]{5,})?(?P<path>\/.*)?'

@@ -11,12 +11,9 @@ from urllib import parse
 
 import aiohttp
 
-from aquavalet.core import streams
-from aquavalet.core import exceptions
+from aquavalet import streams, metadata as wb_metadata, exceptions
 from aquavalet.settings import CONCURRENT_OPS
-from aquavalet.core import metadata as wb_metadata
-from aquavalet.core.streams import ZipStreamReader
-from aquavalet.core.utils import ZipStreamGeneratorReader
+from aquavalet.streams.zip import ZipStreamReader, ZipStreamGeneratorReader
 
 
 logger = logging.getLogger(__name__)
@@ -236,7 +233,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
         return ZipStreamReader(ZipStreamGeneratorReader(self, item, children, session))
 
     @abc.abstractmethod
-    async def download(self, item=None, version=None, range=None) -> streams.ResponseStreamReader:
+    async def download(self, item=None, version=None, range=None):
         raise NotImplementedError
 
     @abc.abstractmethod

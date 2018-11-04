@@ -2,10 +2,14 @@ import io
 import pytest
 import zipfile
 
-from tests.streams.fixtures import zip_generator, zip_stream
-from tests.providers.filesystem.fixtures import provider
-from aquavalet.core.utils import ZipStreamGeneratorReader
+from tests.providers.filesystem.fixtures import (
+    provider
+)
 
+from tests.streams.fixtures import (
+    zip_generator,
+    zip_stream
+)
 
 class TestZipStreamGeneratorReader:
 

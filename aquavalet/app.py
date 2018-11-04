@@ -2,6 +2,7 @@ import asyncio
 import logging
 
 import tornado.web
+from tornado.platform.asyncio import AsyncIOMainLoop
 
 from aquavalet.server.request_handler import ProviderHandler
 from aquavalet.server import handlers
@@ -21,7 +22,7 @@ def make_app(debug):
 
 
 def serve():
-    tornado.platform.asyncio.AsyncIOMainLoop().install()
+    AsyncIOMainLoop().install()
 
     app = make_app(settings.DEBUG)
 

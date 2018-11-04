@@ -2,9 +2,7 @@ import tornado.web
 import tornado.gen
 import tornado.iostream
 
-from aquavalet import settings
-from aquavalet.core import exceptions
-
+from aquavalet import settings, exceptions
 
 CORS_ACCEPT_HEADERS = [
     'Range',

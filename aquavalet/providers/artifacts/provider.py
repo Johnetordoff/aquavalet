@@ -1,5 +1,5 @@
 import re
-from aquavalet.core import exceptions
+from aquavalet import exceptions
 import aiohttp
 
 from aquavalet.providers.osfstyle.provider import OsfProvider

@@ -5,7 +5,8 @@ import asyncio
 import zipfile
 import binascii
 
-from aquavalet.core.streams.base import BaseStream, MultiStream, StringStream
+from aquavalet.streams.base import BaseStream, MultiStream, StringStream, EmptyStream
+from aquavalet.utils import lreplace
 
 # for some reason python3.5 has this as (1 << 31) - 1, which is 0x7fffffff
 ZIP64_LIMIT = 0xffffffff - 1
@@ -384,3 +385,28 @@ class ZipStreamReader(asyncio.StreamReader):
             self.stream = None
             chunk += await self.read(n - len(chunk))
         return chunk
+
+class ZipStreamGeneratorReader:
+    def __init__(self, provider, item, children, session):
+        self.session = session
+        self.provider = provider
+        self.parent_path = item.unix_path
+        self.remaining = children
+        self.stream = None
+        self._eof = False
+
+    async def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        if not self.remaining:
+            raise StopAsyncIteration
+        current = self.remaining.pop(0)
+        if current.is_folder:
+            items = await self.provider.children(current)
+            if items:
+                self.remaining.extend(items)
+                return await self.__anext__()
+            else:
+                return current.unix_path.lstrip(self.parent_path), EmptyStream()
+        return lreplace(self.parent_path, '', current.unix_path), await self.provider.download(current, self.session)

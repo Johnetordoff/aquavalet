@@ -1,15 +1,10 @@
 import pytest
 import asyncio
 import aiohttp
-import socket
 
-
-from aquavalet.core.streams.http import RequestStreamReader
-from aquavalet.core.streams.file import FileStreamReader
-from aquavalet.core.streams.zip import ZipStreamReader
-from aquavalet.core.utils import ZipStreamGeneratorReader
-from tests.providers.filesystem.fixtures import provider
-
+from aquavalet.streams.http import RequestStreamReader
+from aquavalet.streams.file import FileStreamReader
+from aquavalet.streams.zip import ZipStreamReader, ZipStreamGeneratorReader
 
 from tornado.httputil import HTTPServerRequest
 

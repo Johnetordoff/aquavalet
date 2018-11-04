@@ -1,5 +1,6 @@
 import re
-from aquavalet.core import exceptions
+from aquavalet import exceptions
+
 
 def require_group(match, group_name, message=''):
     groupdict = match.groupdict()

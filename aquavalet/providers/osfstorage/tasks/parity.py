@@ -2,9 +2,9 @@ import os
 import asyncio
 import hashlib
 
-from aquavalet.core import streams
-from aquavalet.core.utils import async_retry
-from aquavalet.core.utils import make_provider
+from aquavalet import streams
+from aquavalet.utils import async_retry
+from aquavalet.utils import make_provider
 
 from aquavalet.providers.osfstorage.tasks import utils
 from aquavalet.providers.osfstorage import settings as osf_settings
@@ -49,7 +49,7 @@ async def _upload_parity(path, credentials, settings):
     provider_name = settings.get('provider')
     provider = make_provider(provider_name, {}, credentials, settings)
     with open(path, 'rb') as file_pointer:
-        stream = streams.FileStreamReader(file_pointer)
+        stream = streams.file.FileStreamReader(file_pointer)
         stream.add_writer('sha256', streams.HashStreamWriter(hashlib.sha256))
         await provider.upload(
             stream,

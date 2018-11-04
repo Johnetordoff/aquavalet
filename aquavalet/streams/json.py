@@ -1,7 +1,7 @@
 import asyncio
 
-from aquavalet.core.streams.base import StringStream
-from aquavalet.core.streams.base import MultiStream
+from aquavalet.streams import StringStream
+from aquavalet.streams import MultiStream
 
 
 class JSONStream(MultiStream):

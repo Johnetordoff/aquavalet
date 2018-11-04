@@ -1,7 +1,7 @@
 import uuid
 import asyncio
 
-from aquavalet.core.streams.base import BaseStream, MultiStream, StringStream
+from aquavalet.streams.base import BaseStream, MultiStream, StringStream
 
 
 class FormDataStream(MultiStream):

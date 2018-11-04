@@ -2,7 +2,8 @@ import os
 import datetime
 import mimetypes
 
-from aquavalet.core import metadata
+from aquavalet import metadata
+
 
 class FileSystemMetadata(metadata.BaseMetadata):
 

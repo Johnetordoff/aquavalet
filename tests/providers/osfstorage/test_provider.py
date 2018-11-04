@@ -1,30 +1,9 @@
 import pytest
 import aiohttp
 
-from tests.streams.fixtures import (
-    request_stream
-)
-
-from tests.providers.osfstorage.fixtures import (
-    provider,
-    file_metadata_resp,
-    file_metadata_object,
-    file_metadata_json,
-    children_resp,
-    create_folder_resp,
-    create_folder_response_json,
-    delete_resp,
-    upload_resp,
-    download_resp,
-    folder_metadata_resp,
-    folder_metadata_json,
-    response_404,
-    response_404_json
-)
-
 from aquavalet.providers.osfstorage.metadata import OsfMetadata
-from aquavalet.core.streams import ResponseStreamReader
-from aquavalet.core.exceptions import (
+from aquavalet.streams.http import ResponseStreamReader
+from aquavalet.exceptions import (
     InvalidPathError,
     NotFoundError
 )

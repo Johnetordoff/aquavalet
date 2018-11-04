@@ -4,19 +4,16 @@ import io
 import os
 import zipfile
 
-from aquavalet.core.streams import FileStreamReader
+from aquavalet.streams.file import FileStreamReader
 from aquavalet.providers.filesystem.metadata import FileSystemMetadata
-from aquavalet.core import exceptions
+from aquavalet import exceptions
 
 from .fixtures import (
-    provider,
-    file_metadata,
     folder_metadata,
-    missing_file_metadata
+    provider
 )
 
-from tests.streams.fixtures import request_stream, RequestStreamFactory
-from aquavalet.providers.filesystem import FileSystemProvider
+from tests.streams.fixtures import RequestStreamFactory, request_stream
 
 
 class TestCreateFolder:

@@ -2,11 +2,9 @@ import os
 import shutil
 import logging
 
-from aquavalet.core import streams
-from aquavalet.core import provider
-from aquavalet.core import exceptions
+from aquavalet import streams, provider, exceptions
 
-from aquavalet.providers.filesystem.metadata import FileSystemMetadata
+from .metadata import FileSystemMetadata
 
 logger = logging.getLogger(__name__)
 
@@ -54,9 +52,9 @@ class FileSystemProvider(provider.BaseProvider):
         file_pointer = open(item.path, 'rb')
 
         if range is not None and range[1] is not None:
-            return streams.FileStreamReader(file_pointer, range=range)
+            return streams.file.FileStreamReader(file_pointer, range=range)
 
-        return streams.FileStreamReader(file_pointer)
+        return streams.file.FileStreamReader(file_pointer)
 
     async def upload(self, item, stream=None, new_name=None, conflict='warn'):
         if os.path.isfile(item.path + new_name):

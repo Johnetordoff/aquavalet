@@ -7,23 +7,20 @@ import socket
 import aiohttp
 import tornado.gen
 
-from aquavalet import settings
-from aquavalet.core import exceptions
-from aquavalet.core import remote_logging
-from aquavalet.core import utils
-from aquavalet.core.streams import RequestStreamReader
-from aquavalet.server import core
-from aquavalet.providers.filesystem import FileSystemProvider
+from aquavalet import settings, utils, exceptions
+from aquavalet.streams.http import RequestStreamReader
+from aquavalet.server import base
+
 logger = logging.getLogger(__name__)
 
 
 @tornado.web.stream_request_body
-class ProviderHandler(core.BaseHandler):
+class ProviderHandler(base.BaseHandler):
 
     bytes_downloaded = 0
     bytes_uploaded = 0
 
-    SUPPORTED_METHODS = core.BaseHandler.SUPPORTED_METHODS + ('METADATA',
+    SUPPORTED_METHODS = base.BaseHandler.SUPPORTED_METHODS + ('METADATA',
                                                               'CHILDREN',
                                                               'UPLOAD',
                                                               'CREATE_FOLDER',
