@@ -1,5 +1,6 @@
 import os
 import json
+import aresponses
 
 from tests.utils import json_resp, data_resp, empty_resp
 
@@ -72,8 +73,8 @@ def file_metadata_object(file_metadata_json, provider):
 
 
 @pytest.fixture
-def folder_metadata_object(folder_metadata):
-    return OsfMetadata(folder_metadata['data'])
+def folder_metadata_object(folder_metadata_json, provider):
+    return OsfMetadata(folder_metadata_json['data']['attributes'], provider.internal_provider, provider.resource)
 
 @pytest.fixture
 def revision_metadata_object(revisions_metadata):
@@ -85,3 +86,69 @@ def provider():
     provider.internal_provider = 'osfstorage'
     provider.resource = 'guid0'
     return provider
+
+
+@pytest.fixture
+async def mock_file_metadata(event_loop, file_metadata_json):
+    async with aresponses.ResponsesMockServer(loop=event_loop) as server:
+        headers = {'content-type': 'application/json'}
+        resp = aresponses.Response(body=json.dumps(file_metadata_json), headers=headers, status=200)
+        server.add('api.osf.io', '/v2/files/' + file_metadata_json['data']['id'] + '/', 'GET', resp)
+        yield server
+
+
+@pytest.fixture
+async def mock_file_download(event_loop, file_metadata_json, download_resp):
+    async with aresponses.ResponsesMockServer(loop=event_loop) as server:
+        path = '/v1/resources/guid0/providers/osfstorage/' + file_metadata_json['data']['id']
+        server.add('files.osf.io', path, 'GET', download_resp)
+        yield server
+
+
+@pytest.fixture
+async def mock_file_upload(event_loop, file_metadata_json, upload_resp):
+    async with aresponses.ResponsesMockServer(loop=event_loop) as server:
+        path = '/v1/resources/guid0/providers/osfstorage/' + file_metadata_json['data']['id']
+        server.add('files.osf.io', path, 'PUT', upload_resp)
+        yield server
+
+
+@pytest.fixture
+async def mock_file_missing(event_loop, file_metadata_json, response_404):
+    async with aresponses.ResponsesMockServer(loop=event_loop) as server:
+        server.add('api.osf.io', response=response_404)
+        yield server
+
+
+@pytest.fixture
+async def mock_file_delete(event_loop, file_metadata_json, delete_resp):
+    async with aresponses.ResponsesMockServer(loop=event_loop) as server:
+        path = '/v1/resources/guid0/providers/osfstorage/' + file_metadata_json['data']['id']
+        server.add('files.osf.io', path, 'DELETE', delete_resp)
+        yield server
+
+
+@pytest.fixture
+async def mock_create_folder(event_loop, file_metadata_json, create_folder_resp):
+    async with aresponses.ResponsesMockServer(loop=event_loop) as server:
+        path = '/v1/resources/guid0/providers/osfstorage/' + file_metadata_json['data']['id']
+        server.add('files.osf.io', path, 'PUT', create_folder_resp)
+        yield server
+
+
+@pytest.fixture
+async def mock_rename(event_loop, file_metadata_json, file_metadata_resp):
+    async with aresponses.ResponsesMockServer(loop=event_loop) as server:
+        path = '/v1/resources/guid0/providers/osfstorage/' + file_metadata_json['data']['id']
+        server.add('files.osf.io', path, 'POST', file_metadata_resp)
+        yield server
+
+
+@pytest.fixture
+async def mock_children(event_loop, folder_metadata_json, children_resp):
+    async with aresponses.ResponsesMockServer(loop=event_loop) as server:
+        path = '/v1/resources/guid0/providers/osfstorage/' + folder_metadata_json['data']['id'] + '/'
+        print(path)
+        server.add('files.osf.io', path, 'GET', children_resp)
+        yield server
+

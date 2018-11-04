@@ -253,7 +253,6 @@ class BaseProvider(metaclass=abc.ABCMeta):
     async def validate_item(self, item=None) -> wb_metadata.BaseMetadata:
         raise NotImplementedError
 
-    @abc.abstractmethod
     async def parent(self, item=None) -> wb_metadata.BaseMetadata:
         raise NotImplementedError
 

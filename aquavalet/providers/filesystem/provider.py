@@ -10,11 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class FileSystemProvider(provider.BaseProvider):
-    """Provider using the local filesystem as a backend-store
-
-    This provider is used for local testing.  Files are stored by hash, preserving
-    case-sensitivity on case-insensitive host filesystems.
-    """
+    """Provider using the local filesystem as a backend-store"""
     name = 'filesystem'
 
     async def validate_item(self, path, **kwargs):
@@ -33,19 +29,19 @@ class FileSystemProvider(provider.BaseProvider):
             else:
                 shutil.copytree(src_path.path, dest_path.child(src_path.path))
         except FileNotFoundError as exc:
-            raise exceptions.NotFoundError(f'Item at \'{exc.filename}\' could not be found, folders must end with \'/\'')
+            raise exceptions.NotFoundError(exc.filename)
 
     async def intra_move(self, src_path, dest_path, dest_provider=None):
         try:
             shutil.move(src_path.path, dest_path.path)
         except FileNotFoundError as exc:
-            raise exceptions.NotFoundError(f'Item at \'{exc.filename}\' could not be found, folders must end with \'/\'')
+            raise exceptions.NotFoundError(exc.filename)
 
     async def rename(self, item, new_name):
         try:
             os.rename(item.path, item.rename(new_name))
         except FileNotFoundError as exc:
-            raise exceptions.NotFoundError('Invalid path \'{}\' specified'.format(exc.filename))
+            raise exceptions.NotFoundError(exc.filename)
 
     async def download(self, item, session=None, version=None, range=None):
 
@@ -92,7 +88,7 @@ class FileSystemProvider(provider.BaseProvider):
 
     async def create_folder(self, item, new_name):
         os.makedirs(item.child(new_name), exist_ok=True)
-        item.raw['path'] = item.child(new_name)  #TODO Do this better
+        item.raw['path'] = item.child(new_name)  # TODO: Do this better
         return item
 
     def can_intra_copy(self, dest_provider, item=None):
@@ -100,4 +96,3 @@ class FileSystemProvider(provider.BaseProvider):
 
     def can_intra_move(self, dest_provider, item=None):
         return type(self) == type(dest_provider)
-

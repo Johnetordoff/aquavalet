@@ -8,12 +8,44 @@ from aquavalet.exceptions import (
     NotFoundError
 )
 
+from tests.providers.osfstorage.fixtures import (
+    provider,
+    file_metadata_resp,
+    folder_metadata_json,
+    folder_metadata_object,
+    folder_metadata_resp,
+    response_404,
+    response_404_json,
+    file_metadata_object,
+    file_metadata_json,
+    children_resp,
+    create_folder_resp,
+    create_folder_response_json,
+    delete_resp,
+    upload_resp,
+    download_resp,
+    mock_file_metadata,
+    mock_file_download,
+    mock_file_upload,
+    mock_file_missing,
+    mock_file_delete,
+    mock_create_folder,
+    mock_children,
+    mock_rename
+)
+
+from tests.streams.fixtures import (
+    request_stream
+)
+
+import json
+from aiohttp.web import Response
+
 
 class TestValidateItem:
 
     @pytest.mark.asyncio
-    async def test_validate_item_no_internal_provider(self, provider, file_metadata_resp, aresponses):
-        aresponses.add('api.osf.io', '/v2/files/5b6ee0c390a7e0001986aff5/', 'get', file_metadata_resp)
+    async def test_validate_item_no_internal_provider(self, provider, mock_file_metadata):
 
         with pytest.raises(InvalidPathError) as exc:
             await provider.validate_item('/badpath')
@@ -36,17 +68,16 @@ class TestValidateItem:
         assert exc.value.message == 'No resource in url, path must follow pattern {}'.format(provider.PATH_PATTERN)
 
     @pytest.mark.asyncio
-    async def test_validate_item_404(self, provider, response_404, aresponses):
-        aresponses.add('api.osf.io', '/v2/files/not-root/', 'get', response_404)
+    async def test_validate_item_404(self, provider, mock_file_missing):
 
         with pytest.raises(NotFoundError) as exc:
             await provider.validate_item('/osfstorage/guid0/not-root')
 
-        assert exc.value.message == 'Item at path \'/not-root\' cannot be found.'
+        assert exc.value.message == 'Item at \'Item at path \'/not-root\' cannot be found.\' could not be found, folders must end with \'/\''
+
 
     @pytest.mark.asyncio
-    async def test_validate_item_root(self, provider, folder_metadata_resp, aresponses):
-        aresponses.add('api.osf.io', '/v2/files/5b6ee0c390a7e0001986aff5/', 'get', folder_metadata_resp)
+    async def test_validate_item_root(self, provider):
         item = await provider.validate_item('/osfstorage/guid0/')
 
         assert isinstance(item, OsfMetadata)
@@ -58,24 +89,22 @@ class TestValidateItem:
         assert item.mimetype is None
 
     @pytest.mark.asyncio
-    async def test_validate_item(self, provider, folder_metadata_resp, aresponses):
-        aresponses.add('api.osf.io', '/v2/files/5b6ee0c390a7e0001986aff5/', 'get', folder_metadata_resp)
-        item = await provider.validate_item('/osfstorage/guid0/5b6ee0c390a7e0001986aff5' )
+    async def test_validate_item(self, provider, mock_file_metadata):
+        item = await provider.validate_item('/osfstorage/guid0/5b6ee0c390a7e0001986aff5')
 
         assert isinstance(item, OsfMetadata)
 
-        assert item.id == '/5b5de758f63e210010ec8f53/'
-        assert item.path == '/5b5de758f63e210010ec8f53/'
-        assert item.name == 'test_folder'
-        assert item.kind == 'folder'
-        assert item.mimetype is None
+        assert item.id == '/5b6ee0c390a7e0001986aff5'
+        assert item.path == '/5b6ee0c390a7e0001986aff5'
+        assert item.name == 'test.txt'
+        assert item.kind == 'file'
+        assert item.mimetype == 'text/plain'
 
 
 class TestDownload:
 
     @pytest.mark.asyncio
-    async def test_download(self, provider, file_metadata_object, download_resp, aresponses):
-        aresponses.add('files.osf.io', '/v1/resources/guid0/providers/osfstorage' + file_metadata_object.id, 'get', download_resp)
+    async def test_download(self, provider, file_metadata_object, mock_file_download):
 
         async with aiohttp.ClientSession() as session:
             stream = await provider.download(file_metadata_object, session)
@@ -87,8 +116,7 @@ class TestDownload:
         assert await stream.read() == b'test stream!'
 
     @pytest.mark.asyncio
-    async def test_download_range(self, provider, file_metadata_object, download_resp, aresponses):
-        aresponses.add('files.osf.io', '/v1/resources/guid0/providers/osfstorage' + file_metadata_object.id, 'get', download_resp)
+    async def test_download_range(self, provider, file_metadata_object, mock_file_download):
 
         async with aiohttp.ClientSession() as session:
             stream = await provider.download(file_metadata_object, session, range=(0,3))
@@ -103,10 +131,9 @@ class TestDownload:
 class TestUpload:
 
     @pytest.mark.asyncio
-    async def test_upload(self, provider, file_metadata_object, upload_resp, aresponses, request_stream):
-        aresponses.add('files.osf.io', '/v1/resources/guid0/providers/osfstorage' + file_metadata_object.id, 'put', upload_resp)
+    async def test_upload(self, provider, file_metadata_object, request_stream, mock_file_upload):
 
-        item = await provider.upload(item=file_metadata_object, stream=request_stream, new_name='test.txt', conflict='warn')
+        item = await provider.upload(item=file_metadata_object, stream=request_stream, new_name='test.txt')
 
         assert isinstance(item, OsfMetadata)
         assert item.name == 'test.txt'
@@ -116,8 +143,7 @@ class TestUpload:
 class TestDelete:
 
     @pytest.mark.asyncio
-    async def test_delete(self, provider, file_metadata_object, delete_resp, aresponses):
-        aresponses.add('files.osf.io', '/v1/resources/guid0/providers/osfstorage' + file_metadata_object.id, 'delete', delete_resp)
+    async def test_delete(self, provider, file_metadata_object, mock_file_delete):
 
         item = await provider.delete(file_metadata_object)
 
@@ -127,8 +153,7 @@ class TestDelete:
 class TestCreateFolder:
 
     @pytest.mark.asyncio
-    async def test_create_folder(self, provider, file_metadata_object, create_folder_resp, aresponses):
-        aresponses.add('files.osf.io', '/v1/resources/guid0/providers/osfstorage' + file_metadata_object.id, 'put', create_folder_resp)
+    async def test_create_folder(self, provider, file_metadata_object, mock_create_folder):
 
         item = await provider.create_folder(file_metadata_object, 'test')
 
@@ -140,8 +165,7 @@ class TestCreateFolder:
 class TestRename:
 
     @pytest.mark.asyncio
-    async def test_rename(self, provider, file_metadata_object, file_metadata_resp, aresponses):
-        aresponses.add('files.osf.io', '/v1/resources/guid0/providers/osfstorage' + file_metadata_object.id, 'post', file_metadata_resp)
+    async def test_rename(self, provider, file_metadata_object, mock_rename):
         item = await provider.rename(file_metadata_object, 'new_name')
 
         assert isinstance(item, OsfMetadata)
@@ -153,9 +177,9 @@ class TestRename:
 class TestChildren:
 
     @pytest.mark.asyncio
-    async def test_children(self, provider, file_metadata_object, children_resp, aresponses):
-        aresponses.add('files.osf.io', '/v1/resources/guid0/providers/osfstorage' + file_metadata_object.id, 'get', children_resp)
-        item = await provider.children(file_metadata_object)
+    async def test_children(self, provider, folder_metadata_object, mock_children):
+
+        item = await provider.children(folder_metadata_object)
 
         assert isinstance(item, list)
         assert len(item) == 2

@@ -40,6 +40,7 @@ class OsfProvider(provider.BaseProvider):
 
     async def download(self, item, session, version=None, range=None):
         download_header = self.default_headers
+        print(self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}')
 
         if range:
             download_header.update({'Range': str(self._build_range_header(range))})
@@ -48,13 +49,13 @@ class OsfProvider(provider.BaseProvider):
             url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}',
             headers=download_header
         )
-        return streams.ResponseStreamReader(resp, range)
+        return streams.http.ResponseStreamReader(resp, range)
 
-    async def upload(self, item, stream, new_name, conflict):
+    async def upload(self, item, stream, new_name, conflict='warn'):
 
         async with aiohttp.ClientSession() as session:
             async with session.put(
-                data=stream.generator.stream_sender(),
+                data=stream,
                 url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}',
                 headers=self.default_headers,
                 params={'kind': 'file', 'name': new_name, 'conflict': conflict}
@@ -66,7 +67,7 @@ class OsfProvider(provider.BaseProvider):
 
             return self.Item(data['attributes'], self.internal_provider, self.resource)
 
-    async def handle_conflict_replace(self, resp, item, path, stream, new_name, conflict):
+    async def handle_conflict_new_version(self, resp, item, path, stream, new_name, conflict):
         children = await self.children(item)
 
         for item in children:
