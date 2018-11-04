@@ -22,16 +22,16 @@ def _parity_create_files(self, name, version_id, callback_url, credentials, sett
         if not parity_paths:
             # create_parity_files will return [] for empty files
             return
-        futures = [asyncio.async(_upload_parity(each, credentials, settings))
-                   for each in parity_paths]
-        results, _ = loop.run_until_complete(asyncio.wait(futures,
-                                                          return_when=asyncio.FIRST_EXCEPTION))
+        #futures = [asyncio.async(_upload_parity(each, credentials, settings))
+        #           for each in parity_paths]
+        #results, _ = loop.run_until_complete(asyncio.wait(futures,
+         #                                                 return_when=asyncio.FIRST_EXCEPTION))
         # Errors are not raised in `wait`; explicitly check results for errors
         # and raise if any found
-        for each in results:
-            error = each.exception()
-            if error:
-                raise error
+        #for each in results:
+        #    error = each.exception()
+        #    if error:
+        #        raise error
 
     metadata = {
         'parity': {

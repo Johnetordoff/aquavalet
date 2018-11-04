@@ -13,9 +13,6 @@ install:
     - travis_retry pip install invoke==0.13.0
     - travis_retry invoke install --develop
 
-env:
-  - WATERBUTLER_CONFIG=./travis-config.json
-
 script:
   - invoke test
 

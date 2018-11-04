@@ -9,7 +9,7 @@ from aquavalet.providers.filesystem.metadata import FileSystemMetadata
 from aquavalet import exceptions
 
 from .fixtures import (
-    folder_metadata,
+    missing_file_metadata,
     provider
 )
 
@@ -338,8 +338,12 @@ class TestIntraCopy:
 
     @pytest.mark.asyncio
     async def test_intra_copy_missing(self, provider, missing_file_metadata, fs):
+        fs.create_dir('test folder/')
+
+        folder = await provider.validate_item('test folder/')
+
         with pytest.raises(exceptions.NotFoundError):
-            await provider.intra_copy(missing_file_metadata, folder_metadata)
+            await provider.intra_copy(missing_file_metadata, folder)
 
 class TestIntraMove:
 
@@ -374,7 +378,6 @@ class TestIntraMove:
 
         await provider.intra_move(folder, folder2)
 
-
         item = await provider.validate_item('test folder 2/test folder/')
 
         assert item.path == 'test folder 2/test folder/'
@@ -385,9 +388,13 @@ class TestIntraMove:
             await provider.validate_item('test folder/')
 
     @pytest.mark.asyncio
-    async def test_intra_move_missing(self, provider, missing_file_metadata, folder_metadata, setup_filesystem):
+    async def test_intra_move_missing(self, provider, fs, missing_file_metadata):
+        fs.create_dir('test folder/')
+
+        folder = await provider.validate_item('test folder/')
+
         with pytest.raises(exceptions.NotFoundError):
-            await provider.intra_move(missing_file_metadata, folder_metadata, provider)
+            await provider.intra_move(missing_file_metadata, folder)
 
 
 class TestRename:

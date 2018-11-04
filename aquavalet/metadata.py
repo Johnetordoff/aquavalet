@@ -52,9 +52,6 @@ class BaseMetadata(metaclass=abc.ABCMeta):
 
         return actions
 
-    def construct_parent(self) -> str:
-        return urlparse(settings.DOMAIN + '/' + '/'.join(self.default_segments) + self.parent + '?serve=meta').geturl()
-
     def construct_path(self, path, action) -> str:
         segments = self.default_segments + path
         trailing_slash = '/' if self.kind == 'folder' or not path else ''

@@ -225,10 +225,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
         return False
 
     async def zip(self, item, session) -> ZipStreamGeneratorReader:
-        """Streams a Zip archive of the given folder
-
-        :param  path: ( :class:`.AquaValetPath` ) The folder to compress
-        """
+        """Streams a Zip archive of the given folder"""
         children = await self.children(item)
         return ZipStreamReader(ZipStreamGeneratorReader(self, item, children, session))
 
