@@ -24,13 +24,13 @@ class OsfProvider(provider.BaseProvider):
         path = require_group(match, 'path', message_no_path)
         if path == '/':
             return self.Item.root(self.internal_provider, self.resource)
-
         if self.internal_provider == 'osfstorage':
             async with aiohttp.ClientSession() as session:
                 async with session.get(
                     url=self.API_URL.format(path=path),
                     headers=self.default_headers,
                 ) as resp:
+                    print(resp)
                     if resp.status == 200:
                         data = (await resp.json())['data']
                     else:

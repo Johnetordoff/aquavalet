@@ -31,8 +31,7 @@ class BaseHandler(tornado.web.RequestHandler):
 
         if issubclass(etype, exceptions.WaterButlerError):
             self.set_status(int(exc.code))
-            exception_kwargs = {'data': {'level': 'info'}} if exc.is_user_error else {}
-            finish_args = [exc.data] if exc.data else [{'code': exc.code, 'message': exc.message}]
+            finish_args = [{'code': exc.code, 'message': exc.message}]
         else:
             finish_args = [{'code': status_code, 'message': self._reason}]
 

@@ -1,4 +1,5 @@
 import os
+import asyncio
 import json
 import aresponses
 
@@ -90,7 +91,7 @@ def provider():
 
 @pytest.fixture
 async def mock_file_metadata(event_loop, file_metadata_json):
-    async with aresponses.ResponsesMockServer(loop=event_loop) as server:
+    async with aresponses.ResponsesMockServer(loop=asyncio.get_event_loop()) as server:
         headers = {'content-type': 'application/json'}
         resp = aresponses.Response(body=json.dumps(file_metadata_json), headers=headers, status=200)
         server.add('api.osf.io', '/v2/files/' + file_metadata_json['data']['id'] + '/', 'GET', resp)
