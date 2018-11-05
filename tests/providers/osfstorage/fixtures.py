@@ -90,7 +90,7 @@ def provider():
 
 
 @pytest.fixture
-async def mock_file_metadata(event_loop, file_metadata_json):
+async def mock_file_metadata(file_metadata_json):
     async with aresponses.ResponsesMockServer(loop=asyncio.get_event_loop()) as server:
         headers = {'content-type': 'application/json'}
         resp = aresponses.Response(body=json.dumps(file_metadata_json), headers=headers, status=200)
@@ -149,7 +149,6 @@ async def mock_rename(event_loop, file_metadata_json, file_metadata_resp):
 async def mock_children(event_loop, folder_metadata_json, children_resp):
     async with aresponses.ResponsesMockServer(loop=event_loop) as server:
         path = '/v1/resources/guid0/providers/osfstorage/' + folder_metadata_json['data']['id'] + '/'
-        print(path)
         server.add('files.osf.io', path, 'GET', children_resp)
         yield server
 
