@@ -256,11 +256,8 @@ class BaseProvider(metaclass=abc.ABCMeta):
     async def parent(self, item=None) -> wb_metadata.BaseMetadata:
         raise NotImplementedError
 
-    async def versions(self, item=None) -> wb_metadata.BaseMetadata:
-        """Return a list of :class:`.BaseFileRevisionMetadata` objects representing the revisions
-        available for the file at ``path``.
-        """
-        return []  # TODO Raise 405 by default h/t @rliebz
+    async def versions(self, item=None):
+        raise NotImplementedError
 
     async def create_folder(self, path, item=None) -> wb_metadata.BaseMetadata:
         raise exceptions.ProviderError({'message': 'Folder creation not supported.'}, code=405)

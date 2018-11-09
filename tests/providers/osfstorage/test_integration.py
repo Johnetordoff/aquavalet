@@ -29,3 +29,16 @@ async def test_metadata(http_client, base_url, file_metadata_json, file_metadata
     assert resp['data']['id'] == '/5b6ee0c390a7e0001986aff5'
     assert resp['data']['attributes']['name'] == 'test.txt'
     assert resp['data']['attributes']['kind'] == 'file'
+
+
+@pytest.mark.gen_test
+async def test_versions(http_client, base_url, file_metadata_json, file_metadata_resp):
+    url = base_url + urllib.parse.quote('/osfstorage/osfstorage/guid0/' + file_metadata_json['data']['id'])
+
+    response = await http_client.fetch(url, method='METADATA', allow_nonstandard_methods=True)
+
+    assert response.code == 200
+    resp = json.loads(response.body)
+    assert resp['data']['id'] == '/5b6ee0c390a7e0001986aff5'
+    assert resp['data']['attributes']['name'] == 'test.txt'
+    assert resp['data']['attributes']['kind'] == 'file'

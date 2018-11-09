@@ -144,3 +144,16 @@ class OsfProvider(provider.BaseProvider):
                     raise await self.handle_response(resp, item)
 
         return [self.Item(metadata['attributes'], internal_provider=self.internal_provider, resource=self.resource) for metadata in data]
+
+    async def versions(self, item):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}?revisions=',
+                headers=self.default_headers
+            ) as resp:
+                if resp.status == 200:
+                    data = (await resp.json())['data']
+                else:
+                    raise await self.handle_response(resp, item)
+
+        return [self.Item(metadata['attributes'], internal_provider=self.internal_provider, resource=self.resource) for metadata in data]
