@@ -118,7 +118,6 @@ class OsfProvider(provider.BaseProvider):
                 return self.Item(data['attributes'], self.internal_provider, self.resource)
 
     async def rename(self, item, new_name):
-
         async with aiohttp.ClientSession() as session:
             async with session.post(
                 url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}',
@@ -144,3 +143,22 @@ class OsfProvider(provider.BaseProvider):
                     raise await self.handle_response(resp, item)
 
         return [self.Item(metadata['attributes'], internal_provider=self.internal_provider, resource=self.resource) for metadata in data]
+
+    def can_intra_copy(self, dest_provider, item=None):
+        if type(dest_provider) == type(self):
+            return True
+
+    async def intra_copy(self, item, dest_item, dest_provider=None):
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}',
+                data=json.dumps({'action': 'copy', 'path': dest_item.path + '/', 'provider': 'osfstorage', 'resource': dest_provider.resource}),
+                headers=self.default_headers
+            ) as resp:
+                if resp.status in (200, 201):
+                    data = (await resp.json())['data']
+                else:
+                    raise await self.handle_response(resp, item)
+
+        return [self.Item(metadata['attributes'], internal_provider=self.internal_provider, resource=self.resource) for metadata in data]
+

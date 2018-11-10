@@ -47,21 +47,6 @@ def throttle(concurrency=10, interval=1):
     return _throttle
 
 
-def build_url(base, *segments, **query):
-    url = parse(base)
-    # Filters return generators
-    # Cast to list to force "spin" it
-    url.path.segments = list(filter(
-        lambda segment: segment,
-        map(
-            lambda segment: parse.quote(segment.strip('/')),
-            itertools.chain(url.path.segments, segments)
-        )
-    ))
-    url.args = query
-    return url.url
-
-
 class BaseProvider(metaclass=abc.ABCMeta):
     """The base class for all providers. Every provider must, at the least, implement all abstract
     methods in this class.
@@ -109,14 +94,6 @@ class BaseProvider(metaclass=abc.ABCMeta):
             'credentials': self.credentials,
         }
 
-    def build_url(self, *segments, **query) -> str:
-        """
-        :param \*segments: ( :class:`tuple` ) A tuple of strings joined into /foo/bar/..
-        :param \*\*query: ( :class:`dict` ) A dictionary that will be turned into query parameters ?foo=bar
-        :rtype: :class:`str`
-        """
-        return build_url(self.BASE_URL, *segments, **query)
-
     @property
     def default_headers(self) -> dict:
         """Headers to be included with every request
@@ -135,7 +112,6 @@ class BaseProvider(metaclass=abc.ABCMeta):
                 401: exceptions.AuthError(f'Bad credentials provided'),
                 403: exceptions.Forbidden(f'Forbidden'),
                 404: exceptions.NotFoundError(f'Item at path \'{path or item.name}\' cannot be found.'),
-                409: self.handle_conflict(new_name=new_name, path=path, stream=stream, conflict=conflict),
                 410: exceptions.Gone(f'Item at path \'{path or item.name}\' has been removed.')
             }[resp.status]
 
@@ -218,7 +194,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
 
         return folder
 
-    def can_intra_copy(self, other, path) -> bool:
+    def can_intra_copy(self, dest_provider, item=None):
         return False
 
     def can_intra_move(self, other, path) -> bool:
