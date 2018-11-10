@@ -24,6 +24,7 @@ class OsfProvider(provider.BaseProvider):
         path = require_group(match, 'path', message_no_path)
         if path == '/':
             return self.Item.root(self.internal_provider, self.resource)
+
         if self.internal_provider == 'osfstorage':
             async with aiohttp.ClientSession() as session:
                 async with session.get(
@@ -40,7 +41,6 @@ class OsfProvider(provider.BaseProvider):
 
     async def download(self, item, session, version=None, range=None):
         download_header = self.default_headers
-        print(self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}')
 
         if range:
             download_header.update({'Range': str(self._build_range_header(range))})
@@ -76,7 +76,7 @@ class OsfProvider(provider.BaseProvider):
 
         async with aiohttp.ClientSession() as session:
             async with session.put(
-                data=stream.generator.stream_sender(),
+                data=stream,
                 url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}',
                 headers=self.default_headers,
             ) as resp:
@@ -142,10 +142,10 @@ class OsfProvider(provider.BaseProvider):
                 else:
                     raise await self.handle_response(resp, item)
 
-        return [self.Item(metadata['attributes'], internal_provider=self.internal_provider, resource=self.resource) for metadata in data]
+        return self.Item.list(item, data)
 
     def can_intra_copy(self, dest_provider, item=None):
-        if type(dest_provider) == type(self):
+        if type(self) == type(dest_provider):
             return True
 
     async def intra_copy(self, item, dest_item, dest_provider=None):
@@ -160,5 +160,17 @@ class OsfProvider(provider.BaseProvider):
                 else:
                     raise await self.handle_response(resp, item)
 
-        return [self.Item(metadata['attributes'], internal_provider=self.internal_provider, resource=self.resource) for metadata in data]
+        return self.Item(data['attributes'], internal_provider=self.internal_provider, resource=self.resource)
 
+    async def versions(self, item):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}?revisions=',
+                headers=self.default_headers
+            ) as resp:
+                if resp.status == 200:
+                    version_data = (await resp.json())['data']
+                else:
+                    raise await self.handle_response(resp, item)
+
+        return self.Item.versions(item, version_data)

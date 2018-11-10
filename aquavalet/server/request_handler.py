@@ -179,7 +179,7 @@ class ProviderHandler(base.BaseHandler):
         if self.provider.item.is_folder:
             raise exceptions.InvalidPathError(message='Directories have no revisions')
 
-        metadata = await self.provider.versions()
+        metadata = await self.provider.versions(self.provider.item)
 
         return self.write({
             'data': [metadata.json_api_serialized() for metadata in metadata]

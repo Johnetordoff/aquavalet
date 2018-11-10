@@ -27,6 +27,28 @@ class BaseOsfStyleItemMetadata(metadata.BaseMetadata):
         }
         return cls(raw, internal_provider, resource)
 
+    @classmethod
+    def versions(cls, item, version_data):
+        raw = item.raw
+        versions = []
+        for metadata in version_data:
+            raw.update(metadata['attributes'])
+            data = raw.copy()
+            version = cls(data, item.internal_provider, item.resource)
+            versions.append(version)
+
+        return versions
+
+    @classmethod
+    def list(cls, item, data):
+        items = []
+        for metadata in data:
+            print(metadata['attributes'])
+            item = cls(metadata['attributes'], item.internal_provider, item.resource)
+            items.append(item)
+
+        return items
+
     @property
     def name(self):
         return self.raw['name']
@@ -59,26 +81,25 @@ class BaseOsfStyleItemMetadata(metadata.BaseMetadata):
 
     @property
     def modified(self):
-        return self.raw.get('modified_utc')
+        # TODO: standardize datetime
+        return self.raw.get('date_modified') or self.raw.get('modified_utc')
+
+    @property
+    def guid(self):
+        return self.raw.get('guid')
+
+    @property
+    def version_id(self):
+        return self.raw.get('version') or self.raw.get('current_version')
 
     @property
     def created(self):
-        return self.raw.get('created_utc')
+        # TODO: standardize datetime
+        return self.raw.get('date_created') or self.raw.get('created_utc')
 
     @property
     def unix_path(self):
         return self.raw.get('materialized') or self.raw.get('materialized_path')
-
-    @property
-    def unix_path_parent(self):
-        if os.path.dirname(self.unix_path.rstrip('/')) == '/':
-            return '/'
-
-        return os.path.dirname(self.unix_path.rstrip('/')) + '/'
-
-    @property
-    def child_link(self):
-        return self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{self.id}'
 
     @property
     def etag(self):
@@ -91,6 +112,16 @@ class BaseOsfStyleItemMetadata(metadata.BaseMetadata):
     @property
     def path(self):
         return self.raw['path']
+
+    @property
+    def md5(self):
+        if self.is_file:
+            return self.raw['extra']['hashes']['md5']
+
+    @property
+    def sha256(self):
+        if self.is_file:
+            return self.raw['extra']['hashes']['sha256']
 
     @property
     def mimetype(self):
@@ -109,6 +140,9 @@ class BaseOsfStyleItemMetadata(metadata.BaseMetadata):
             'modified': self.modified,
             'mimetype': self.mimetype,
             'provider': self.provider,
+            'md5': self.md5,
+            'sha256': self.sha256,
             'etag': hashlib.sha256('{}::{}'.format(self.provider, self.etag).encode('utf-8')).hexdigest(),
+            'version_id': self.version_id,
         }
 
