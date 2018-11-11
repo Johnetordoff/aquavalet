@@ -71,10 +71,10 @@ class TestValidateItem:
     @pytest.mark.asyncio
     async def test_validate_item_404(self, provider, mock_file_missing):
 
-        with pytest.raises(InvalidPathError) as exc:
+        with pytest.raises(NotFoundError) as exc:
             await provider.validate_item('/osfstorage/guid0/not-root')
 
-        assert exc.value.message == 'not-root'
+        assert exc.value.message == "Item at 'Item at path 'not' cannot be found.' could not be found, folders must end with '/'"
 
 
     @pytest.mark.asyncio

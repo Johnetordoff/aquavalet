@@ -57,11 +57,13 @@ def download_resp():
     return data_resp(b'test stream!')
 
 
-@pytest.fixture
-def file_metadata_json():
+def get_file_metadata_json():
     with open(os.path.join(os.path.dirname(__file__), 'fixtures/fixtures.json'), 'r') as fp:
         return json.load(fp)['file_metadata']
 
+@pytest.fixture
+def file_metadata_json():
+    return get_file_metadata_json()
 
 @pytest.fixture
 def version_metadata_json():
@@ -69,19 +71,20 @@ def version_metadata_json():
         return json.load(fp)['versions_metadata']
 
 
-@pytest.fixture
+@pytest.fixture()
 def file_metadata_resp(file_metadata_json):
     return json_resp(file_metadata_json)
 
 
-@pytest.fixture
+@pytest.fixture()
 def version_metadata_resp(version_metadata_json):
     return json_resp(version_metadata_json)
 
 
 class FileMetadataRespFactory:
     def __new__(self):
-        return file_metadata_resp(file_metadata_json())
+        data = get_file_metadata_json()
+        return json_resp(data)
 
 
 @pytest.fixture
