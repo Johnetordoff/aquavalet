@@ -26,7 +26,7 @@ class ProviderHandler(base.BaseHandler):
                                                               'CREATE_FOLDER',
                                                               'RENAME',
                                                               'DOWNLOAD',
-                                                              'REVISIONS',
+                                                              'VERSIONS',
                                                               'MOVE',
                                                               'COPY')
 

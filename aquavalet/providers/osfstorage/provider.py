@@ -4,7 +4,7 @@ from aquavalet.settings import OSF_TOKEN
 
 class OSFStorageProvider(OsfProvider):
     BASE_URL = 'https://files.osf.io/v1/resources/'
-    API_URL = 'https://api.osf.io/v2/files{path}/?meta='
+    API_URL = 'https://api.osf.io/v2/files/{path}'
 
     Item = OsfMetadata
 

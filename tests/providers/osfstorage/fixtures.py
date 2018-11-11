@@ -64,8 +64,24 @@ def file_metadata_json():
 
 
 @pytest.fixture
+def version_metadata_json():
+    with open(os.path.join(os.path.dirname(__file__), 'fixtures/fixtures.json'), 'r') as fp:
+        return json.load(fp)['versions_metadata']
+
+
+@pytest.fixture
 def file_metadata_resp(file_metadata_json):
     return json_resp(file_metadata_json)
+
+
+@pytest.fixture
+def version_metadata_resp(version_metadata_json):
+    return json_resp(version_metadata_json)
+
+
+class FileMetadataRespFactory:
+    def __new__(self):
+        return file_metadata_resp(file_metadata_json())
 
 
 @pytest.fixture
@@ -112,7 +128,7 @@ def provider():
 async def mock_file_metadata(aresponses, file_metadata_json):
     headers = {'content-type': 'application/json'}
     resp = aresponses.Response(body=json.dumps(file_metadata_json), headers=headers, status=200)
-    aresponses.add('api.osf.io', '/v2/files/' + file_metadata_json['data']['id'] + '/', 'GET', resp)
+    aresponses.add('api.osf.io', '/v2/files/' + file_metadata_json['data']['id'], 'GET', resp)
 
 
 @pytest.fixture
@@ -163,4 +179,9 @@ async def mock_rename(aresponses, file_metadata_json, file_metadata_resp):
 async def mock_children(aresponses, folder_metadata_json, children_resp):
     path = '/v1/resources/guid0/providers/osfstorage/' + folder_metadata_json['data']['id'] + '/'
     aresponses.add('files.osf.io', path, 'GET', children_resp)
+
+@pytest.fixture
+async def mock_intra_copy(aresponses, file_metadata_json, children_resp):
+    path = '/v1/resources/guid0/providers/osfstorage/' + file_metadata_json['data']['id']
+    aresponses.add('files.osf.io', path, 'POST', file_metadata_resp)
 

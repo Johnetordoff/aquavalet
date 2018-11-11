@@ -266,5 +266,50 @@
 				}
 			}
 		]
+	},
+	"versions_metadata": {
+		"data": [{
+			"attributes": {
+				"extra": {
+					"user": {
+						"name": "John Tordoff",
+						"url": "/gyht4/"
+					},
+					"hashes": {
+						"md5": "d41d8cd98f00b204e9800998ecf8427e",
+						"sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+					},
+					"downloads": 0
+				},
+				"version": "2",
+				"modified_utc": "2018-11-10T19:55:39+00:00",
+				"modified": "2018-11-10T19:55:39.665788+00:00",
+				"versionIdentifier": "version"
+			},
+			"type": "file_versions",
+			"id": "2"
+		},
+			{
+				"attributes": {
+					"extra": {
+						"user": {
+							"name": "John Tordoff",
+							"url": "/gyht4/"
+						},
+						"hashes": {
+							"md5": "81dc9bdb52d04dc20036dbd8313ed055",
+							"sha256": "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4"
+						},
+						"downloads": 0
+					},
+					"version": "1",
+					"modified_utc": "2018-11-10T19:52:46+00:00",
+					"modified": "2018-11-10T19:52:46.668061+00:00",
+					"versionIdentifier": "version"
+				},
+				"type": "file_versions",
+				"id": "1"
+			}
+		]
 	}
 }

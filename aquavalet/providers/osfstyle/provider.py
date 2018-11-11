@@ -1,37 +1,39 @@
 import json
 import aiohttp
 
-from aquavalet import streams, provider
+from aquavalet import streams, provider, exceptions
 from aquavalet.providers.utils import require_group, require_match
 
 message_no_internal_provider = 'No internal provider in url, path must follow pattern ^\/(?P<internal_provider>(?:\w|\d)+)?\/(?P<resource>[a-zA-Z0-9]{5,})?(?P<path>\/.*)?'
-message_no_resource = 'No internal provider in url, path must follow pattern ^\/(?P<internal_provider>(?:\w|\d)+)?\/(?P<resource>[a-zA-Z0-9]{5,})?(?P<path>\/.*)?'
+message_no_resource = 'No resource in url, path must follow pattern ^\/(?P<internal_provider>(?:\w|\d)+)?\/(?P<resource>[a-zA-Z0-9]{5,})?(?P<path>\/.*)?'
 message_no_path = 'No path in url, path must follow pattern ^\/(?P<internal_provider>(?:\w|\d)+)?\/(?P<resource>[a-zA-Z0-9]{5,})?(?P<path>\/.*)?'
 
 class OsfProvider(provider.BaseProvider):
     NAME = 'OSF'
-    PATH_PATTERN = r'^\/(?P<internal_provider>(?:\w|\d)+)?\/(?P<resource>[a-zA-Z0-9]{5,})?(?P<path>\/.*)?'
+    PATH_PATTERN = r'^\/(?P<internal_provider>osfstorage)\/(?P<resource>[a-zA-Z0-9]{5,})\/((?P<path>[a-zA-Z0-9]{,}))'
 
     @property
     def default_headers(self):
         return {'Authorization': f'Bearer {self.token}'}
 
     async def validate_item(self, path):
+        print(path)
         match = require_match(self.PATH_PATTERN, path, 'match could not be found')
-
         self.internal_provider = require_group(match, 'internal_provider', message_no_internal_provider)
         self.resource = require_group(match, 'resource', message_no_resource)
-        path = require_group(match, 'path', message_no_path)
-        if path == '/':
-            return self.Item.root(self.internal_provider, self.resource)
+        if match.groupdict().get('bad_path'):
+            raise exceptions.InvalidPathError(match.groupdict().get('bad_path'))
 
+        if not match.groupdict().get('path'):
+            return self.Item.root(self.internal_provider, self.resource)
+        else:
+            path = require_group(match, 'path', message_no_path)
         if self.internal_provider == 'osfstorage':
             async with aiohttp.ClientSession() as session:
                 async with session.get(
                     url=self.API_URL.format(path=path),
                     headers=self.default_headers,
                 ) as resp:
-                    print(resp)
                     if resp.status == 200:
                         data = (await resp.json())['data']
                     else:
@@ -46,7 +48,7 @@ class OsfProvider(provider.BaseProvider):
             download_header.update({'Range': str(self._build_range_header(range))})
 
         resp = await session.get(
-            url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}',
+            url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}?version={version}',
             headers=download_header
         )
         return streams.http.ResponseStreamReader(resp, range)
@@ -70,9 +72,7 @@ class OsfProvider(provider.BaseProvider):
     async def handle_conflict_new_version(self, resp, item, path, stream, new_name, conflict):
         children = await self.children(item)
 
-        for item in children:
-            if item.name == new_name:
-                break
+        item = next(item for item in children if item.name == new_name)
 
         async with aiohttp.ClientSession() as session:
             async with session.put(
@@ -155,12 +155,7 @@ class OsfProvider(provider.BaseProvider):
                 data=json.dumps({'action': 'copy', 'path': dest_item.path + '/', 'provider': 'osfstorage', 'resource': dest_provider.resource}),
                 headers=self.default_headers
             ) as resp:
-                if resp.status in (200, 201):
-                    data = (await resp.json())['data']
-                else:
-                    raise await self.handle_response(resp, item)
-
-        return self.Item(data['attributes'], internal_provider=self.internal_provider, resource=self.resource)
+                print(resp)
 
     async def versions(self, item):
         async with aiohttp.ClientSession() as session:
@@ -169,8 +164,8 @@ class OsfProvider(provider.BaseProvider):
                 headers=self.default_headers
             ) as resp:
                 if resp.status == 200:
-                    version_data = (await resp.json())['data']
+                    data = (await resp.json())['data']
                 else:
                     raise await self.handle_response(resp, item)
 
-        return self.Item.versions(item, version_data)
+        return self.Item.versions(item, data)

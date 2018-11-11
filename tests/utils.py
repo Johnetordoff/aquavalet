@@ -1,6 +1,6 @@
 import json
 import aiohttp
-from aiohttp.web import Response
+from aresponses import Response
 
 def json_resp(json_data, status=200):
     return Response(body=json.dumps(json_data), headers={'content-type': 'application/json'}, status=status)

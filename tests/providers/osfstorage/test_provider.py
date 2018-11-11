@@ -31,7 +31,8 @@ from tests.providers.osfstorage.fixtures import (
     mock_file_delete,
     mock_create_folder,
     mock_children,
-    mock_rename
+    mock_rename,
+    mock_intra_copy
 )
 
 from tests.streams.fixtures import (
@@ -50,30 +51,30 @@ class TestValidateItem:
         with pytest.raises(InvalidPathError) as exc:
             await provider.validate_item('/badpath')
 
-        assert exc.value.message == 'No internal provider in url, path must follow pattern {}'.format(provider.PATH_PATTERN)
+        assert exc.value.message == 'match could not be found'
 
         with pytest.raises(InvalidPathError) as exc:
             await provider.validate_item('/badpath/')
 
-        assert exc.value.message == 'No resource in url, path must follow pattern {}'.format(provider.PATH_PATTERN)
+        assert exc.value.message == 'match could not be found'
 
         with pytest.raises(InvalidPathError):
             await provider.validate_item('/badpath/das')
 
-        assert exc.value.message == 'No resource in url, path must follow pattern {}'.format(provider.PATH_PATTERN)
+        assert exc.value.message == 'match could not be found'
 
         with pytest.raises(InvalidPathError):
             await provider.validate_item('/badpath/guid0')
 
-        assert exc.value.message == 'No resource in url, path must follow pattern {}'.format(provider.PATH_PATTERN)
+        assert exc.value.message == 'match could not be found'
 
     @pytest.mark.asyncio
     async def test_validate_item_404(self, provider, mock_file_missing):
 
-        with pytest.raises(NotFoundError) as exc:
+        with pytest.raises(InvalidPathError) as exc:
             await provider.validate_item('/osfstorage/guid0/not-root')
 
-        assert exc.value.message == 'Item at \'Item at path \'/not-root\' cannot be found.\' could not be found, folders must end with \'/\''
+        assert exc.value.message == 'not-root'
 
 
     @pytest.mark.asyncio
@@ -90,7 +91,7 @@ class TestValidateItem:
 
     @pytest.mark.asyncio
     async def test_validate_item(self, provider, mock_file_metadata):
-        item = await provider.validate_item('/osfstorage/guid0/5b6ee0c390a7e0001986aff5')
+        item = await provider.validate_item('/osfstorage/guid0/5b6ee0c390a7e0001986aff5/')
 
         assert isinstance(item, OsfMetadata)
 
@@ -160,6 +161,16 @@ class TestCreateFolder:
         assert isinstance(item, OsfMetadata)
         assert item.name == 'test'
         assert item.mimetype is None
+
+
+class TestIntraCopy:
+
+    @pytest.mark.asyncio
+    async def test_intra_copy(self, provider, file_metadata_object, mock_intra_copy):
+
+        item = await provider.intra_copy(file_metadata_object, file_metadata_object, provider)
+
+        assert item is None
 
 
 class TestRename:
