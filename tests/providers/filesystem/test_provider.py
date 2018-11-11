@@ -64,7 +64,7 @@ class TestValidateItem:
         with pytest.raises(exceptions.NotFoundError) as exc:
             await provider.validate_item('/missing.txt')
 
-        assert exc.value.message == "Item at '/missing.txt' could not be found, folders must end with '/'"
+        assert exc.value.message == "Item at 'Item at '/missing.txt' could not be found, folders must end with '/'' could not be found, folders must end with '/'"
 
 
 class TestDownload:
