@@ -56,7 +56,7 @@
 				"current_version": 1,
 				"current_user_can_comment": true,
 				"guid": "q5djf",
-				"materialized_path": "/test1-1.txt",
+				"materialized_path": "/test.txt",
 				"tags": [],
 				"size": 28,
 				"kind": "file",

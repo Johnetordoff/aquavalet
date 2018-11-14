@@ -42,8 +42,7 @@ def delete_resp():
     return empty_resp(status=204)
 
 
-@pytest.fixture
-def folder_metadata_json():
+def get_folder_metadata_json():
     return from_fixture_json('folder_metadata')
 
 
@@ -66,7 +65,7 @@ def file_metadata_json():
     return get_file_metadata_json()
 
 @pytest.fixture
-def version_metadata_json():
+def get_version_json():
     with open(os.path.join(os.path.dirname(__file__), 'fixtures/fixtures.json'), 'r') as fp:
         return json.load(fp)['versions_metadata']
 
@@ -77,8 +76,18 @@ def file_metadata_resp(file_metadata_json):
 
 
 @pytest.fixture()
-def version_metadata_resp(version_metadata_json):
-    return json_resp(version_metadata_json)
+def version_metadata_resp():
+    return json_resp(get_version_json())
+
+
+@pytest.fixture()
+def version_metadata_object(file_metadata_object):
+    return OsfMetadata.versions(file_metadata_object, get_version_json()['data'])
+
+
+@pytest.fixture()
+def root_metadata_object():
+    return OsfMetadata.root('osfstorage', 'guid0')
 
 
 class FileMetadataRespFactory:
@@ -105,13 +114,13 @@ def children_resp():
 
 
 @pytest.fixture
-def file_metadata_object(file_metadata_json, provider):
-    return OsfMetadata(file_metadata_json['data']['attributes'], provider.internal_provider, provider.resource)
+def file_metadata_object(provider):
+    return OsfMetadata(get_file_metadata_json()['data']['attributes'], provider.internal_provider, provider.resource)
 
 
 @pytest.fixture
-def folder_metadata_object(folder_metadata_json, provider):
-    return OsfMetadata(folder_metadata_json['data']['attributes'], provider.internal_provider, provider.resource)
+def folder_metadata_object(provider):
+    return OsfMetadata(get_folder_metadata_json()['data']['attributes'], provider.internal_provider, provider.resource)
 
 
 @pytest.fixture

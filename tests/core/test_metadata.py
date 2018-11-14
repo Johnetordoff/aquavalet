@@ -1,109 +1,58 @@
+import pytest
 import hashlib
 
 from tests import utils
 
 
-class TestBaseMetadata:
+class FileMetadata:
 
-    def test_file_metadata(self):
-        file_metadata = utils.MockFileMetadata()
+    def test_file(self, provider, file):
 
-        assert file_metadata.is_file is True
-        assert file_metadata.is_folder is False
+        assert file.provider == provider.name
+        assert isinstance(file, provider.Item)
 
-    def test_folder_metadata(self):
-        folder_metadata = utils.MockFolderMetadata()
+        assert file.is_file is True
+        assert file.is_folder is False
+        assert file.is_root is False
+        assert file.kind == 'file'
+        assert file.name == 'test.txt'
+        assert file.mimetype == 'text/plain'
+        assert file.unix_path == '/test.txt'
 
-        assert folder_metadata.is_file is False
-        assert folder_metadata.is_folder is True
+    def test_folder(self, provider, folder):
 
-    def test_file_json_api_serialize(self):
-        file_metadata = utils.MockFileMetadata()
-        serialized = file_metadata.json_api_serialized('n0d3z')
-        link_suffix = '/v1/resources/n0d3z/providers/MockProvider/Foo.name'
-        etag = hashlib.sha256('{}::{}'.format('MockProvider', 'etag').encode('utf-8')).hexdigest()
+        assert folder.provider == provider.name
+        assert isinstance(folder, provider.Item)
 
-        assert serialized['id'] == 'MockProvider/Foo.name'
-        assert serialized['type'] == 'files'
-        assert serialized['attributes'] == {
-            'extra': {},
-            'kind': 'file',
-            'name': 'Foo.name',
-            'path': '/Foo.name',
-            'provider': 'MockProvider',
-            'materialized': '/Foo.name',
-            'etag': etag,
-            'contentType': 'application/octet-stream',
-            'modified': 'never',
-            'modified_utc': 'never',
-            'created_utc': 'always',
-            'size': 1337,
-            'resource': 'n0d3z',
-        }
-        assert 'new_folder' not in serialized['links']
-        assert serialized['links']['move'].endswith(link_suffix)
-        assert serialized['links']['upload'].endswith(link_suffix + '?kind=file')
-        assert serialized['links']['download'].endswith(link_suffix)
-        assert serialized['links']['delete'].endswith(link_suffix)
+        assert folder.is_file is False
+        assert folder.is_folder is True
+        assert folder.is_root is False
+        assert folder.kind == 'folder'
+        assert folder.name == 'test_folder'
+        assert folder.mimetype is None
+        assert folder.unix_path == '/test_folder/'
 
-    def test_folder_json_api_serialize(self):
-        folder_metadata = utils.MockFolderMetadata()
-        serialized = folder_metadata.json_api_serialized('n0d3z')
-        link_suffix = '/v1/resources/n0d3z/providers/MockProvider/Bar/'
-        etag = hashlib.sha256('{}::{}'.format('MockProvider', 'etag').encode('utf-8')).hexdigest()
+    def test_root(self, provider, root):
 
-        assert serialized['id'] == 'MockProvider/Bar/'
-        assert serialized['type'] == 'files'
-        assert serialized['attributes'] == {
-            'extra': {},
-            'kind': 'folder',
-            'name': 'Bar',
-            'path': '/Bar/',
-            'provider': 'MockProvider',
-            'materialized': '/Bar/',
-            'etag': etag,
-            'size': None,
-            'resource': 'n0d3z',
-        }
-        assert serialized['links']['new_folder'].endswith(link_suffix + '?kind=folder')
-        assert serialized['links']['move'].endswith(link_suffix)
-        assert serialized['links']['upload'].endswith(link_suffix + '?kind=file')
-        assert 'download' not in serialized['links']
-        assert serialized['links']['delete'].endswith(link_suffix)
+        assert root.is_file is False
+        assert root.is_folder is True
+        assert root.is_root is True
+        assert root.kind == 'folder'
+        assert root.name == 'osfstorage root'
+        assert root.mimetype is None
+        assert root.unix_path == '/'
 
-    def test_folder_json_api_size_serialize(self):
-        folder_metadata = utils.MockFolderMetadata()
-        folder_metadata.children = [utils.MockFileMetadata()]
-        serialized = folder_metadata.json_api_serialized('n0d3z')
-        child = serialized['attributes']['children'][0]
-        etag = hashlib.sha256('{}::{}'.format('MockProvider', 'etag').encode('utf-8')).hexdigest()
+    def test_version(self, provider, versions):
 
-        assert len(serialized['attributes']['children']) == 1
-        assert child == {
-            'extra': {},
-            'kind': 'file',
-            'name': 'Foo.name',
-            'path': '/Foo.name',
-            'provider': 'MockProvider',
-            'materialized': '/Foo.name',
-            'etag': etag,
-            'contentType': 'application/octet-stream',
-            'modified': 'never',
-            'modified_utc': 'never',
-            'created_utc': 'always',
-            'size': 1337,
-        }
+        for ind, file in enumerate(versions):
+            assert file.provider == provider.name
+            assert isinstance(file, provider.Item)
 
-    def test_file_revision_json_api_serialize(self):
-        file_revision_metadata = utils.MockFileRevisionMetadata()
-        serialized = file_revision_metadata.json_api_serialized()
-
-        assert serialized['id'] == 1
-        assert serialized['type'] == 'file_versions'
-        assert serialized['attributes'] == {
-            'extra': {},
-            'version': 1,
-            'modified': 'never',
-            'modified_utc': 'never',
-            'versionIdentifier': 'versions',
-        }
+            assert file.is_file is True
+            assert file.is_folder is False
+            assert file.is_root is False
+            assert file.kind == 'file'
+            assert file.name == 'test.txt'
+            assert file.mimetype == 'text/plain'
+            assert file.unix_path == '/test.txt'
+            assert file.version_id == str(len(versions) - ind)

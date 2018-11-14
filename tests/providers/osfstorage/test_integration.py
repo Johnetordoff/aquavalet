@@ -16,7 +16,6 @@ from .fixtures import (
     download_resp,
     FileMetadataRespFactory,
     version_metadata_resp,
-    version_metadata_json
 )
 
 

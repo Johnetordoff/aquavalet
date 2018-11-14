@@ -99,6 +99,8 @@ class BaseOsfStyleItemMetadata(metadata.BaseMetadata):
 
     @property
     def unix_path(self):
+        if self.is_root:
+            return '/'
         return self.raw.get('materialized') or self.raw.get('materialized_path')
 
     @property
