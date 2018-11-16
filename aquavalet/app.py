@@ -6,7 +6,7 @@ from tornado.platform.asyncio import AsyncIOMainLoop
 
 from aquavalet.server.request_handler import ProviderHandler
 from aquavalet.server import handlers
-from aquavalet.server import settings
+from aquavalet import settings
 
 logger = logging.getLogger(__name__)
 

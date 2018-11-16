@@ -54,8 +54,8 @@ class OsfProvider(provider.BaseProvider):
         return streams.http.ResponseStreamReader(resp, range)
 
     async def upload(self, item, stream, new_name, conflict='warn'):
-
         async with aiohttp.ClientSession() as session:
+            print(self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}')
             async with session.put(
                 data=stream,
                 url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}',
@@ -160,7 +160,7 @@ class OsfProvider(provider.BaseProvider):
     async def versions(self, item):
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}?revisions=',
+                url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}?versions=',
                 headers=self.default_headers
             ) as resp:
                 if resp.status == 200:

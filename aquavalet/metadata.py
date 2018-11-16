@@ -4,7 +4,7 @@ import hashlib
 import mimetypes
 from urllib.parse import urlparse, quote
 
-from aquavalet.server import settings
+from aquavalet import settings
 
 
 class BaseMetadata(metaclass=abc.ABCMeta):

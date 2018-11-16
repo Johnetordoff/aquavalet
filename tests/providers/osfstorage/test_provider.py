@@ -11,7 +11,6 @@ from aquavalet.exceptions import (
 from tests.providers.osfstorage.fixtures import (
     provider,
     file_metadata_resp,
-    folder_metadata_json,
     folder_metadata_object,
     folder_metadata_resp,
     response_404,

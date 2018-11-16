@@ -159,6 +159,10 @@
 			"version": "2.0"
 		}
 	},
+	"api_response_409": {
+		"message": "Cannot complete action: file or folder \"test.txt\" already exists in this location",
+		"code": 409
+	},
 	"upload_response": {
 		"data": {
 			"links": {
@@ -248,9 +252,9 @@
 				"type": "files",
 				"attributes": {
 					"kind": "folder",
-					"name": "test2",
+					"name": "test-2",
 					"path": "/5b4247025b38c4001068a7b6/",
-					"unix_path": "/test_folder/test2/",
+					"unix_path": "/test_folder/test-2/",
 					"size": null,
 					"created": null,
 					"modified": null,

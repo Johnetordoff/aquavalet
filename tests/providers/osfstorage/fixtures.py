@@ -6,7 +6,7 @@ import aresponses
 from tests.utils import json_resp, data_resp, empty_resp
 
 import pytest
-
+import tornado
 from aquavalet.providers.osfstorage.provider import OSFStorageProvider
 from aquavalet.providers.osfstorage.metadata import OsfMetadata
 from aquavalet.app import make_app
@@ -64,7 +64,7 @@ def get_file_metadata_json():
 def file_metadata_json():
     return get_file_metadata_json()
 
-@pytest.fixture
+
 def get_version_json():
     with open(os.path.join(os.path.dirname(__file__), 'fixtures/fixtures.json'), 'r') as fp:
         return json.load(fp)['versions_metadata']
@@ -100,6 +100,16 @@ class FileMetadataRespFactory:
 def response_404_json():
     with open(os.path.join(os.path.dirname(__file__), 'fixtures/fixtures.json'), 'r') as fp:
         return json.load(fp)['api_response_404']
+
+
+def get_response_409_json():
+    with open(os.path.join(os.path.dirname(__file__), 'fixtures/fixtures.json'), 'r') as fp:
+        return json.load(fp)['api_response_404']
+
+
+@pytest.fixture
+def response_409():
+    return json_resp(get_response_409_json(), status=409)
 
 
 @pytest.fixture
@@ -188,12 +198,11 @@ async def mock_rename(aresponses, file_metadata_json, file_metadata_resp):
 
 
 @pytest.fixture
-async def mock_children(aresponses, folder_metadata_json, children_resp):
-    path = '/v1/resources/guid0/providers/osfstorage/' + folder_metadata_json['data']['id'] + '/'
+async def mock_children(aresponses, children_resp):
+    path = '/v1/resources/guid0/providers/osfstorage/' + get_folder_metadata_json()['data']['id'] + '/'
     aresponses.add('files.osf.io', path, 'GET', children_resp)
 
 @pytest.fixture
 async def mock_intra_copy(aresponses, file_metadata_json, children_resp):
     path = '/v1/resources/guid0/providers/osfstorage/' + file_metadata_json['data']['id']
     aresponses.add('files.osf.io', path, 'POST', file_metadata_resp)
-

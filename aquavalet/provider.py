@@ -102,13 +102,11 @@ class BaseProvider(metaclass=abc.ABCMeta):
         return {}
 
     async def handle_response(self, resp=None, item=None, path=None, new_name=None, conflict='warn', stream=None):
-        data = await resp.json()
-
         if resp.status == 409:
             return await self.handle_conflict(resp=resp, item=item, path=path, new_name=new_name, conflict=conflict, stream=stream)
         else:
             raise {
-                400: exceptions.InvalidPathError(data),
+                400: exceptions.InvalidPathError(item),
                 401: exceptions.AuthError(f'Bad credentials provided'),
                 403: exceptions.Forbidden(f'Forbidden'),
                 404: exceptions.NotFoundError(f'Item at path \'{path or item.name}\' cannot be found.'),

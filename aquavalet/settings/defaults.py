@@ -40,9 +40,31 @@ DEFAULT_LOGGING_CONFIG = {
     }
 }
 
-DEBUG = True
 CONCURRENT_OPS = 5
 
 DEFAULT_CONFLICT = 'warn'
 
 logging.config.dictConfig(DEFAULT_LOGGING_CONFIG)
+
+import hashlib
+
+from aquavalet import settings
+
+
+ADDRESS = '0.0.0.0'
+PORT = 7777
+DOMAIN = "http://localhost:7777"
+
+DEBUG = True
+
+XHEADERS = False
+CORS_ALLOW_ORIGIN = '*'
+
+MAX_BODY_SIZE = 4.9 * (1024 ** 3)  # 4.9 GB
+
+HMAC_ALGORITHM = getattr(hashlib, 'sha256')
+
+HMAC_SECRET = 'HMAC_SECRET'
+if not DEBUG:
+    assert HMAC_SECRET, 'HMAC_SECRET must be specified when not in debug mode'
+HMAC_SECRET = (HMAC_SECRET or 'changeme').encode('utf-8')

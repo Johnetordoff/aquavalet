@@ -62,6 +62,7 @@ class NotFoundError(PluginError):
 class Conflict(PluginError):
     code = 409
 
+
 class Gone(PluginError):
     code = 410
 

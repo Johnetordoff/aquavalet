@@ -117,13 +117,16 @@ class BaseOsfStyleItemMetadata(metadata.BaseMetadata):
 
     @property
     def md5(self):
-        if self.is_file:
-            return self.raw['extra']['hashes']['md5']
+        extra = self.raw.get('extra')
+        if extra:
+            return extra['hashes']['md5']
 
     @property
     def sha256(self):
-        if self.is_file:
-            return self.raw['extra']['hashes']['sha256']
+        extra = self.raw.get('extra')
+        if extra:
+            return extra['hashes']['sha256']
+
 
     @property
     def mimetype(self):
