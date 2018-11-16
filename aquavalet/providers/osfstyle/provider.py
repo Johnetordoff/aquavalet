@@ -17,7 +17,6 @@ class OsfProvider(provider.BaseProvider):
         return {'Authorization': f'Bearer {self.token}'}
 
     async def validate_item(self, path):
-        print(path)
         match = require_match(self.PATH_PATTERN, path, 'match could not be found')
         self.internal_provider = require_group(match, 'internal_provider', message_no_internal_provider)
         self.resource = require_group(match, 'resource', message_no_resource)
@@ -55,7 +54,6 @@ class OsfProvider(provider.BaseProvider):
 
     async def upload(self, item, stream, new_name, conflict='warn'):
         async with aiohttp.ClientSession() as session:
-            print(self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}')
             async with session.put(
                 data=stream,
                 url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}',
@@ -71,8 +69,10 @@ class OsfProvider(provider.BaseProvider):
 
     async def handle_conflict_new_version(self, resp, item, path, stream, new_name, conflict):
         children = await self.children(item)
-
-        item = next(item for item in children if item.name == new_name)
+        try:
+            item = next(item for item in children if item.name == new_name)
+        except StopIteration:
+            raise exceptions.Gone(f'Item at path \'{item.name}\' is gone.')
 
         async with aiohttp.ClientSession() as session:
             async with session.put(

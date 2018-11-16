@@ -1,11 +1,7 @@
 import pytest
-import asyncio
-from aresponses import ResponsesMockServer
-import aresponses
 import json
 import urllib.parse
 
-import tornado
 
 from .utils import MockOsfstorageServer
 
@@ -54,29 +50,31 @@ class TestChildren:
 
 
 class TestDownload:
-
     @pytest.mark.gen_test
-    async def test_download(self, http_client, base_url, file_metadata_json):
-        url = base_url + urllib.parse.quote('/osfstorage/osfstorage/guid0/' + file_metadata_json['data']['id'])
+    async def test_download(self, http_client, base_url):
+        file_metadata = get_file_metadata_json()
+        url = base_url + urllib.parse.quote(f'/osfstorage/osfstorage/guid0/{file_metadata["data"]["id"]}')
 
         async with MockOsfstorageServer() as server:
-            server.mock_download(file_metadata_json, b'test stream!')
+            server.mock_download(file_metadata, b'test stream!')
 
             response = await http_client.fetch(url, method='DOWNLOAD', allow_nonstandard_methods=True)
 
         assert response.code == 200
         assert response.body == b'test stream!'
 
-class TestIntraCopy:
 
+class TestIntraCopy:
     @pytest.mark.gen_test
-    async def test_intra_copy(self, http_client, base_url, file_metadata_json):
-        url = base_url + urllib.parse.quote('/osfstorage/osfstorage/guid0/' + file_metadata_json['data']['id']) + '?to=/osfstorage/guid0/&destination_provider=osfstorage'
+    async def test_intra_copy(self, http_client, base_url):
+        file_metadata = get_file_metadata_json()
+
+        url = base_url + urllib.parse.quote(f'/osfstorage/osfstorage/guid0/{file_metadata["data"]["id"]}') + '?to=/osfstorage/guid0/&destination_provider=osfstorage'
         file_resp = FileMetadataRespFactory()
 
         async with MockOsfstorageServer() as server:
-            server.mock_api_get(file_metadata_json)
-            server.add('files.osf.io', '/v1/resources/guid0/providers/osfstorage/' + file_metadata_json['data']['id'], 'POST', file_resp)
+            server.mock_api_get(file_metadata)
+            server.add('files.osf.io', f'/v1/resources/guid0/providers/osfstorage/{file_metadata["data"]["id"]}', 'POST', file_resp)
 
             response = await http_client.fetch(url, method='COPY', allow_nonstandard_methods=True)
 
@@ -127,12 +125,16 @@ class TestUpload:
 
     @pytest.mark.gen_test
     async def test_upload_new_version(self, http_client, base_url):
-        url = base_url + urllib.parse.quote('/osfstorage/osfstorage/guid0/') + get_folder_metadata_json()['data']['id'] + '?new_name=test&conflict=new_version'
+        url = base_url + urllib.parse.quote('/osfstorage/osfstorage/guid0/') + get_folder_metadata_json()['data']['id'] + '?new_name=test-1&conflict=new_version'
 
+        old_version_metadata = get_file_metadata_json()
+        old_version_metadata['data']['id'] = '5b537030c86a8c001243ce7a'
         async with MockOsfstorageServer() as server:
             server.mock_api_get(get_folder_metadata_json())
             server.mock_409(get_folder_metadata_json())
             server.mock_upload(get_file_metadata_json())
+            server.mock_children(get_folder_metadata_json())
+            server.mock_upload(old_version_metadata)
 
             response = await http_client.fetch(url, method='UPLOAD', allow_nonstandard_methods=True, body=b'12345')
 

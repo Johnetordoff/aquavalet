@@ -33,7 +33,7 @@ class MockOsfstorageServer(ResponsesMockServer):
 
     def mock_upload(self, metadata=None):
         if metadata:
-            self.add('files.osf.io', f'/v1/resources/guid0/providers/osfstorage/{metadata["data"]["id"]}/', 'PUT', upload_resp())
+            self.add('files.osf.io', f'/v1/resources/guid0/providers/osfstorage/{metadata["data"]["id"]}', 'PUT', upload_resp())
         else:
             self.add('files.osf.io', f'/v1/resources/guid0/providers/osfstorage/', 'PUT', upload_resp())
 

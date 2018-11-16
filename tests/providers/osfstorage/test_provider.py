@@ -197,6 +197,6 @@ class TestChildren:
         assert item[0].name == 'test-1'
         assert item[0].kind == 'file'
         assert item[1].path == '/5b4247025b38c4001068a7b6/'
-        assert item[1].name == 'test2'
+        assert item[1].name == 'test-2'
         assert item[1].kind == 'folder'
 

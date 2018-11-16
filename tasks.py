@@ -3,7 +3,7 @@ import os
 from invoke import task
 
 @task
-def install(ctx, develop=False, pty=True):
+def install(ctx, develop=True, pty=True):
     ctx.run('python setup.py develop')
     req_file = 'dev-requirements.txt' if develop else 'requirements.txt'
     cmd = 'pip install --upgrade -r {}'.format(req_file)
