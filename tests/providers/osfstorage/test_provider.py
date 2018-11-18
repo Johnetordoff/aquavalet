@@ -14,7 +14,6 @@ from tests.providers.osfstorage.fixtures import (
     folder_metadata_object,
     folder_metadata_resp,
     response_404,
-    response_404_json,
     file_metadata_object,
     file_metadata_json,
     children_resp,

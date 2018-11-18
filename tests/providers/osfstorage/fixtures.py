@@ -6,7 +6,6 @@ import aresponses
 from tests.utils import json_resp, data_resp, empty_resp
 
 import pytest
-import tornado
 from aquavalet.providers.osfstorage.provider import OSFStorageProvider
 from aquavalet.providers.osfstorage.metadata import OsfMetadata
 from aquavalet.app import make_app
@@ -65,11 +64,6 @@ def file_metadata_json():
     return get_file_metadata_json()
 
 
-def get_version_json():
-    with open(os.path.join(os.path.dirname(__file__), 'fixtures/fixtures.json'), 'r') as fp:
-        return json.load(fp)['versions_metadata']
-
-
 @pytest.fixture()
 def file_metadata_resp(file_metadata_json):
     return json_resp(file_metadata_json)
@@ -77,12 +71,12 @@ def file_metadata_resp(file_metadata_json):
 
 @pytest.fixture()
 def version_metadata_resp():
-    return json_resp(get_version_json())
+    return json_resp(from_fixture_json('versions_metadata'))
 
 
 @pytest.fixture()
 def version_metadata_object(file_metadata_object):
-    return OsfMetadata.versions(file_metadata_object, get_version_json()['data'])
+    return OsfMetadata.versions(file_metadata_object, from_fixture_json('versions_metadata')['data'])
 
 
 @pytest.fixture()
@@ -96,15 +90,13 @@ class FileMetadataRespFactory:
         return json_resp(data)
 
 
-@pytest.fixture
-def response_404_json():
+def get_response_404_json():
     with open(os.path.join(os.path.dirname(__file__), 'fixtures/fixtures.json'), 'r') as fp:
-        return json.load(fp)['api_response_404']
-
+        return json.load(fp)['response_404']
 
 def get_response_409_json():
     with open(os.path.join(os.path.dirname(__file__), 'fixtures/fixtures.json'), 'r') as fp:
-        return json.load(fp)['api_response_404']
+        return json.load(fp)['response_409']
 
 
 @pytest.fixture
@@ -113,8 +105,8 @@ def response_409():
 
 
 @pytest.fixture
-def response_404(response_404_json):
-    return json_resp(response_404_json, status=404)
+def response_404():
+    return json_resp(from_fixture_json('response_404'), status=404)
 
 
 @pytest.fixture
@@ -136,7 +128,6 @@ def folder_metadata_object(provider):
 @pytest.fixture
 def revision_metadata_object(revisions_metadata):
     return OsfMetadata(revisions_metadata['revisions'][0])
-
 
 @pytest.fixture
 def provider():
@@ -203,6 +194,6 @@ async def mock_children(aresponses, children_resp):
     aresponses.add('files.osf.io', path, 'GET', children_resp)
 
 @pytest.fixture
-async def mock_intra_copy(aresponses, file_metadata_json, children_resp):
+async def mock_intra_copy(aresponses, file_metadata_json):
     path = '/v1/resources/guid0/providers/osfstorage/' + file_metadata_json['data']['id']
     aresponses.add('files.osf.io', path, 'POST', file_metadata_resp)

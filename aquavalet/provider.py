@@ -6,12 +6,10 @@ import asyncio
 import logging
 import weakref
 import functools
-import itertools
-from urllib import parse
 
 import aiohttp
 
-from aquavalet import streams, metadata as wb_metadata, exceptions
+from aquavalet import metadata as wb_metadata, exceptions
 from aquavalet.settings import CONCURRENT_OPS
 from aquavalet.streams.zip import ZipStreamReader, ZipStreamGeneratorReader
 
@@ -128,7 +126,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
 
     async def handle_conflict_replace(self, new_name, item, stream):
         # TODO: Optimize for name based providers (using Mixin?)
-        blocking_item = next(child for child in (await self.children(item)) if child.name == new_name)
+        blocking_item = next(child for child in await self.children(item) if child.name == new_name)
         await self.delete(blocking_item)
         await self.upload(item, stream=stream, new_name=new_name)
         return 'replace'
@@ -220,7 +218,7 @@ class BaseProvider(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    async def children(self, item=None) -> wb_metadata.BaseMetadata:
+    async def children(self, item=None) -> []:
         raise NotImplementedError
 
     @abc.abstractmethod

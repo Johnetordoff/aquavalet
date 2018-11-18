@@ -150,7 +150,7 @@
 			"version": "2.0"
 		}
 	},
-	"api_response_404": {
+	"response_404": {
 		"errors": [
 			{
 				"detail": "Not found."}
@@ -159,7 +159,7 @@
 			"version": "2.0"
 		}
 	},
-	"api_response_409": {
+	"response_409": {
 		"message": "Cannot complete action: file or folder \"test.txt\" already exists in this location",
 		"code": 409
 	},

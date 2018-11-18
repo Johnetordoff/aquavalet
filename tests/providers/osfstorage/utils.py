@@ -2,16 +2,18 @@ import asyncio
 from tests.utils import json_resp, data_resp
 from aresponses import ResponsesMockServer
 
-from tests.providers.osfstorage.fixtures import response_409, upload_resp, children_resp
+
+from tests.providers.osfstorage.fixtures import response_409, upload_resp, children_resp, empty_resp
+
 
 class MockOsfstorageServer(ResponsesMockServer):
 
     def __init__(self):
         super().__init__(loop=asyncio.get_event_loop())
 
-    def mock_api_get(self, metadata):
+    def mock_metadata(self, metadata):
         resp = json_resp(metadata)
-        self.add('api.osf.io', '/v2/files/' + metadata['data']['id'], 'GET', resp, match_querystring=True)
+        self.add('api.osf.io', f'/v2/files/{metadata["data"]["id"]}', 'GET', resp, match_querystring=True)
 
     def mock_waterbutler_get(self, metadata, data):
         resp = data_resp(data)
@@ -20,6 +22,9 @@ class MockOsfstorageServer(ResponsesMockServer):
     def mock_children(self, metadata):
         self.add('files.osf.io', f'/v1/resources/guid0/providers/osfstorage/{metadata["data"]["id"]}/', 'GET', children_resp(), match_querystring=True)
 
+    def mock_delete(self, metadata):
+        self.add('files.osf.io',  f'/v1/resources/guid0/providers/osfstorage/{metadata["data"]["id"]}', 'DELETE', empty_resp(status=204))
+
     def mock_download(self, metadata, data):
         resp = json_resp(metadata)
         self.add('api.osf.io', '/v2/files/' + metadata['data']['id'], 'GET', resp)
@@ -27,7 +32,7 @@ class MockOsfstorageServer(ResponsesMockServer):
         self.add('files.osf.io', '/v1/resources/guid0/providers/osfstorage/' + metadata['data']['id'], 'GET', resp)
 
     def mock_versions(self, metadata, version):
-        self.mock_api_get(metadata)
+        self.mock_metadata(metadata)
         resp = json_resp(version)
         self.add('files.osf.io', f'/v1/resources/guid0/providers/osfstorage/{metadata["data"]["id"]}?versions=', 'GET', resp, match_querystring=True)
 
