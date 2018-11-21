@@ -6,11 +6,12 @@ from functools import partial
 
 from tests.providers.osfstorage.fixtures import (
     empty_resp,
-    response_409,
+    json_to_resp,
     upload_resp,
     create_folder_resp,
     children_resp
 )
+
 
 from urllib.parse import urlencode
 
@@ -35,6 +36,15 @@ class MockOsfstorageServer(ResponsesMockServer):
     def __init__(self):
         super().__init__(loop=asyncio.get_event_loop())
 
+    def add_files_resp(self, path, method, metadata=None, data=None, status=200):
+        if metadata:
+            resp = json_resp(metadata, status=status)
+        elif data:
+            resp = data_resp(data, status=status)
+        else:
+            resp = empty_resp(status=status)
+
+        self.add('files.osf.io', path, method, resp, match_querystring=True)
 
     def mock_metadata(self, metadata):
         resp = json_resp(metadata)
@@ -47,51 +57,53 @@ class MockOsfstorageServer(ResponsesMockServer):
         if children_metadata:
             if not isinstance(children_metadata['data'], list):
                 children_metadata = {'data': [children_metadata['data']]}
-
-            children_resp = json_resp(children_metadata)
-            self.add('files.osf.io', path, 'GET', children_resp, match_querystring=True)
+            self.add_files_resp(path, 'GET', children_metadata)
         else:
-            self.add('files.osf.io', path, 'GET', json_resp({'data': []}, status=200), match_querystring=True)
+            self.add_files_resp(path, 'GET', {'data': []})
 
     def mock_delete(self, metadata):
-        self.add('files.osf.io',  make_files_path(metadata['data']['id']), 'DELETE', empty_resp(status=204))
+        path = make_files_path(metadata['data']['id'] + '?confirm_delete=0')
+        self.add_files_resp(path, 'DELETE', status=204)
 
     def mock_download(self, metadata, data):
-        self.mock_metadata(metadata)
-        resp = data_resp(data)
+
+        path = make_files_path(metadata['data']['id'])
         if metadata['data']['attributes']['kind'] == 'folder':
-            self.add('files.osf.io', make_files_path(metadata['data']['id']) + '/', 'GET', resp,
-                     match_querystring=True)
+            self.add_files_resp(path + '/', 'GET', data=data)
         else:
-            self.add('files.osf.io', make_files_path(metadata['data']['id']), 'GET', resp, match_querystring=True)
+            self.add_files_resp(path, 'GET', data=data)
 
     def mock_download_version(self, metadata, data):
-        self.mock_metadata(metadata)
         resp = data_resp(data)
         self.add('files.osf.io', make_files_path(metadata["data"]["id"] + '?version=2'), 'GET', resp, match_querystring=True)
 
     def mock_versions(self, metadata, version):
-        self.mock_metadata(metadata)
         resp = json_resp(version)
         self.add('files.osf.io', make_files_path(metadata["data"]["id"] + '?versions='), 'GET', resp, match_querystring=True)
 
     def mock_upload(self, metadata=None):
+        upload = json_to_resp('upload_metadata')
+
         if metadata:
-            self.add('files.osf.io', make_files_path(metadata["data"]["id"]), 'PUT', upload_resp())
+            self.add('files.osf.io', make_files_path(metadata["data"]["id"]), 'PUT', upload)
         else:
-            self.add('files.osf.io', make_files_path() + '/', 'PUT', upload_resp())
+            self.add('files.osf.io', make_files_path() + '/', 'PUT', upload)
 
     def mock_rename(self, metadata):
-        self.add('files.osf.io', f'/v1/resources/guid0/providers/osfstorage/{metadata["data"]["id"]}', 'POST', upload_resp())
+        upload = json_to_resp('upload_metadata')
+
+        self.add('files.osf.io', f'/v1/resources/guid0/providers/osfstorage/{metadata["data"]["id"]}', 'POST', upload)
 
     def mock_409(self, metadata=None):
+        conflict = json_to_resp('conflict_metadata', status=409)
+
         if metadata:
-            self.add('files.osf.io',  make_files_path(metadata["data"]["id"]) + '/', 'PUT', response_409())
+            self.add('files.osf.io',  make_files_path(metadata["data"]["id"]) + '/', 'PUT', conflict)
         else:
             self.add('files.osf.io',
                      make_files_path(metadata["data"]["id"]) + '/?kind=file&name=test&conflict=warn',
                      'PUT',
-                     response_409(),
+                     conflict,
                      match_querystring=True)
 
     def mock_create_folder(self, metadata):

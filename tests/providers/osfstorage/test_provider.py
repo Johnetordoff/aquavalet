@@ -37,9 +37,6 @@ from tests.streams.fixtures import (
     RequestStreamFactory
 )
 
-import json
-from aiohttp.web import Response
-
 
 class TestValidateItem:
 
@@ -204,10 +201,10 @@ class TestChildren:
 
         assert isinstance(item, list)
         assert len(item) == 2
-        assert item[0].path == '/5b537030c86a8c001243ce7a'
+        assert item[0].path == '/5b5de758f63e210010ec8f53/'
         assert item[0].name == 'test_folder'
-        assert item[0].kind == 'file'
-        assert item[1].path == '/5b4247025b38c4001068a7b6/'
-        assert item[1].name == 'test-2'
-        assert item[1].kind == 'folder'
+        assert item[0].kind == 'folder'
+        assert item[1].path == '/5b6ee0c390a7e0001986aff5'
+        assert item[1].name == 'test.txt'
+        assert item[1].kind == 'file'
 

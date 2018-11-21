@@ -150,7 +150,7 @@
 			"version": "2.0"
 		}
 	},
-	"response_404": {
+	"file_not_found_metadata": {
 		"errors": [
 			{
 				"detail": "Not found."}
@@ -159,11 +159,11 @@
 			"version": "2.0"
 		}
 	},
-	"response_409": {
+	"conflict_metadata": {
 		"message": "Cannot complete action: file or folder \"test.txt\" already exists in this location",
 		"code": 409
 	},
-	"upload_response": {
+	"upload_metadata": {
 		"data": {
 			"links": {
 				"delete": "https://files.osf.io/v1/resources/vy6x2/providers/osfstorage/5b8d55ae6a59a50017708986",
@@ -201,7 +201,7 @@
 			}
 		}
 	},
-	"create_folder_response": {
+	"create_folder_metadata": {
 		"data": {
 			"id": "osfstorage/5b9533710b4b7d000f1bdd90/",
 			"type": "files",
@@ -224,7 +224,7 @@
 			}
 		}
 	},
-	"children_response": {
+	"children_metadata": {
 		"data": [{
 			"relationships": {
 				"files": {

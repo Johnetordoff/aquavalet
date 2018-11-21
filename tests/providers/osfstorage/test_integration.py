@@ -79,6 +79,7 @@ class TestDownload:
         path = make_path('osfstorage', 'osfstorage', 'guid0', file_metadata["data"]["id"])
 
         async with MockOsfstorageServer() as server:
+            server.mock_metadata(file_metadata)
             server.mock_download(file_metadata, b'test stream!')
 
             response = await http_server_client.fetch(path, method='DOWNLOAD', allow_nonstandard_methods=True)
@@ -93,6 +94,7 @@ class TestDownload:
         path = make_path('osfstorage', 'osfstorage', 'guid0', file_metadata["data"]["id"], range=(0, 3))
 
         async with MockOsfstorageServer() as server:
+            server.mock_metadata(file_metadata)
             server.mock_download(file_metadata, b'test')
 
             response = await http_server_client.fetch(path, method='DOWNLOAD', allow_nonstandard_methods=True)
@@ -106,6 +108,7 @@ class TestDownload:
         path = make_path('osfstorage', 'osfstorage', 'guid0', file_metadata["data"]["id"], version=2)
 
         async with MockOsfstorageServer() as server:
+            server.mock_metadata(file_metadata)
             server.mock_download_version(file_metadata, b'test stream')
 
             response = await http_server_client.fetch(path, method='DOWNLOAD', allow_nonstandard_methods=True)
@@ -168,6 +171,7 @@ class TestVersions:
         path = make_path('osfstorage', 'osfstorage', 'guid0', file_metadata["data"]["id"])
 
         async with MockOsfstorageServer() as server:
+            server.mock_metadata(file_metadata)
             server.mock_versions(file_metadata, from_fixture_json('versions_metadata'))
             response = await http_server_client.fetch(path, method='VERSIONS', allow_nonstandard_methods=True)
 
