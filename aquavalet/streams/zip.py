@@ -124,14 +124,13 @@ class ZipLocalFile(MultiStream):
     used separately.
     """
     def __init__(self, file_tuple):
-
         filename, stream = file_tuple
         # Build a ZipInfo instance to use for the file's header and footer
         self.zinfo = zipfile.ZipInfo(
             filename=filename,
             date_time=time.localtime(time.time())[:6],
         )
-
+        print(self.zinfo.filename)
         # If the file is a `.zip`, set permission and turn off compression
         if self.zinfo.filename.endswith('.zip'):
             self.zinfo.external_attr = 0o600 << 16      # -rw-------
@@ -354,7 +353,7 @@ class ZipArchiveCentralDirectory(StringStream):
         return b''.join((file_headers, zip64_endrec, zip64_locator, endrec))
 
 
-class ZipStreamReader(asyncio.StreamReader):
+class ZipStreamReader(BaseStream):
     """Combines one or more streams into a single, Zip-compressed stream"""
     def __init__(self, stream_gen):
         self._eof = False
@@ -364,7 +363,11 @@ class ZipStreamReader(asyncio.StreamReader):
         # Each incoming stream should be wrapped in a _ZipFile instance
         super().__init__()
 
-    async def read(self, n=-1):
+    @property
+    def size(self):
+        raise NotImplementedError()
+
+    async def _read(self, n=-1):
         if n < 0:
             # Parent class will handle auto chunking for us
             return await super().read(n)
@@ -385,6 +388,7 @@ class ZipStreamReader(asyncio.StreamReader):
             self.stream = None
             chunk += await self.read(n - len(chunk))
         return chunk
+
 
 class ZipStreamGeneratorReader:
     def __init__(self, provider, item, children, session):
@@ -409,4 +413,5 @@ class ZipStreamGeneratorReader:
                 return await self.__anext__()
             else:
                 return current.unix_path.lstrip(self.parent_path), EmptyStream()
+
         return lreplace(self.parent_path, '', current.unix_path), await self.provider.download(current, self.session)

@@ -28,13 +28,8 @@ class BaseHandler(tornado.web.RequestHandler):
 
     def write_error(self, status_code, exc_info):
         etype, exc, _ = exc_info
-
-        if issubclass(etype, exceptions.WaterButlerError):
-            self.set_status(int(exc.code))
-            finish_args = [{'code': exc.code, 'message': exc.message}]
-        else:
-            finish_args = [{'code': status_code, 'message': self._reason}]
-
+        self.set_status(int(exc.code))
+        finish_args = [{'code': exc.code, 'message': exc.message}]
         self.finish(*finish_args)
 
     def set_status(self, code, reason=None):
@@ -46,33 +41,6 @@ class BaseHandler(tornado.web.RequestHandler):
         elif not self.request.cookies and self.request.headers.get('Authorization'):
             return True
         return False
-
-    def set_default_headers(self):
-        if not self.request.headers.get('Origin'):
-            return
-
-        allowed_origin = None
-        if self._cross_origin_is_allowed():
-            allowed_origin = self.request.headers['Origin']
-        elif isinstance(settings.CORS_ALLOW_ORIGIN, str):
-            if settings.CORS_ALLOW_ORIGIN == '*':
-                # Wild cards cannot be used with allowCredentials.
-                # Match Origin if its specified, makes pdfs and pdbs render properly
-                allowed_origin = self.request.headers['Origin']
-            else:
-                allowed_origin = settings.CORS_ALLOW_ORIGIN
-        else:
-            if self.request.headers['Origin'] in settings.CORS_ALLOW_ORIGIN:
-                allowed_origin = self.request.headers['Origin']
-
-        if allowed_origin is not None:
-            self.set_header('Access-Control-Allow-Origin', allowed_origin)
-
-        self.set_header('Access-Control-Allow-Credentials', 'true')
-        self.set_header('Access-Control-Allow-Headers', ', '.join(CORS_ACCEPT_HEADERS))
-        self.set_header('Access-Control-Expose-Headers', ', '.join(CORS_EXPOSE_HEADERS))
-        self.set_header('Cache-control', 'no-store, no-cache, must-revalidate, max-age=0')
-
 
 def parse_request_range(range_header):
     request_range = tornado.httputil._parse_request_range(range_header)

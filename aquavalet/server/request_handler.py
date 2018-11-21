@@ -141,7 +141,13 @@ class ProviderHandler(base.BaseHandler):
 
         new_name = self.require_query_argument('new_name', "'new_name' is a required argument")
 
-        await self.provider.create_folder(self.provider.item, new_name)
+        metadata = await self.provider.create_folder(self.provider.item, new_name)
+
+        self.set_status(201)
+
+        return self.write({
+            'data': metadata.json_api_serialized()
+        })
 
     async def get_destination(self, auth=None):
         dest_path = self.require_query_argument('to', "'to' is a required argument")
@@ -238,22 +244,20 @@ class ProviderHandler(base.BaseHandler):
         zipfile_name = self.provider.item.name or '{}-archive'.format(self.provider.name)
         self.set_header('Content-Type', 'application/zip')
         self.set_header('Content-Disposition', 'attachment;filename="{}.zip"'.format(zipfile_name))
-
+        print(zipfile_name)
         async with aiohttp.ClientSession() as session:
 
             stream = await self.provider.zip(self.provider.item, session)
 
-            chunk = await stream.read(settings.CHUNK_SIZE)
-            while chunk:
+            async for chunk in stream:
                 self.write(chunk)
                 self.bytes_downloaded += len(chunk)
-                chunk = await stream.read(settings.CHUNK_SIZE)
                 await self.flush()
 
     def on_finish(self):
         status, method = self.get_status(), self.request.method.upper()
-
-        #self._send_hook(action)
+        if settings.DEBUG:
+            logger.info(f'done: {method} with {status}')
 
     def require_query_argument(self, param, message):
         value = self.get_query_argument(param, default=None)

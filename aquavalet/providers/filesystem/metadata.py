@@ -61,10 +61,8 @@ class FileSystemMetadata(metadata.BaseMetadata):
         return self.path
 
     def child(self, new_name):
-        if self.is_folder:
-            return self.path + new_name.rstrip('/') + '/'
-        else:
-            return None
+        return self.path + new_name.rstrip('/') + '/'
+
 
     @property
     def path(self):
@@ -83,7 +81,7 @@ class FileSystemMetadata(metadata.BaseMetadata):
         return self.raw['modified']
 
     @property
-    def content_type(self):
+    def mime_type(self):
         return self.raw['mime_type']
 
     @property

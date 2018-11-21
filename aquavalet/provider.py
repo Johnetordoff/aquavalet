@@ -71,15 +71,14 @@ class BaseProvider(metaclass=abc.ABCMeta):
         self.auth = auth
 
     @property
-    @abc.abstractmethod
     def name(self) -> str:
-        raise NotImplementedError
+        return 'base provider'
 
     def __eq__(self, other):
         try:
             return (
                 type(self) == type(other) and
-                self.credentials == other.credentials
+                self.auth == other.auth
             )
         except AttributeError:
             return False
@@ -88,8 +87,6 @@ class BaseProvider(metaclass=abc.ABCMeta):
         return {
             'name': self.name,
             'auth': self.auth,
-            'settings': self.settings,
-            'credentials': self.credentials,
         }
 
     @property
@@ -121,30 +118,30 @@ class BaseProvider(metaclass=abc.ABCMeta):
         if conflict == 'rename':
             return await self.handle_conflict_rename(new_name, item, stream)
 
-    def handle_conflict_warn(self, new_name):
+    async def handle_conflict_warn(self, new_name):
         raise exceptions.Conflict(f'Conflict \'{new_name}\'.')
 
     async def handle_conflict_replace(self, new_name, item, stream):
         # TODO: Optimize for name based providers (using Mixin?)
         blocking_item = next(child for child in await self.children(item) if child.name == new_name)
+        print(blocking_item.path)
         await self.delete(blocking_item)
         await self.upload(item, stream=stream, new_name=new_name)
-        return 'replace'
+        return 'rename'
 
     def handle_conflict_new_version(self):
         raise NotImplementedError()
 
     async def handle_conflict_rename(self, new_name, item, stream):
         # TODO: Optimize for name based providers (using Mixin?)
-        names = {child.name for child in (await self.children(item))}
+        names = [child.name for child in (await self.children(item))]
         num = 1
         while new_name in names:
             name, ext = os.path.splitext(new_name)
             if f'{name}({num}){ext}' not in names:
-                new_name =  f'{name}({num}){ext}'
+                new_name = f'{name}({num}){ext}'
             num += 1
-        await self.upload(item, stream=stream, new_name=new_name)
-        return 'rename'
+        return await self.upload(item, stream=stream, new_name=new_name)
 
     async def move(self, dest_provider, item, destination_item, conflict):
 
@@ -201,27 +198,21 @@ class BaseProvider(metaclass=abc.ABCMeta):
         children = await self.children(item)
         return ZipStreamReader(ZipStreamGeneratorReader(self, item, children, session))
 
-    @abc.abstractmethod
     async def download(self, item=None, version=None, range=None):
         raise NotImplementedError
 
-    @abc.abstractmethod
     async def upload(self, stream, new_name, item=None):
         raise NotImplementedError
 
-    @abc.abstractmethod
     async def delete(self, item=None) -> None:
         raise NotImplementedError
 
-    @abc.abstractmethod
     async def metadata(self, item=None) -> wb_metadata.BaseMetadata:
         raise NotImplementedError
 
-    @abc.abstractmethod
     async def children(self, item=None) -> []:
         raise NotImplementedError
 
-    @abc.abstractmethod
     async def validate_item(self, item=None) -> wb_metadata.BaseMetadata:
         raise NotImplementedError
 

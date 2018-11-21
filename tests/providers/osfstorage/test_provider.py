@@ -34,7 +34,7 @@ from tests.providers.osfstorage.fixtures import (
 )
 
 from tests.streams.fixtures import (
-    request_stream
+    RequestStreamFactory
 )
 
 import json
@@ -126,13 +126,25 @@ class TestDownload:
         assert stream.content_type == 'application/octet-stream'
         assert await stream.read() == b'test stream!'  # this should really be truncated, but it's done by osf which is mocked.
 
+    @pytest.mark.asyncio
+    async def test_download_version(self, provider, file_metadata_object, mock_file_download):
+
+        async with aiohttp.ClientSession() as session:
+            stream = await provider.download(file_metadata_object, session, version=2)
+
+        assert isinstance(stream, ResponseStreamReader)
+        assert stream.size == 12
+        assert stream.name == None
+        assert stream.content_type == 'application/octet-stream'
+        assert await stream.read() == b'test stream!'  # this should really be truncated, but it's done by osf which is mocked.
+
 
 class TestUpload:
 
     @pytest.mark.asyncio
-    async def test_upload(self, provider, file_metadata_object, request_stream, mock_file_upload):
+    async def test_upload(self, provider, file_metadata_object, mock_file_upload):
 
-        item = await provider.upload(item=file_metadata_object, stream=request_stream, new_name='test.txt')
+        item = await provider.upload(item=file_metadata_object, stream=RequestStreamFactory(), new_name='test.txt')
 
         assert isinstance(item, OsfMetadata)
         assert item.name == 'test.txt'
@@ -152,12 +164,12 @@ class TestDelete:
 class TestCreateFolder:
 
     @pytest.mark.asyncio
-    async def test_create_folder(self, provider, file_metadata_object, mock_create_folder):
+    async def test_create_folder(self, provider, folder_metadata_object, mock_create_folder):
 
-        item = await provider.create_folder(file_metadata_object, 'test')
+        item = await provider.create_folder(folder_metadata_object, 'new_test_folder')
 
         assert isinstance(item, OsfMetadata)
-        assert item.name == 'test'
+        assert item.name == 'test_folder'  #  technically wrong mocking
         assert item.mimetype is None
 
 
@@ -193,7 +205,7 @@ class TestChildren:
         assert isinstance(item, list)
         assert len(item) == 2
         assert item[0].path == '/5b537030c86a8c001243ce7a'
-        assert item[0].name == 'test-1'
+        assert item[0].name == 'test_folder'
         assert item[0].kind == 'file'
         assert item[1].path == '/5b4247025b38c4001068a7b6/'
         assert item[1].name == 'test-2'

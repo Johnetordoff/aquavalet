@@ -1,8 +1,10 @@
 import os
-
+from aquavalet.providers.filesystem.settings import CHUNK_SIZE
 from aquavalet.streams.base import BaseStream
 
 class FileStreamReader(BaseStream):
+
+    CHUNK_SIZE=CHUNK_SIZE
 
     def __init__(self, file_pointer, range=None):
         super().__init__()

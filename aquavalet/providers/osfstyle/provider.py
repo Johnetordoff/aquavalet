@@ -20,8 +20,6 @@ class OsfProvider(provider.BaseProvider):
         match = require_match(self.PATH_PATTERN, path, 'match could not be found')
         self.internal_provider = require_group(match, 'internal_provider', message_no_internal_provider)
         self.resource = require_group(match, 'resource', message_no_resource)
-        if match.groupdict().get('bad_path'):
-            raise exceptions.InvalidPathError(match.groupdict().get('bad_path'))
 
         if not match.groupdict().get('path'):
             return self.Item.root(self.internal_provider, self.resource)
@@ -46,8 +44,13 @@ class OsfProvider(provider.BaseProvider):
         if range:
             download_header.update({'Range': str(self._build_range_header(range))})
 
+        path = f'{self.resource}/providers/{self.internal_provider}{item.id}'
+
+        if version:
+            path += f'?version={version}'
+
         resp = await session.get(
-            url=self.BASE_URL + f'{self.resource}/providers/{self.internal_provider}{item.id}?version={version}',
+            url=self.BASE_URL + path,
             headers=download_header
         )
         return streams.http.ResponseStreamReader(resp, range)

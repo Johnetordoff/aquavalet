@@ -53,6 +53,7 @@ class FileSystemProvider(provider.BaseProvider):
         return streams.file.FileStreamReader(file_pointer)
 
     async def upload(self, item, stream=None, new_name=None, conflict='warn'):
+        print(os.filesystem)
         if os.path.isfile(item.path + new_name):
             return await self.handle_conflict(item=item, conflict=conflict, new_name=new_name, stream=stream)
 
@@ -82,9 +83,6 @@ class FileSystemProvider(provider.BaseProvider):
         children = [child + '/' if os.path.isdir(child) else child for child in children]
 
         return [FileSystemMetadata(path=child) for child in children]
-
-    async def parent(self, item):
-        return FileSystemMetadata(path=item.parent)
 
     async def create_folder(self, item, new_name):
         os.makedirs(item.child(new_name), exist_ok=True)

@@ -11,9 +11,9 @@ class BaseStream(asyncio.StreamReader, metaclass=abc.ABCMeta):
         self.readers = {}
         self.writers = {}
 
-    @abc.abstractproperty
+    @abc.abstractmethod
     def size(self):
-        pass
+        raise NotImplementedError()
 
     def add_reader(self, name, reader):
         self.readers[name] = reader

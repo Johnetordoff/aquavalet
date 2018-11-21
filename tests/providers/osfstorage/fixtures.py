@@ -20,7 +20,6 @@ def app():
     return make_app(False)
 
 
-@pytest.fixture
 def upload_resp():
     data = from_fixture_json('upload_response')
     return json_resp(data)
@@ -31,9 +30,8 @@ def create_folder_response_json():
     return from_fixture_json('create_folder_response')
 
 
-@pytest.fixture
-def create_folder_resp(create_folder_response_json):
-    return json_resp(create_folder_response_json, status=201)
+def create_folder_resp():
+    return json_resp(from_fixture_json('create_folder_response'), status=201)
 
 
 @pytest.fixture
@@ -99,7 +97,6 @@ def get_response_409_json():
         return json.load(fp)['response_409']
 
 
-@pytest.fixture
 def response_409():
     return json_resp(get_response_409_json(), status=409)
 
@@ -109,10 +106,12 @@ def response_404():
     return json_resp(from_fixture_json('response_404'), status=404)
 
 
-@pytest.fixture
 def children_resp():
     data = from_fixture_json('children_response')
     return json_resp(data)
+
+def children_metadata():
+    return from_fixture_json('children_response')
 
 
 @pytest.fixture
@@ -145,15 +144,6 @@ async def mock_file_metadata(aresponses, file_metadata_json):
 
 
 @pytest.fixture
-async def mock_file_metadata2(file_metadata_json):
-    server = aresponses.ResponsesMockServer(loop=asyncio.get_event_loop())
-    await server.__aenter__()
-    headers = {'content-type': 'application/json'}
-    resp = aresponses.Response(body=json.dumps(file_metadata_json), headers=headers, status=200)
-    server.add('api.osf.io', '/v2/files/' + file_metadata_json['data']['id'] + '/', 'GET', resp)
-
-
-@pytest.fixture
 async def mock_file_download(aresponses, file_metadata_json, download_resp):
     path = '/v1/resources/guid0/providers/osfstorage/' + file_metadata_json['data']['id']
     aresponses.add('files.osf.io', path, 'GET', download_resp)
@@ -166,6 +156,12 @@ async def mock_file_upload(aresponses, file_metadata_json, upload_resp):
 
 
 @pytest.fixture
+async def mock_create_folder(aresponses):
+    path = '/v1/resources/guid0/providers/osfstorage/' + get_folder_metadata_json()['data']['id'] + '/'
+    aresponses.add('files.osf.io', path, 'PUT', create_folder_resp())
+
+
+@pytest.fixture
 async def mock_file_missing(aresponses, file_metadata_json, response_404):
     aresponses.add('api.osf.io', response=response_404)
 
@@ -174,12 +170,6 @@ async def mock_file_missing(aresponses, file_metadata_json, response_404):
 async def mock_file_delete(aresponses, file_metadata_json, delete_resp):
     path = '/v1/resources/guid0/providers/osfstorage/' + file_metadata_json['data']['id']
     aresponses.add('files.osf.io', path, 'DELETE', delete_resp)
-
-
-@pytest.fixture
-async def mock_create_folder(aresponses, file_metadata_json, create_folder_resp):
-    path = '/v1/resources/guid0/providers/osfstorage/' + file_metadata_json['data']['id']
-    aresponses.add('files.osf.io', path, 'PUT', create_folder_resp)
 
 
 @pytest.fixture

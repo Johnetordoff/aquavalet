@@ -8,20 +8,15 @@ from aquavalet.streams.zip import ZipStreamReader, ZipStreamGeneratorReader
 
 from tornado.httputil import HTTPServerRequest
 
-@pytest.fixture()
-def request_stream(stream_data=b'test data'):
-    reader = asyncio.StreamReader()
-    reader.feed_data(stream_data)
-    reader.feed_eof()
-
-    headers = {'Content-Length': len(stream_data)}
-    request = HTTPServerRequest(uri='http://fake.com', headers=headers, body=stream_data)
-    return RequestStreamReader(request, reader)
-
-
 class RequestStreamFactory:
-    def __new__(self):
-        return request_stream()
+    def __new__(self, stream_data=b'test data'):
+        reader = asyncio.StreamReader()
+        reader.feed_data(stream_data)
+        reader.feed_eof()
+
+        headers = {'Content-Length': len(stream_data)}
+        request = HTTPServerRequest(uri='http://fake.com', headers=headers, body=stream_data)
+        return RequestStreamReader(request, reader)
 
 @pytest.fixture()
 async def response_stream(stream_data=b'test data'):
