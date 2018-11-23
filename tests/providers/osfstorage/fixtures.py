@@ -61,6 +61,10 @@ def get_file_metadata_json():
 def file_metadata_json():
     return get_file_metadata_json()
 
+@pytest.fixture
+def folder_metadata_json():
+    return get_folder_metadata_json()
+
 
 @pytest.fixture()
 def file_metadata_resp(file_metadata_json):
@@ -136,10 +140,11 @@ async def mock_file_metadata(aresponses, file_metadata_json):
 
 
 @pytest.fixture
-async def mock_file_download(aresponses, file_metadata_json, download_resp):
-    path = '/v1/resources/guid0/providers/osfstorage/' + file_metadata_json['data']['id']
-    aresponses.add('files.osf.io', path, 'GET', download_resp)
-
+async def mock_version_metadata(aresponses):
+    headers = {'content-type': 'application/json'}
+    version_metadata = from_fixture_json('versions_metadata')
+    resp = aresponses.Response(body=json.dumps(version_metadata), headers=headers, status=200)
+    aresponses.add('files.osf.io', '/v2/files/' + version_metadata['data']['id'], 'GET', resp)
 
 @pytest.fixture
 async def mock_file_upload(aresponses, file_metadata_json):
@@ -174,6 +179,7 @@ async def mock_rename(aresponses, file_metadata_json, file_metadata_resp):
 async def mock_children(aresponses):
     path = '/v1/resources/guid0/providers/osfstorage/' + get_folder_metadata_json()['data']['id'] + '/'
     aresponses.add('files.osf.io', path, 'GET', children_resp())
+
 
 @pytest.fixture
 async def mock_intra_copy(aresponses, file_metadata_json):

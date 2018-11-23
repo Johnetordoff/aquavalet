@@ -14,7 +14,6 @@ class ResponseStreamReader(BaseStream):
             self._size = size
         self._name = name
         self.response = response
-        self.iter_any = response.content.iter_any
 
     @property
     def partial(self):
@@ -64,8 +63,8 @@ class RequestStreamReader(BaseStream):
         if self.reader.at_eof():
             return b''
         if size < 0:
-            return (await self.reader.read(size))
+            return await self.reader.read(size)
         try:
-            return (await self.reader.readexactly(size))
+            return await self.reader.readexactly(size)
         except asyncio.IncompleteReadError as e:
             return e.partial

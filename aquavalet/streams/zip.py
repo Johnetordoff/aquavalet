@@ -353,8 +353,11 @@ class ZipArchiveCentralDirectory(StringStream):
         return b''.join((file_headers, zip64_endrec, zip64_locator, endrec))
 
 
-class ZipStreamReader(BaseStream):
+class ZipStreamReader(asyncio.StreamReader):
     """Combines one or more streams into a single, Zip-compressed stream"""
+
+    CHUNK_SIZE = 64 * 1024
+
     def __init__(self, stream_gen):
         self._eof = False
         self.stream = None
@@ -367,7 +370,16 @@ class ZipStreamReader(BaseStream):
     def size(self):
         raise NotImplementedError()
 
-    async def _read(self, n=-1):
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        chunk = await self.read(self.CHUNK_SIZE)
+        if not chunk:
+            raise StopAsyncIteration()
+        return chunk
+
+    async def read(self, n=-1):
         if n < 0:
             # Parent class will handle auto chunking for us
             return await super().read(n)

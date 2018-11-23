@@ -120,7 +120,9 @@ class TestDownload:
 
         stream = await provider.zip(item, None)
 
-        data = await stream.read()
+        data = b''
+        async for chunk in stream:
+            data += chunk
 
         zip = zipfile.ZipFile(io.BytesIO(data))
 

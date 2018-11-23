@@ -20,7 +20,7 @@ class TestMetadata:
         #assert data.etag == ('Wed, 20 Sep 2017 15:16:02 +0000::/'
          #                    'code/website/osfstoragecache/77094244-aa24-48da-9437-d8ce6f7a94e9')
 
-        assert data.content_type == 'text/plain'
+        assert data.mime_type == 'text/plain'
         assert data.name == 'test.txt'
         assert data.size == 4
         assert data.kind == 'file'
@@ -47,7 +47,7 @@ class TestMetadata:
         assert data.path == '/'
         assert data.provider == 'filesystem'
 
-        assert data.content_type is None
+        assert data.mime_type is None
         assert data.name == 'filesystem root'
         assert data.size == 0
         assert data.kind == 'folder'
@@ -74,7 +74,7 @@ class TestMetadata:
         assert data.path == 'folder test/'
         assert data.provider == 'filesystem'
 
-        assert data.content_type is None
+        assert data.mime_type is None
         assert data.name == 'folder test'
         assert data.size == 0
         assert data.kind == 'folder'

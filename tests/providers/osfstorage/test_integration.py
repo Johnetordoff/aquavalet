@@ -249,6 +249,7 @@ class TestRename:
         assert response.code == 200
         assert response.body == b''
 
+
 class TestCreateFolder:
 
     @pytest.mark.gen_test

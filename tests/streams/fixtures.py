@@ -2,11 +2,13 @@ import pytest
 import asyncio
 import aiohttp
 
-from aquavalet.streams.http import RequestStreamReader
+from aquavalet.streams.http import RequestStreamReader, ResponseStreamReader
 from aquavalet.streams.file import FileStreamReader
 from aquavalet.streams.zip import ZipStreamReader, ZipStreamGeneratorReader
 
 from tornado.httputil import HTTPServerRequest
+
+from aiohttp.client_reqrep import ClientResponse
 
 class RequestStreamFactory:
     def __new__(self, stream_data=b'test data'):
@@ -18,9 +20,6 @@ class RequestStreamFactory:
         request = HTTPServerRequest(uri='http://fake.com', headers=headers, body=stream_data)
         return RequestStreamReader(request, reader)
 
-@pytest.fixture()
-async def response_stream(stream_data=b'test data'):
-    pass
 
 @pytest.fixture()
 async def file_stream(fs, range=None):

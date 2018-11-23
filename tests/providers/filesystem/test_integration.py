@@ -11,11 +11,11 @@ def app():
 class TestMetadata:
 
     @pytest.mark.gen_test
-    async def test_metadata(self, http_client, base_url, fs):
+    async def test_metadata(self, http_server_client, fs):
         fs.create_dir('test folder/')
 
-        url = base_url + urllib.parse.quote('/filesystem/test folder/')
-        response = yield http_client.fetch(url, method='METADATA', allow_nonstandard_methods=True)
+        url = urllib.parse.quote('/filesystem/test folder/')
+        response = yield http_server_client.fetch(url, method='METADATA', allow_nonstandard_methods=True)
         assert response.code == 200
         resp = json.loads(response.body)
         assert resp['data']['id'] == '/test folder/'
@@ -26,11 +26,11 @@ class TestMetadata:
 class TestIntraCopy:
 
     @pytest.mark.gen_test
-    async def test_copy(self, http_client, base_url, fs):
+    async def test_copy(self, http_server_client, fs):
         fs.create_dir('test_folder/')
         fs.create_file('test.txt')
-        url = base_url + urllib.parse.quote('/filesystem/test.txt') + '?to=test_folder/&destination_provider=filesystem'
-        response = await http_client.fetch(url, method='COPY', allow_nonstandard_methods=True)
+        url = urllib.parse.quote('/filesystem/test.txt') + '?to=test_folder/&destination_provider=filesystem'
+        response = await http_server_client.fetch(url, method='COPY', allow_nonstandard_methods=True)
         assert response.code == 200
         assert fs.listdir('test_folder/')[0] == 'test.txt'
         fs.reset()
@@ -38,9 +38,9 @@ class TestIntraCopy:
 class TestUpload:
 
     @pytest.mark.gen_test
-    async def test_upload(self, http_server_client, base_url, fs):
+    async def test_upload(self, http_server_client, fs):
 
-        url = base_url + urllib.parse.quote('/filesystem/') + '?destination_provider=filesystem&new_name=test.txt'
+        url = urllib.parse.quote('/filesystem/') + '?destination_provider=filesystem&new_name=test.txt'
         response = await http_server_client.fetch(url, method='UPLOAD', allow_nonstandard_methods=True, body=b'test')
         assert response.code == 201
 
