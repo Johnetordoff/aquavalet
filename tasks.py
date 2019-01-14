@@ -39,5 +39,7 @@ def rabbitmq(ctx):
 
 @task
 def server(ctx):
-    from aquavalet.app import serve
-    serve()
+    ctx.run('adev aquavalet/app.py::serve')
+
+    #from aquavalet.app import serve
+    #serve()

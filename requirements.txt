@@ -5,3 +5,4 @@ aiofiles==0.3.2
 -e git+git://github.com/reinhrst/pytest-tornado
 coverage
 pytest-coverage
+aiohttp-devtools

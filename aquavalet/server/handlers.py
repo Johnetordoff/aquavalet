@@ -1,25 +1,12 @@
-import tornado.web
+from aiohttp import web
 from aquavalet import settings
 
+routes = web.RouteTableDef()
 
+@routes.get('/status')
+async def get_handler(request):
+    return web.json_response({'status': 'up'})
 
-class StatusHandler(tornado.web.RequestHandler):
-
-    def get(self):
-        """List information about aquavalet status"""
-        self.write({
-            'status': 'up',
-        })
-
-
-class RootHandler(tornado.web.RequestHandler):
-
-    def get(self):
-        """List information about aquavalet status"""
-        self.write({
-            'patterns': {'root': settings.ROOT_PATTERN},
-            'providers': [{'name': 'filesystem'},
-                          {'name': 'waterbutler',
-                           'pattern': ''},
-                          ],
-        })
+@routes.get('/')
+async def index(request):
+    return web.Response(text='Hi')
