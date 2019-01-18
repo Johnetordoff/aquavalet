@@ -1,11 +1,10 @@
-import json
 from http import HTTPStatus
-
+from aiohttp.web import HTTPException
 
 DEFAULT_ERROR_MSG = 'An error occurred while making a {response.method} request to {response.url}'
 
 
-class WaterButlerError(Exception):
+class WaterButlerError(HTTPException):
 
     def __init__(self, message):
         self.message = message
@@ -45,26 +44,26 @@ class PluginError(WaterButlerError):
     pass
 
 class InvalidPathError(PluginError):
-    code = 400
+    status = 400
 
 class AuthError(PluginError):
-    code = 401
+    status = 401
 
 class Forbidden(PluginError):
-    code = 403
+    status = 403
 
 class NotFoundError(PluginError):
 
     def __init__(self, filename):
         self.message =  f'Item at \'{filename}\' could not be found, folders must end with \'/\''
-    code = 404
+    status = 404
 
 class Conflict(PluginError):
-    code = 409
+    status = 409
 
 
 class Gone(PluginError):
-    code = 410
+    status = 410
 
 class ProviderError(PluginError):
     """WaterButler-related errors raised from :class:`aquavalet.core.provider.BaseProvider`

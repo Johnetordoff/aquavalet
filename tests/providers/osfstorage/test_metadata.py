@@ -1,32 +1,31 @@
 import pytest
 
-from tests.core.test_metadata import FileMetadata
+from tests.core.test_metadata import FileMetadataTests
 from tests.providers.osfstorage.fixtures import (
     provider,
-    folder_metadata_object,
-    file_metadata_object,
-    version_metadata_object,
     root_metadata_object
 )
 
+from tests.providers.osfstorage.utils import MockOsfstorageServer
 
-class TestOsfFileMetadata(FileMetadata):
+
+class TestOsfFileMetadata(FileMetadataTests):
 
     @pytest.fixture
     def provider(self, provider):
         return provider
 
     @pytest.fixture
-    def file(self, file_metadata_object):
-        return file_metadata_object
+    def file(self):
+        return MockOsfstorageServer().get_file_item()
 
     @pytest.fixture
-    def versions(self, version_metadata_object):
-        return version_metadata_object
+    def versions(self):
+        return MockOsfstorageServer().get_version_item()
 
     @pytest.fixture
-    def folder(self, folder_metadata_object):
-        return folder_metadata_object
+    def folder(self):
+        return MockOsfstorageServer().get_folder_item()
 
     @pytest.fixture
     def root(self, root_metadata_object):

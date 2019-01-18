@@ -124,7 +124,6 @@ class BaseProvider(metaclass=abc.ABCMeta):
     async def handle_conflict_replace(self, new_name, item, stream):
         # TODO: Optimize for name based providers (using Mixin?)
         blocking_item = next(child for child in await self.children(item) if child.name == new_name)
-        print(blocking_item.path)
         await self.delete(blocking_item)
         await self.upload(item, stream=stream, new_name=new_name)
         return 'rename'

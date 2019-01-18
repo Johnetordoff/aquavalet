@@ -12,29 +12,6 @@ from tests.core.test_provider import BaseProviderTestSuite
 
 
 from tests.providers.osfstorage.fixtures import (
-    provider,
-    file_metadata_resp,
-    folder_metadata_object,
-    folder_metadata_resp,
-    response_404,
-    file_metadata_object,
-    file_metadata_json,
-    children_resp,
-    create_folder_resp,
-    create_folder_response_json,
-    folder_metadata_json,
-    delete_resp,
-    upload_resp,
-    download_resp,
-    mock_file_metadata,
-    mock_version_metadata,
-    mock_file_upload,
-    mock_file_missing,
-    mock_file_delete,
-    mock_create_folder,
-    mock_children,
-    mock_rename,
-    mock_intra_copy,
     from_fixture_json,
 )
 
@@ -45,27 +22,35 @@ from tests.streams.fixtures import (
 from tests.providers.osfstorage.utils import MockOsfstorageServer
 from aquavalet.providers.osfstorage.provider import OSFStorageProvider
 
-def mock_server(func):
+import asyncio
+import functools
+
+def mocked_server(func):
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
     async def wrapper(*args, **kwargs):
         self = args[0]
         args = list(args)
-        async with self.mock_server2() as server:
+        with self.mock_server() as server:
             provider = self.provider({})
             provider.internal_provider = 'osfstorage'
             provider.resource = 'guid0'
+
             args.append(server)
             args.append(provider)
             return await func(*args, **kwargs)
+
     return wrapper
 
 
 class TestOsfStorageProvider(BaseProviderTestSuite):
 
     provider = OSFStorageProvider
-    mock_server2 = MockOsfstorageServer
+    mock_server = MockOsfstorageServer
 
     @pytest.mark.asyncio
-    async def test_validate_item_no_internal_provider(self, provider, mock_file_metadata):
+    async def test_validate_item_no_internal_provider(self, provider):
 
         with pytest.raises(InvalidPathError) as exc:
             await provider.validate_item('/badpath')
@@ -88,8 +73,8 @@ class TestOsfStorageProvider(BaseProviderTestSuite):
         assert exc.value.message == 'match could not be found'
 
     @pytest.mark.asyncio
-    async def test_validate_item_404(self, provider, mock_file_missing):
-
+    async def test_validate_item_404(self, provider):
+        self.m
         with pytest.raises(NotFoundError) as exc:
             await provider.validate_item('/osfstorage/guid0/not-root')
 
@@ -108,10 +93,11 @@ class TestOsfStorageProvider(BaseProviderTestSuite):
         assert item.kind == 'folder'
         assert item.mimetype is None
 
-    @mock_server
+    @mocked_server
     @pytest.mark.asyncio
     async def test_validate_item(self, server, provider):
-        server.mock_metadata(file_metadata_json())
+        file_metadata = server.get_file_json()
+        server.mock_metadata(file_metadata)
         item = await provider.validate_item('/osfstorage/guid0/5b6ee0c390a7e0001986aff5/')
 
         assert isinstance(item, OsfMetadata)
@@ -122,12 +108,11 @@ class TestOsfStorageProvider(BaseProviderTestSuite):
         assert item.kind == 'file'
         assert item.mimetype == 'text/plain'
 
+    @mocked_server
     @pytest.mark.asyncio
-    async def test_metadata(self, provider, file_metadata_json):
-        async with self.MockServer() as server:
-            server.mock_metadata(file_metadata_json)
-            item = await provider.validate_item('/osfstorage/guid0/5b6ee0c390a7e0001986aff5/')
-            item = await provider.metadata(item)
+    async def test_metadata(self, server, provider):
+        file_item = server.get_file_item()
+        item = await provider.metadata(file_item)
 
         assert isinstance(item, OsfMetadata)
 
@@ -137,13 +122,15 @@ class TestOsfStorageProvider(BaseProviderTestSuite):
         assert item.kind == 'file'
         assert item.mimetype == 'text/plain'
 
+    @mocked_server
     @pytest.mark.asyncio
-    async def test_versions(self, provider, file_metadata_json):
-        async with MockOsfstorageServer() as server:
-            server.mock_metadata(file_metadata_json)
-            server.mock_versions(file_metadata_json, from_fixture_json('versions_metadata'))
-            item = await provider.validate_item(f'/osfstorage/guid0/{file_metadata_json["data"]["id"]}')
-            versions = await provider.versions(item)
+    async def test_versions(self, server, provider):
+        file_json = server.get_file_json()
+        file_item = server.get_file_item()
+
+        server.mock_versions(file_json, from_fixture_json('versions_metadata'))
+
+        versions = await provider.versions(file_item)
 
         assert isinstance(versions, list)
         assert len(versions) == 2
@@ -155,100 +142,126 @@ class TestOsfStorageProvider(BaseProviderTestSuite):
         assert item.kind == 'file'
         assert item.mimetype == 'text/plain'
 
+    @mocked_server
     @pytest.mark.asyncio
-    async def test_download(self, provider, file_metadata_json, file_metadata_object):
-        async with MockOsfstorageServer() as server:
-            server.mock_download(file_metadata_json, b'test stream!')
+    async def test_download(self, server, provider):
+        file_json = server.get_file_json()
+        item = server.get_file_item()
 
-            async with aiohttp.ClientSession() as session:
-                stream = await provider.download(file_metadata_object, session)
+        server.mock_download(file_json, 'test stream!')
+
+        async with aiohttp.ClientSession() as session:
+            stream = await provider.download(item, session)
 
         assert isinstance(stream, ResponseStreamReader)
         assert stream.size == 12
-        assert stream.name == None
+        assert stream.name is None
         assert stream.content_type == 'application/octet-stream'
         assert await stream.read() == b'test stream!'
 
+    @mocked_server
     @pytest.mark.asyncio
-    async def test_download_range(self, provider, file_metadata_object, file_metadata_json):
-        async with MockOsfstorageServer() as server:
-            server.mock_download(file_metadata_json, b'test stream!')
+    async def test_download_range(self, server, provider):
+        file_json = server.get_file_json()
+        item = server.get_file_item()
+        server.mock_download(file_json, b'test stream!')
 
-            async with aiohttp.ClientSession() as session:
-                stream = await provider.download(file_metadata_object, session, range=(0,3))
+        async with aiohttp.ClientSession() as session:
+            stream = await provider.download(item, session, range=(0,3))
 
         assert isinstance(stream, ResponseStreamReader)
         assert stream.size == 12
-        assert stream.name == None
+        assert stream.name is None
         assert stream.content_type == 'application/octet-stream'
         assert await stream.read() == b'test stream!'  # this should really be truncated, but it's done by osf which is mocked.
 
+    @mocked_server
     @pytest.mark.asyncio
-    async def test_download_version(self, provider, file_metadata_object, file_metadata_json):
-        async with MockOsfstorageServer() as server:
-            server.mock_download_version(file_metadata_json, b'test stream!')
+    async def test_download_version(self, server, provider):
+        file_json = server.get_file_json()
+        item = server.get_file_item()
+        server.mock_download_version(file_json, b'test stream!')
 
-            async with aiohttp.ClientSession() as session:
-                stream = await provider.download(file_metadata_object, session, version=2)
+        async with aiohttp.ClientSession() as session:
+            stream = await provider.download(item, session, version=2)
 
         assert isinstance(stream, ResponseStreamReader)
         assert stream.size == 12
-        assert stream.name == None
+        assert stream.name is None
         assert stream.content_type == 'application/octet-stream'
         assert await stream.read() == b'test stream!'
 
+    @mocked_server
     @pytest.mark.asyncio
-    async def test_upload(self, provider, file_metadata_object, file_metadata_json):
-        async with MockOsfstorageServer() as server:
-            server.mock_upload(file_metadata_json)
-            item = await provider.upload(item=file_metadata_object, stream=RequestStreamFactory(), new_name='test.txt')
+    async def test_upload(self, server, provider):
+        file_json = server.get_file_json()
+        file_item = server.get_file_item()
+        stream = RequestStreamFactory()
+
+        server.mock_upload(file_json)
+        item = await provider.upload(item=file_item, stream=stream, new_name='test.txt')
 
         assert isinstance(item, OsfMetadata)
         assert item.name == 'test.txt'
         assert item.mimetype == 'text/plain'
 
+    @mocked_server
     @pytest.mark.asyncio
-    async def test_delete(self, provider, file_metadata_object, file_metadata_json):
-        async with MockOsfstorageServer() as server:
-            server.mock_delete(file_metadata_json)
-            item = await provider.delete(file_metadata_object)
+    async def test_delete(self, server, provider):
+        file_json = server.get_file_json()
+        file_item = server.get_file_item()
+        server.mock_delete(file_json)
+        item = await provider.delete(file_item)
 
         assert item is None
 
+    @mocked_server
     @pytest.mark.asyncio
-    async def test_create_folder(self, provider, folder_metadata_object, folder_metadata_json):
-        async with MockOsfstorageServer() as server:
-            server.mock_create_folder(folder_metadata_json)
-            item = await provider.create_folder(folder_metadata_object, 'new_test_folder')
+    async def test_create_folder(self, server, provider):
+        folder_json = server.get_folder_json()
+        folder_item = server.get_folder_item()
+
+        server.mock_create_folder(folder_json)
+        item = await provider.create_folder(folder_item, 'new_test_folder')
 
         assert isinstance(item, OsfMetadata)
         assert item.name == 'test_folder'  #  technically wrong mocking
         assert item.mimetype is None
 
+    @mocked_server
     @pytest.mark.asyncio
-    async def test_intra_copy(self, provider, file_metadata_object, mock_intra_copy):
+    async def test_intra_copy(self, server, provider):
+        file_item = server.get_file_item()
 
-        item = await provider.intra_copy(file_metadata_object, file_metadata_object, provider)
+        item = await provider.intra_copy(file_item, file_item, provider)
 
         assert item is None
 
+    @mocked_server
     @pytest.mark.asyncio
-    async def test_rename(self, provider, file_metadata_object, file_metadata_json):
-        async with MockOsfstorageServer() as server:
-            server.mock_rename(file_metadata_json)
-            item = await provider.rename(file_metadata_object, 'new_name')
+    async def test_rename(self, server, provider):
+        file_json = server.get_file_json()
+        file_item = server.get_file_item()
+
+        server.mock_rename(file_json)
+        item = await provider.rename(file_item, 'new_name')
 
         assert isinstance(item, OsfMetadata)
-        assert item.path == '/5b6ee0c390a7e0001986aff5'
+        assert item.path == '/5b8d55ae6a59a50017708986'
         assert item.kind == 'file'
         assert item.name == 'test.txt'  # this should really be 'new_name, but it's done by osf which is mocked.
 
+    @mocked_server
     @pytest.mark.asyncio
-    async def test_children(self, provider, folder_metadata_object, file_metadata_json):
-        async with MockOsfstorageServer() as server:
-            server.mock_children(folder_metadata_json, children_metadata=False)
+    async def test_children(self, server, provider):
+        folder_json = server.get_folder_json()
+        children_json = server.get_children_json()
+        folder_item = server.get_folder_item()
 
-            item = await provider.children(folder_metadata_object)
+        server.mock_metadata(folder_json)
+        server.mock_children(folder_json, children_metadata=children_json)
+
+        item = await provider.children(folder_item)
 
         assert isinstance(item, list)
         assert len(item) == 2
@@ -259,7 +272,7 @@ class TestOsfStorageProvider(BaseProviderTestSuite):
         assert item[1].name == 'test.txt'
         assert item[1].kind == 'file'
 
+    @mocked_server
     @pytest.mark.asyncio
-    async def test_download_zip(self, provider, folder_metadata_object):
-
-        item = await provider.children(folder_metadata_object)
+    async def test_download_zip(self, server, provider):
+        pass

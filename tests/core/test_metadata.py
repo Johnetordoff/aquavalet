@@ -1,10 +1,7 @@
 import pytest
 import hashlib
 
-from tests import utils
-
-
-class FileMetadata:
+class FileMetadataTests:
 
     def test_file(self, provider, file):
 
@@ -43,8 +40,8 @@ class FileMetadata:
         assert root.unix_path == '/'
 
     def test_version(self, provider, versions):
-
-        for ind, file in enumerate(versions):
+        versions = reversed(versions)  # just to enumerate better
+        for ind, file in enumerate(versions, start=1):
             assert file.provider == provider.name
             assert isinstance(file, provider.Item)
 
@@ -55,4 +52,4 @@ class FileMetadata:
             assert file.name == 'test.txt'
             assert file.mimetype == 'text/plain'
             assert file.unix_path == '/test.txt'
-            assert file.version_id == str(len(versions) - ind)
+            assert file.version_id == str(ind)

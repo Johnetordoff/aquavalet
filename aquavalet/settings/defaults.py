@@ -1,8 +1,8 @@
 import logging.config
 
 ADDRESS = '0.0.0.0'
-PORT = 7777
-DOMAIN = "http://localhost:7777"
+PORT = 8000
+DOMAIN = "http://localhost:{}".format(PORT)
 
 DEBUG = True
 

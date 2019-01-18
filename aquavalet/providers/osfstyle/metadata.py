@@ -8,8 +8,8 @@ from aquavalet import metadata
 class BaseOsfStyleItemMetadata(metadata.BaseMetadata):
 
     def __init__(self, raw, internal_provider, resource):
-        super().__init__(raw)
-
+        super().__init__(raw['attributes'])
+        self.raw = raw
         self.internal_provider = internal_provider
         self.resource = resource
 
@@ -18,23 +18,29 @@ class BaseOsfStyleItemMetadata(metadata.BaseMetadata):
 
     @classmethod
     def root(cls, internal_provider, resource):
-        raw = {
-            'name': f'{internal_provider} root',
-            'kind': 'folder',
-            'modified': '',
-            'etag': '',
-            'path': '/',
+        data = {
+            'attributes': {
+                'name': f'{internal_provider} root',
+                'kind': 'folder',
+                'modified': '',
+                'etag': '',
+                'path': '/',
+            }
         }
-        return cls(raw, internal_provider, resource)
+        return cls(data, internal_provider, resource)
 
     @classmethod
     def versions(cls, item, version_data):
-        raw = item.raw
+        raw = item.raw.copy()
         versions = []
-        for metadata in version_data:
-            raw.update(metadata['attributes'])
+        import pprint
+
+        for ind, metadata in enumerate(version_data):
             data = raw.copy()
-            version = cls(data, item.internal_provider, item.resource)
+            data['attributes'].update(metadata['attributes'])
+            pprint.pprint(data)
+            version = cls(data.copy(), item.internal_provider, item.resource)
+            assert data['attributes']['version'] == str(2 - ind)
             versions.append(version)
 
         return versions
@@ -43,19 +49,18 @@ class BaseOsfStyleItemMetadata(metadata.BaseMetadata):
     def list(cls, item, data):
         items = []
         for metadata in data:
-            print(metadata['attributes'])
-            item = cls(metadata['attributes'], item.internal_provider, item.resource)
+            item = cls(metadata, item.internal_provider, item.resource)
             items.append(item)
 
         return items
 
     @property
     def name(self):
-        return self.raw['name']
+        return self.attributes['name']
 
     @property
     def kind(self):
-        return self.raw['kind']
+        return self.attributes['kind']
 
     @property
     def parent(self):
@@ -65,19 +70,19 @@ class BaseOsfStyleItemMetadata(metadata.BaseMetadata):
     @property
     def size(self):
         if self.is_file:
-            return self.raw['size']
+            return self.attributes['size']
 
     @property
     def is_file(self):
-        return self.raw['kind'] == 'file'
+        return self.attributes['kind'] == 'file'
 
     @property
     def is_folder(self):
-        return self.raw['kind'] == 'folder'
+        return self.attributes['kind'] == 'folder'
 
     @property
     def is_root(self):
-        return self.raw['path'] == '/'
+        return self.attributes['path'] == '/'
 
     @property
     def modified(self):
@@ -86,44 +91,44 @@ class BaseOsfStyleItemMetadata(metadata.BaseMetadata):
 
     @property
     def guid(self):
-        return self.raw.get('guid')
+        return self.attributes.get('guid')
 
     @property
     def version_id(self):
-        return self.raw.get('version') or self.raw.get('current_version')
+        return self.attributes.get('version') or self.attributes.get('current_version')
 
     @property
     def created(self):
         # TODO: standardize datetime
-        return self.raw.get('date_created') or self.raw.get('created_utc')
+        return self.attributes.get('date_created') or self.attributes.get('created_utc')
 
     @property
     def unix_path(self):
         if self.is_root:
             return '/'
-        return self.raw.get('materialized') or self.raw.get('materialized_path')
+        return self.attributes.get('materialized') or self.attributes.get('materialized_path')
 
     @property
     def etag(self):
-        return self.raw.get('etag')
+        return self.attributes.get('etag')
 
     @property
     def id(self):
-        return self.raw['path']
+        return self.attributes['path']
 
     @property
     def path(self):
-        return self.raw['path']
+        return self.attributes['path']
 
     @property
     def md5(self):
-        extra = self.raw.get('extra')
+        extra = self.attributes.get('extra')
         if extra:
             return extra['hashes']['md5']
 
     @property
     def sha256(self):
-        extra = self.raw.get('extra')
+        extra = self.attributes.get('extra')
         if extra:
             return extra['hashes']['sha256']
 

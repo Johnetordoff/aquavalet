@@ -1,8 +1,6 @@
 aiohttp==3.4.4
 invoke==0.22.1
-tornado==5.0.2
 aiofiles==0.3.2
--e git+git://github.com/reinhrst/pytest-tornado
 coverage
 pytest-coverage
 aiohttp-devtools

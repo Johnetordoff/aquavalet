@@ -11,8 +11,6 @@ RUN pip install --no-cache-dir -r /code/requirements.txt
 # Copy the rest of the code over
 COPY ./ /code/
 
-RUN python setup.py develop
-
-EXPOSE 7777
+EXPOSE 8000
 
 CMD ["invoke", "server"]

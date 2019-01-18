@@ -130,7 +130,6 @@ class ZipLocalFile(MultiStream):
             filename=filename,
             date_time=time.localtime(time.time())[:6],
         )
-        print(self.zinfo.filename)
         # If the file is a `.zip`, set permission and turn off compression
         if self.zinfo.filename.endswith('.zip'):
             self.zinfo.external_attr = 0o600 << 16      # -rw-------

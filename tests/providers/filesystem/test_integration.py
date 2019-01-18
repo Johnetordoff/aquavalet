@@ -1,5 +1,4 @@
 import pytest
-import tornado
 import json
 import urllib.parse
 from aquavalet.app import make_app
@@ -71,7 +70,6 @@ class TestUpload:
     @pytest.mark.gen_test
     async def test_upload_rename(self, http_server_client, fs):
         fs.create_file('test.txt')
-        print(fs.listdir('/'))
         url = urllib.parse.quote('/filesystem/') + '?destination_provider=filesystem&new_name=test.txt&conflict=rename'
         response = await http_server_client.fetch(url, method='UPLOAD', allow_nonstandard_methods=True)
         assert response.code == 201

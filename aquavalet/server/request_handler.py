@@ -5,7 +5,6 @@ import os
 import socket
 
 import aiohttp
-import tornado.gen
 
 from aquavalet import settings, utils, exceptions
 from aquavalet.streams.http import RequestStreamReader
@@ -14,13 +13,12 @@ from aquavalet.server import base
 logger = logging.getLogger(__name__)
 
 
-@tornado.web.stream_request_body
 class ProviderHandler(base.BaseHandler):
 
     bytes_downloaded = 0
     bytes_uploaded = 0
 
-    SUPPORTED_METHODS = base.BaseHandler.SUPPORTED_METHODS + ('METADATA',
+    SUPPORTED_METHODS = ('METADATA',
                                                               'CHILDREN',
                                                               'UPLOAD',
                                                               'CREATE_FOLDER',
@@ -203,7 +201,7 @@ class ProviderHandler(base.BaseHandler):
         #    return
 
         if range:
-            range = tornado.httputil._parse_request_range(range)
+            range =  tornado.httputil._parse_request_range(range)
 
         async with aiohttp.ClientSession() as session:
             stream = await self.provider.download(
@@ -244,7 +242,6 @@ class ProviderHandler(base.BaseHandler):
         zipfile_name = self.provider.item.name or '{}-archive'.format(self.provider.name)
         self.set_header('Content-Type', 'application/zip')
         self.set_header('Content-Disposition', 'attachment;filename="{}.zip"'.format(zipfile_name))
-        print(zipfile_name)
         async with aiohttp.ClientSession() as session:
 
             stream = await self.provider.zip(self.provider.item, session)

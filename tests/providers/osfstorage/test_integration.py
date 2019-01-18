@@ -6,29 +6,36 @@ import pytest
 
 from .utils import (
     MockOsfstorageServer,
-    make_path
-) 
+)
 
 from .fixtures import (
     app,
     from_fixture_json,
     get_file_metadata_json,
-    get_folder_metadata_json,
     children_metadata,
     FileMetadataRespFactory,
 )
 
+build_path = lambda file_metadata: URL.build(path='/osfstorage/osfstorage/guid0/{}'.format(file_metadata["data"]["id"])).human_repr()
+
+from tests.core.test_provider import BaseProviderTestSuite
+
+from yarl import URL
+
+from aioresponses import aioresponses
 
 
-class TestMetadata:
+class TestOsfStorageProvider(BaseProviderTestSuite):
 
+    @aioresponses()
     @pytest.mark.gen_test
-    async def test_metadata(self, http_server_client):
-        file_metadata = get_file_metadata_json()
-        path = make_path('osfstorage', 'osfstorage', 'guid0', file_metadata["data"]["id"])
-        async with MockOsfstorageServer() as server:
-            server.mock_metadata(file_metadata)
-            response = await http_server_client.fetch(path, method='METADATA', allow_nonstandard_methods=True)
+    async def test_metadata(self, http_server_client, m):
+        raise Exception(http_server_client)
+        file_metadata = {}
+        url = build_path(file_metadata)
+        with aioresponses() as m:
+            m.put(url, payload=file_metadata)
+        response = await http_server_client.fetch(url, method='METADATA', allow_nonstandard_methods=True)
 
         assert response.code == 200
         resp = json.loads(response.body)
@@ -36,26 +43,37 @@ class TestMetadata:
         assert resp['data']['attributes']['name'] == 'test.txt'
         assert resp['data']['attributes']['kind'] == 'file'
 
+    @pytest.mark.gen_test
+    async def test_validate_item(self, http_server_client):
+        with MockOsfstorageServer() as server:
+            file_metadata = server.get_file_json()
+            url = build_path(file_metadata)
+            server.mock_metadata(file_metadata)
+            response = await http_server_client.fetch(url, method='METADATA', allow_nonstandard_methods=True)
 
-class TestChildren:
+        assert response.code == 200
+        resp = json.loads(response.body)
+        assert resp['data']['id'] == '/5b6ee0c390a7e0001986aff5'
+        assert resp['data']['attributes']['name'] == 'test.txt'
+        assert resp['data']['attributes']['kind'] == 'file'
 
     @pytest.mark.gen_test
     async def test_children(self, http_server_client):
-        folder_metadata = get_folder_metadata_json()
-        path = make_path('osfstorage', 'osfstorage', 'guid0', folder_metadata["data"]["id"])
 
-        async with MockOsfstorageServer() as server:
+        with MockOsfstorageServer() as server:
+            file_metadata = server.get_file_item()
+            folder_metadata = server.get_folder_item()
+            url = build_path(file_metadata)
+
+            url = build_path(file_metadata)
             server.mock_metadata(folder_metadata)
             server.mock_children(folder_metadata, children_metadata=children_metadata())
-            response = await http_server_client.fetch(path, method='CHILDREN', allow_nonstandard_methods=True)
+            response = await http_server_client.fetch(url, method='CHILDREN', allow_nonstandard_methods=True)
 
         assert response.code == 200
         resp = json.loads(response.body)
         assert resp['data'][0]['attributes']['name'] == 'test_folder'
         assert resp['data'][1]['attributes']['name'] == 'test.txt'
-
-
-class TestDelete:
 
     @pytest.mark.gen_test
     async def test_delete(self, http_server_client):
@@ -71,8 +89,6 @@ class TestDelete:
         assert response.code == 204
         assert response.body == b''
 
-
-class TestDownload:
     @pytest.mark.gen_test
     async def test_download(self, http_server_client):
         file_metadata = get_file_metadata_json()
@@ -86,7 +102,6 @@ class TestDownload:
 
         assert response.code == 200
         assert response.body == b'test stream!'
-
 
     @pytest.mark.gen_test
     async def test_download_range(self, http_server_client):
@@ -116,11 +131,9 @@ class TestDownload:
         assert response.code == 200
         assert response.body == b'test stream'
 
-
     @pytest.mark.gen_test
     async def test_download_direct(self, http_server_client):
         raise NotImplementedError()
-
 
     @pytest.mark.gen_test
     async def test_download_zip(self, http_server_client):
@@ -146,8 +159,6 @@ class TestDownload:
         zipped1 = zip.open('/test.txt')
         assert zipped1.read() == b'test zip stream'
 
-class TestIntraCopy:
-
     @pytest.mark.gen_test
     async def test_intra_copy(self, http_server_client):
         file_metadata = get_file_metadata_json()
@@ -163,8 +174,6 @@ class TestIntraCopy:
         assert response.code == 200
 
 
-class TestVersions:
-
     @pytest.mark.gen_test
     async def test_versions(self, http_server_client):
         file_metadata = get_file_metadata_json()
@@ -179,9 +188,6 @@ class TestVersions:
         resp = json.loads(response.body)
         assert resp['data'][0]['attributes']['version_id'] == '2'
         assert resp['data'][1]['attributes']['version_id'] == '1'
-
-
-class TestUpload:
 
     @pytest.mark.gen_test
     async def test_upload(self, http_server_client):
@@ -232,9 +238,6 @@ class TestUpload:
     async def test_upload_replace(self, http_server_client):
         raise NotImplementedError()
 
-
-class TestRename:
-
     @pytest.mark.gen_test
     async def test_rename(self, http_server_client):
         file_metadata = get_file_metadata_json()
@@ -248,9 +251,6 @@ class TestRename:
 
         assert response.code == 200
         assert response.body == b''
-
-
-class TestCreateFolder:
 
     @pytest.mark.gen_test
     async def test_create_folder(self, http_server_client):

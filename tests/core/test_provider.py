@@ -40,53 +40,51 @@ from tests.providers.osfstorage.utils import MockOsfstorageServer
 
 class BaseProviderTestSuite(metaclass=abc.ABCMeta):
 
-    MockServer = MockOsfstorageServer
-
     @classmethod
     @abc.abstractmethod
-    async def test_validate_item(self):
+    async def test_validate_item(self, server, provider):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    async def test_download(self):
+    async def test_download(self, server, provider):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    async def test_download_version(self):
+    async def test_download_version(self, server, provider):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    async def test_download_range(self):
+    async def test_download_range(self, server, provider):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    async def test_download_zip(self):
+    async def test_download_zip(self, server, provider):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    async def test_upload(self):
+    async def test_upload(self, server, provider):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    async def test_delete(self):
+    async def test_delete(self, server, provider):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    async def test_metadata(self):
+    async def test_metadata(self, server, provider):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    async def test_create_folder(self):
+    async def test_create_folder(self, server, provider):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    async def test_rename(self):
+    async def test_rename(self, server, provider):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    async def test_children(self):
+    async def test_children(self, server, provider):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    async def test_versions(self):
+    async def test_versions(self, server, provider):
         raise NotImplementedError()

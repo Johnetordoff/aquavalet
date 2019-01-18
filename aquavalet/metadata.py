@@ -8,9 +8,8 @@ from aquavalet import settings
 
 
 class BaseMetadata(metaclass=abc.ABCMeta):
-    def __init__(self, raw: dict) -> None:
-
-        self.raw = raw
+    def __init__(self, attributes: dict) -> None:
+        self.attributes = attributes.copy()
         self.default_segments = [self.provider]
 
     def serialized(self) -> dict:
@@ -38,7 +37,7 @@ class BaseMetadata(metaclass=abc.ABCMeta):
 
     def _json_api_links(self) -> dict:
         actions = {}
-        path_segments = [quote(seg) for seg in self.raw['path'].split('/') if seg]
+        path_segments = [quote(seg) for seg in self.attributes['path'].split('/') if seg]
 
         actions['info'] = self.construct_path(path_segments, 'meta')
         actions['delete'] = self.construct_path(path_segments, 'delete')

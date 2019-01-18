@@ -53,7 +53,6 @@ class FileSystemProvider(provider.BaseProvider):
         return streams.file.FileStreamReader(file_pointer)
 
     async def upload(self, item, stream=None, new_name=None, conflict='warn'):
-        print(os.filesystem)
         if os.path.isfile(item.path + new_name):
             return await self.handle_conflict(item=item, conflict=conflict, new_name=new_name, stream=stream)
 

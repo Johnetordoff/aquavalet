@@ -1,6 +1,3 @@
-import tornado.web
-import tornado.gen
-import tornado.iostream
 
 from aquavalet import settings, exceptions
 
@@ -20,7 +17,7 @@ CORS_EXPOSE_HEADERS = [
     'Content-Encoding',
 ]
 
-class BaseHandler(tornado.web.RequestHandler):
+class BaseHandler(object):
 
     @classmethod
     def as_entry(cls):
@@ -42,8 +39,35 @@ class BaseHandler(tornado.web.RequestHandler):
             return True
         return False
 
+
+def _int_or_none(val):
+    val = val.strip()
+    if val == "":
+        return None
+    return int(val)
+
+def _parse_request_range(range_header):
+    unit, _, value = range_header.partition("=")
+    unit, value = unit.strip(), value.strip()
+    if unit != "bytes":
+        return None
+    start_b, _, end_b = value.partition("-")
+    try:
+        start = _int_or_none(start_b)
+        end = _int_or_none(end_b)
+    except ValueError:
+        return None
+    if end is not None:
+        if start is None:
+            if end != 0:
+                start = -end
+                end = None
+        else:
+            end += 1
+    return (start, end)
+
 def parse_request_range(range_header):
-    request_range = tornado.httputil._parse_request_range(range_header)
+    request_range = _parse_request_range(range_header)
 
     if request_range is None:
         return request_range

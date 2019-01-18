@@ -6,7 +6,7 @@ from aquavalet.streams.http import RequestStreamReader, ResponseStreamReader
 from aquavalet.streams.file import FileStreamReader
 from aquavalet.streams.zip import ZipStreamReader, ZipStreamGeneratorReader
 
-from tornado.httputil import HTTPServerRequest
+from aiohttp.web_request import Request
 
 from aiohttp.client_reqrep import ClientResponse
 
@@ -17,7 +17,7 @@ class RequestStreamFactory:
         reader.feed_eof()
 
         headers = {'Content-Length': len(stream_data)}
-        request = HTTPServerRequest(uri='http://fake.com', headers=headers, body=stream_data)
+        request = Request(uri='http://fake.com', headers=headers, body=stream_data)
         return RequestStreamReader(request, reader)
 
 

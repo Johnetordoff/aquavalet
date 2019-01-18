@@ -36,7 +36,7 @@ class OsfProvider(provider.BaseProvider):
                     else:
                         raise await self.handle_response(resp, path=path)
 
-        return self.Item(data['attributes'], self.internal_provider, self.resource)
+        return self.Item(data, self.internal_provider, self.resource)
 
     async def download(self, item, session, version=None, range=None):
         download_header = self.default_headers
@@ -68,7 +68,7 @@ class OsfProvider(provider.BaseProvider):
                 else:
                     return await self.handle_response(resp=resp, item=item, new_name=new_name, stream=stream, conflict=conflict)
 
-            return self.Item(data['attributes'], self.internal_provider, self.resource)
+            return self.Item(data, self.internal_provider, self.resource)
 
     async def handle_conflict_new_version(self, resp, item, path, stream, new_name, conflict):
         children = await self.children(item)
@@ -88,7 +88,7 @@ class OsfProvider(provider.BaseProvider):
                 else:
                     return await self.handle_response(resp=resp, item=item, new_name=new_name, stream=stream, conflict=conflict)
 
-            return self.Item(data['attributes'], self.internal_provider, self.resource)
+            return self.Item(data, self.internal_provider, self.resource)
 
     async def delete(self, item, confirm_delete=0):
         async with aiohttp.ClientSession() as session:
@@ -118,7 +118,7 @@ class OsfProvider(provider.BaseProvider):
                 else:
                     raise await self.handle_response(resp, item, new_name=new_name)
 
-                return self.Item(data['attributes'], self.internal_provider, self.resource)
+                return self.Item(data, self.internal_provider, self.resource)
 
     async def rename(self, item, new_name):
         async with aiohttp.ClientSession() as session:
@@ -132,7 +132,7 @@ class OsfProvider(provider.BaseProvider):
                 else:
                     raise await self.handle_response(resp, item)
 
-                return self.Item(data['attributes'], self.internal_provider, self.resource)
+                return self.Item(data, self.internal_provider, self.resource)
 
     async def children(self, item):
         async with aiohttp.ClientSession() as session:

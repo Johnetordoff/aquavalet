@@ -5,9 +5,11 @@ from invoke import task
 @task
 def install(ctx, develop=True, pty=True):
     ctx.run('python setup.py develop')
+    ctx.run('python setup.py develop')
     req_file = 'dev-requirements.txt' if develop else 'requirements.txt'
     cmd = 'pip install --upgrade -r {}'.format(req_file)
-
+    ctx.run(cmd, pty=pty)
+    cmd = 'pip install -r {}'.format('requirements.txt')
     ctx.run(cmd, pty=pty)
 
 
@@ -39,7 +41,4 @@ def rabbitmq(ctx):
 
 @task
 def server(ctx):
-    ctx.run('adev aquavalet/app.py::serve')
-
-    #from aquavalet.app import serve
-    #serve()
+    ctx.run('adev runserver aquavalet')

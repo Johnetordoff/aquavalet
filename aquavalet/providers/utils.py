@@ -8,7 +8,7 @@ def require_group(match, group_name, message=''):
     if group:
         return group
     else:
-        raise exceptions.InvalidPathError(message)
+        raise exceptions.InvalidPathError(message=message)
 
 
 def require_match(pattern, string, message=''):
@@ -16,5 +16,5 @@ def require_match(pattern, string, message=''):
     if match:
         return match
     else:
-        raise exceptions.InvalidPathError(message)
+        raise exceptions.InvalidPathError(message=message)
 

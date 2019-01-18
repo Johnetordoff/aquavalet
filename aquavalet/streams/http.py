@@ -8,10 +8,6 @@ class ResponseStreamReader(BaseStream):
 
     def __init__(self, response, size=None, name=None):
         super().__init__()
-        if 'Content-Length' in response.headers:
-            self._size = int(response.headers['Content-Length'])
-        else:
-            self._size = size
         self._name = name
         self.response = response
 
@@ -33,11 +29,10 @@ class ResponseStreamReader(BaseStream):
 
     @property
     def size(self):
-        return self._size
+        return self.response.content._size
 
     async def _read(self, size):
         chunk = await self.response.content.read(size)
-
         if not chunk:
             self.feed_eof()
             await self.response.release()
