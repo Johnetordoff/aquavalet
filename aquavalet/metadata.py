@@ -16,62 +16,75 @@ class BaseMetadata(metaclass=abc.ABCMeta):
 
         _, ext = os.path.splitext(self.name)
         return {
-            'kind': self.kind,
-            'name': self.name,
-            'path': self.id,
-            'size': self.size,
-            'modified': self.modified,
-            'mimetype': mimetypes.types_map.get(ext),
-            'provider': self.provider,
-            'etag': hashlib.sha256('{}::{}'.format(self.provider, self.etag).encode('utf-8')).hexdigest(),
+            "kind": self.kind,
+            "name": self.name,
+            "path": self.id,
+            "size": self.size,
+            "modified": self.modified,
+            "mimetype": mimetypes.types_map.get(ext),
+            "provider": self.provider,
+            "etag": hashlib.sha256(
+                "{}::{}".format(self.provider, self.etag).encode("utf-8")
+            ).hexdigest(),
         }
 
     def json_api_serialized(self) -> dict:
         json_api = {
-            'id': self.id,
-            'type': 'files',
-            'attributes': self.serialized(),
-            'links': self._json_api_links(),
+            "id": self.id,
+            "type": "files",
+            "attributes": self.serialized(),
+            "links": self._json_api_links(),
         }
         return json_api
 
     def _json_api_links(self) -> dict:
         actions = {}
-        path_segments = [quote(seg) for seg in self.attributes['path'].split('/') if seg]
+        path_segments = [
+            quote(seg) for seg in self.attributes["path"].split("/") if seg
+        ]
 
-        actions['info'] = self.construct_path(path_segments, 'meta')
-        actions['delete'] = self.construct_path(path_segments, 'delete')
+        actions["info"] = self.construct_path(path_segments, "meta")
+        actions["delete"] = self.construct_path(path_segments, "delete")
 
-        if self.kind == 'folder':
-            actions['children'] = self.construct_path(path_segments, 'children')
-            actions['upload'] = self.construct_path(path_segments, 'upload')
-            actions['download_as_zip'] = self.construct_path(path_segments, 'download_as_zip')
+        if self.kind == "folder":
+            actions["children"] = self.construct_path(path_segments, "children")
+            actions["upload"] = self.construct_path(path_segments, "upload")
+            actions["download_as_zip"] = self.construct_path(
+                path_segments, "download_as_zip"
+            )
         else:
-            actions['download'] = self.construct_path(path_segments, 'download')
+            actions["download"] = self.construct_path(path_segments, "download")
 
         return actions
 
     def construct_path(self, path, action) -> str:
         segments = self.default_segments + path
-        trailing_slash = '/' if self.kind == 'folder' or not path else ''
-        return urlparse(settings.DOMAIN + '/' + '/'.join(segments) + trailing_slash + '?serve=' + action).geturl()
+        trailing_slash = "/" if self.kind == "folder" or not path else ""
+        return urlparse(
+            settings.DOMAIN
+            + "/"
+            + "/".join(segments)
+            + trailing_slash
+            + "?serve="
+            + action
+        ).geturl()
 
     @property
     @abc.abstractmethod
     def provider(self) -> str:
-        """ The provider from which this resource originated. """
+        """The provider from which this resource originated."""
         raise NotImplementedError
 
     @property
     @abc.abstractmethod
     def kind(self) -> str:
-        """ `file` or `folder` """
+        """`file` or `folder`"""
         raise NotImplementedError
 
     @property
     @abc.abstractmethod
     def name(self) -> str:
-        """ The user-facing name of the entity, excluding parent folder(s).
+        """The user-facing name of the entity, excluding parent folder(s).
         ::
 
             /bar/foo.txt -> foo.txt

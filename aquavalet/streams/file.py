@@ -2,16 +2,17 @@ import os
 from aquavalet.providers.filesystem.settings import CHUNK_SIZE
 from aquavalet.streams.base import BaseStream
 
+
 class FileStreamReader(BaseStream):
 
-    CHUNK_SIZE=CHUNK_SIZE
+    CHUNK_SIZE = CHUNK_SIZE
 
     def __init__(self, file_pointer, range=None):
         super().__init__()
         self.file_pointer = file_pointer
         self.read_size = None
         self.file_gen = None
-        self.content_type = 'application/octet-stream'
+        self.content_type = "application/octet-stream"
 
         if range:
             self.file_pointer.seek(range[0])

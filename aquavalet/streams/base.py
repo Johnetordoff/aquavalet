@@ -32,7 +32,7 @@ class BaseStream(asyncio.StreamReader, metaclass=abc.ABCMeta):
         for reader in self.readers.values():
             reader.feed_eof()
         for writer in self.writers.values():
-            if hasattr(writer, 'can_write_eof') and writer.can_write_eof():
+            if hasattr(writer, "can_write_eof") and writer.can_write_eof():
                 writer.write_eof()
 
     async def read(self, size=-1):
@@ -65,6 +65,7 @@ class MultiStream(asyncio.StreamReader):
     etc. Used to build streaming form data for Figshare uploads.
     Originally written by @jmcarp
     """
+
     def __init__(self, *streams):
         super().__init__()
         self._size = 0
@@ -90,9 +91,9 @@ class MultiStream(asyncio.StreamReader):
 
     async def read(self, n=-1):
         if n < 0:
-            return (await super().read(n))
+            return await super().read(n)
 
-        chunk = b''
+        chunk = b""
 
         while self.stream and (len(chunk) < n or n == -1):
             if n == -1:
@@ -117,9 +118,11 @@ class StringStream(BaseStream):
     def __init__(self, data):
         super().__init__()
         if isinstance(data, str):
-            data = data.encode('UTF-8')
+            data = data.encode("UTF-8")
         elif not isinstance(data, bytes):
-            raise TypeError('Data must be either str or bytes, found {!r}'.format(type(data)))
+            raise TypeError(
+                "Data must be either str or bytes, found {!r}".format(type(data))
+            )
 
         self._size = len(data)
         self.feed_data(data)
@@ -130,13 +133,14 @@ class StringStream(BaseStream):
         return self._size
 
     async def _read(self, n=-1):
-        return (await asyncio.StreamReader.read(self, n))
+        return await asyncio.StreamReader.read(self, n)
 
 
 class EmptyStream(BaseStream):
     """An empty stream with size 0 that returns nothing when read. Useful for representing
     empty folders when building zipfiles.
     """
+
     def __init__(self):
         super().__init__()
         self._eof = False

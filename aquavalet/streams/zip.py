@@ -9,7 +9,7 @@ from aquavalet.streams.base import BaseStream, MultiStream, StringStream, EmptyS
 from aquavalet.utils import lreplace
 
 # for some reason python3.5 has this as (1 << 31) - 1, which is 0x7fffffff
-ZIP64_LIMIT = 0xffffffff - 1
+ZIP64_LIMIT = 0xFFFFFFFF - 1
 
 
 # Basic structure of .zip:
@@ -43,6 +43,7 @@ class ZipLocalFileDataDescriptor(BaseStream):
 
     Note: This class is tightly coupled to ZipStreamReader and should not be used separately.
     """
+
     def __init__(self, file):
         super().__init__()
         self.file = file
@@ -55,7 +56,9 @@ class ZipLocalFileDataDescriptor(BaseStream):
         """Create 16 or 24 byte descriptor of file CRC, file size, and compress size"""
         self._eof = True
 
-        if (self.file.original_size > ZIP64_LIMIT) or (self.file.compressed_size > ZIP64_LIMIT):
+        if (self.file.original_size > ZIP64_LIMIT) or (
+            self.file.compressed_size > ZIP64_LIMIT
+        ):
             self.file.need_zip64_data_descriptor = True
         return self.file.descriptor
 
@@ -68,6 +71,7 @@ class ZipLocalFileData(BaseStream):
 
     Note: This class is tightly coupled to ZipStreamReader and should not be used separately.
     """
+
     def __init__(self, file, stream, *args, **kwargs):
         self.file = file
         self.stream = stream
@@ -123,6 +127,7 @@ class ZipLocalFile(MultiStream):
     Note: This class is tightly coupled to ZipStreamReader and should not be
     used separately.
     """
+
     def __init__(self, file_tuple):
         filename, stream = file_tuple
         # Build a ZipInfo instance to use for the file's header and footer
@@ -131,19 +136,19 @@ class ZipLocalFile(MultiStream):
             date_time=time.localtime(time.time())[:6],
         )
         # If the file is a `.zip`, set permission and turn off compression
-        if self.zinfo.filename.endswith('.zip'):
-            self.zinfo.external_attr = 0o600 << 16      # -rw-------
+        if self.zinfo.filename.endswith(".zip"):
+            self.zinfo.external_attr = 0o600 << 16  # -rw-------
             self.zinfo.compress_type = zipfile.ZIP_STORED
             self.compressor = None
         # If the file is a directory, set the directory flag and turn off compression
-        elif self.zinfo.filename[-1] == '/':
-            self.zinfo.external_attr = 0o40775 << 16    # drwxrwxr-x
-            self.zinfo.external_attr |= 0x10            # Directory flag
+        elif self.zinfo.filename[-1] == "/":
+            self.zinfo.external_attr = 0o40775 << 16  # drwxrwxr-x
+            self.zinfo.external_attr |= 0x10  # Directory flag
             self.zinfo.compress_type = zipfile.ZIP_STORED
             self.compressor = None
         # For other types, set permission and define a compressor
         else:
-            self.zinfo.external_attr = 0o600 << 16      # -rw-------
+            self.zinfo.external_attr = 0o600 << 16  # -rw-------
             self.zinfo.compress_type = zipfile.ZIP_DEFLATED
             self.compressor = zlib.compressobj(
                 zlib.Z_DEFAULT_COMPRESSION,
@@ -221,12 +226,12 @@ class ZipLocalFile(MultiStream):
 
         extra_data = self.zinfo.extra
         if len(extra_64):
-            extra_data = struct.pack(
-                '<HH' + 'Q' * len(extra_64),
-                1,
-                8 * len(extra_64),
-                *extra_64
-            ) + self.zinfo.extra
+            extra_data = (
+                struct.pack(
+                    "<HH" + "Q" * len(extra_64), 1, 8 * len(extra_64), *extra_64
+                )
+                + self.zinfo.extra
+            )
 
         filename, flag_bits = self.zinfo._encodeFilenameFlags()
         centdir = struct.pack(
@@ -243,7 +248,7 @@ class ZipLocalFile(MultiStream):
             self.zinfo.CRC,
             reported_compressed_size,
             reported_original_size,
-            len(self.zinfo.filename.encode('utf-8')),
+            len(self.zinfo.filename.encode("utf-8")),
             len(extra_data),
             len(self.zinfo.comment),
             0,
@@ -258,8 +263,8 @@ class ZipLocalFile(MultiStream):
     def descriptor(self):
         """Local file data descriptor.  See ZipLocalFileDataDescriptor."""
 
-        fmt = '<4sLQQ' if self.need_zip64_data_descriptor else '<4sLLL'
-        signature = b'PK\x07\x08'  # magic number for data descriptor
+        fmt = "<4sLQQ" if self.need_zip64_data_descriptor else "<4sLLL"
+        signature = b"PK\x07\x08"  # magic number for data descriptor
         return struct.pack(
             fmt,
             signature,
@@ -275,11 +280,7 @@ class ZipLocalFile(MultiStream):
         Note: This should be accessed after the file's data has been streamed, since the total
         size, compressed size, and CRC isn't known until then.
         """
-        return (
-            len(self.local_header) +
-            self.compressed_size +
-            len(self.descriptor)
-        )
+        return len(self.local_header) + self.compressed_size + len(self.descriptor)
 
 
 class ZipArchiveCentralDirectory(StringStream):
@@ -292,6 +293,7 @@ class ZipArchiveCentralDirectory(StringStream):
 
     Note: This class is tightly coupled to ZipStreamReader and should not be used separately.
     """
+
     def __init__(self, files):
         self.files = files
         super().__init__(self.build_content())
@@ -304,7 +306,7 @@ class ZipArchiveCentralDirectory(StringStream):
             file_headers.append(file.directory_header)
             cumulative_offset += file.total_bytes
 
-        file_headers = b''.join(file_headers)
+        file_headers = b"".join(file_headers)
 
         count = len(self.files)
 
@@ -349,7 +351,7 @@ class ZipArchiveCentralDirectory(StringStream):
             0,  # comment length in bytes
         )
 
-        return b''.join((file_headers, zip64_endrec, zip64_locator, endrec))
+        return b"".join((file_headers, zip64_endrec, zip64_locator, endrec))
 
 
 class ZipStreamReader(asyncio.StreamReader):
@@ -388,7 +390,7 @@ class ZipStreamReader(asyncio.StreamReader):
                 self.stream = ZipLocalFile(await self.streams.__anext__())
             except StopAsyncIteration:
                 if self._eof:
-                    return b''
+                    return b""
                 self._eof = True
                 # Append a stream for the archive's footer (central directory)
                 self.stream = ZipArchiveCentralDirectory(self.finished_streams)
@@ -425,4 +427,6 @@ class ZipStreamGeneratorReader:
             else:
                 return current.unix_path.lstrip(self.parent_path), EmptyStream()
 
-        return lreplace(self.parent_path, '', current.unix_path), await self.provider.download(current, self.session)
+        return lreplace(
+            self.parent_path, "", current.unix_path
+        ), await self.provider.download(current, self.session)

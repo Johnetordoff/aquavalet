@@ -1,6 +1,4 @@
-aiohttp==3.4.4
-invoke==0.22.1
-aiofiles==0.3.2
+aiohttp
+invoke
 coverage
 pytest-coverage
-aiohttp-devtools

@@ -1,62 +1,76 @@
 from http import HTTPStatus
 from aiohttp.web import HTTPException
 
-DEFAULT_ERROR_MSG = 'An error occurred while making a {response.method} request to {response.url}'
+DEFAULT_ERROR_MSG = (
+    "An error occurred while making a {response.method} request to {response.url}"
+)
 
 
 class WaterButlerError(HTTPException):
-
     def __init__(self, message):
         self.message = message
 
     def __repr__(self):
-        return '<{}({}, {})>'.format(self.__class__.__name__, self.code, self.message)
+        return "<{}({}, {})>".format(self.__class__.__name__, self.code, self.message)
 
     def __str__(self):
-        return '{}, {}'.format(self.code, self.message)
+        return "{}, {}".format(self.code, self.message)
 
 
 class InvalidParameters(WaterButlerError):
     """Errors regarding incorrect data being sent to a method should raise either this
     Exception or a subclass thereof.  Defaults status code to 400, Bad Request.
     """
+
     code = 400
 
+
 class UnsupportedHTTPMethodError(WaterButlerError):
-    """An unsupported HTTP method was used.
-    """
+    """An unsupported HTTP method was used."""
+
     def __init__(self, method, supported=None):
 
         if supported is None:
-            supported_methods = 'unspecified'
+            supported_methods = "unspecified"
         else:
-            supported_methods = ', '.join(list(supported)).upper()
+            supported_methods = ", ".join(list(supported)).upper()
 
-        super().__init__('Method "{}" not supported, currently supported methods '
-                         'are {}'.format(method, supported_methods),
-                         code=HTTPStatus.METHOD_NOT_ALLOWED, is_user_error=True)
+        super().__init__(
+            'Method "{}" not supported, currently supported methods '
+            "are {}".format(method, supported_methods),
+            code=HTTPStatus.METHOD_NOT_ALLOWED,
+            is_user_error=True,
+        )
 
 
 class PluginError(WaterButlerError):
     """WaterButler-related errors raised from a plugin, such as an auth handler or provider, should
     inherit from `PluginError`.
     """
+
     pass
+
 
 class InvalidPathError(PluginError):
     status = 400
 
+
 class AuthError(PluginError):
     status = 401
+
 
 class Forbidden(PluginError):
     status = 403
 
-class NotFoundError(PluginError):
 
+class NotFoundError(PluginError):
     def __init__(self, filename):
-        self.message =  f'Item at \'{filename}\' could not be found, folders must end with \'/\''
+        self.message = (
+            f"Item at '{filename}' could not be found, folders must end with '/'"
+        )
+
     status = 404
+
 
 class Conflict(PluginError):
     status = 409
@@ -65,10 +79,12 @@ class Conflict(PluginError):
 class Gone(PluginError):
     status = 410
 
+
 class ProviderError(PluginError):
     """WaterButler-related errors raised from :class:`aquavalet.core.provider.BaseProvider`
     should inherit from ProviderError.
     """
+
     pass
 
 
@@ -80,6 +96,7 @@ class UnhandledProviderError(ProviderError):
 
     Developer-defined errors should **not** inherit from `UnhandledProviderError`.
     """
+
     pass
 
 
@@ -121,4 +138,3 @@ class RevisionsError(UnhandledProviderError):
 
 class UploadError(UnhandledProviderError):
     pass
-

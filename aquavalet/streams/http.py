@@ -5,7 +5,6 @@ from aquavalet.streams.base import BaseStream, MultiStream, StringStream
 
 
 class ResponseStreamReader(BaseStream):
-
     def __init__(self, response, size=None, name=None):
         super().__init__()
         self._name = name
@@ -17,7 +16,7 @@ class ResponseStreamReader(BaseStream):
 
     @property
     def content_type(self):
-        return self.response.headers.get('Content-Type', 'application/octet-stream')
+        return self.response.headers.get("Content-Type", "application/octet-stream")
 
     @property
     def content_range(self):
@@ -41,7 +40,6 @@ class ResponseStreamReader(BaseStream):
 
 
 class RequestStreamReader(BaseStream):
-
     def __init__(self, request, reader):
         super().__init__()
         self.reader = reader
@@ -49,14 +47,14 @@ class RequestStreamReader(BaseStream):
 
     @property
     def size(self):
-        return int(self.request.headers.get('Content-Length'))
+        return int(self.request.headers.get("Content-Length"))
 
     def at_eof(self):
         return self.reader.at_eof()
 
     async def _read(self, size):
         if self.reader.at_eof():
-            return b''
+            return b""
         if size < 0:
             return await self.reader.read(size)
         try:

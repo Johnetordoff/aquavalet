@@ -10,8 +10,11 @@ from aquavalet.providers.osfstorage.provider import OSFStorageProvider
 from aquavalet.providers.osfstorage.metadata import OsfMetadata
 from aquavalet.app import make_app
 
+
 def from_fixture_json(key):
-    with open(os.path.join(os.path.dirname(__file__), 'fixtures/fixtures.json'), 'r') as fp:
+    with open(
+        os.path.join(os.path.dirname(__file__), "fixtures/fixtures.json"), "r"
+    ) as fp:
         return json.load(fp)[key]
 
 
@@ -19,18 +22,22 @@ def from_fixture_json(key):
 def app():
     return make_app(False)
 
+
 @pytest.fixture
 def folder_metadata_resp(folder_metadata_json):
     return json_resp(folder_metadata_json)
 
 
 def get_file_metadata_json():
-    with open(os.path.join(os.path.dirname(__file__), 'fixtures/fixtures.json'), 'r') as fp:
-        return json.load(fp)['file_metadata']
+    with open(
+        os.path.join(os.path.dirname(__file__), "fixtures/fixtures.json"), "r"
+    ) as fp:
+        return json.load(fp)["file_metadata"]
+
 
 @pytest.fixture
 def root_metadata_object():
-    return OsfMetadata.root('osfstorage', 'guid0')
+    return OsfMetadata.root("osfstorage", "guid0")
 
 
 class FileMetadataRespFactory:
@@ -45,16 +52,17 @@ def json_to_resp(key, status=200):
 
 
 def children_metadata():
-    return from_fixture_json('children_metadata')
+    return from_fixture_json("children_metadata")
 
 
 @pytest.fixture
 def revision_metadata_object(revisions_metadata):
-    return OsfMetadata(revisions_metadata['revisions'][0])
+    return OsfMetadata(revisions_metadata["revisions"][0])
+
 
 @pytest.fixture
 def provider():
     provider = OSFStorageProvider({})
-    provider.internal_provider = 'osfstorage'
-    provider.resource = 'guid0'
+    provider.internal_provider = "osfstorage"
+    provider.resource = "guid0"
     return provider

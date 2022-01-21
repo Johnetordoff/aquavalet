@@ -1,8 +1,6 @@
 version: '3.7'
 
 volumes:
-  rabbitmq_vol:
-    external: false
   av_requirements_vol:
     external: false
 
@@ -11,16 +9,6 @@ services:
   ###################
   # Shared Services #
   ###################
-
-  rabbitmq:
-    image: rabbitmq:3-management
-    ports:
-      - 5672:5672
-      - 15672:15672
-    volumes:
-      - rabbitmq_vol:/var/lib/rabbitmq
-    stdin_open: true
-
   av_requirements:
     image: av:latest
     command: |-
@@ -45,19 +33,4 @@ services:
     volumes:
       - av_requirements_vol:/usr/local/lib/python3.6
       - ./:/code:cached
-    stdin_open: true
-
-  av_worker:
-    image: av:latest
-    command: invoke celery
-    restart: unless-stopped
-    depends_on:
-      - av
-      - rabbitmq
-    environment:
-      C_FORCE_ROOT: 1
-    env_file:
-      - .docker-compose.av.env
-    volumes:
-      - av_requirements_vol:/usr/local/lib/python3.6
     stdin_open: true

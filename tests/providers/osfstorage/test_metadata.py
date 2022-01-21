@@ -1,16 +1,12 @@
 import pytest
 
 from tests.core.test_metadata import FileMetadataTests
-from tests.providers.osfstorage.fixtures import (
-    provider,
-    root_metadata_object
-)
+from tests.providers.osfstorage.fixtures import provider, root_metadata_object
 
 from tests.providers.osfstorage.utils import MockOsfstorageServer
 
 
 class TestOsfFileMetadata(FileMetadataTests):
-
     @pytest.fixture
     def provider(self, provider):
         return provider
