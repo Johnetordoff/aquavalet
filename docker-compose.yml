@@ -28,8 +28,12 @@ services:
     restart: unless-stopped
     ports:
       - 8000:8000
-    env_file:
-      - .docker-compose.av.env
+    environment:
+      DEBUG: ${DEBUG:-1}
+      SERVER_CONFIG_DEBUG: ${SERVER_CONFIG_DEBUG:-1}
+      SERVER_CONFIG_ADDRESS: ${SERVER_CONFIG_ADDRESS:-0.0.0.0}
+      TASKS_CONFIG_BROKER_URL: ${TASKS_CONFIG_BROKER_URL:-}
+      PYTHONUNBUFFERED: ${PYTHONUNBUFFERED:-0}
     volumes:
       - av_requirements_vol:/usr/local/lib/python3.6
       - ./:/code:cached
